@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerenciar Agendamentos e Bloqueios - LBarber</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-dark: #121212;
+            --secondary-dark: #1a1a1a;
+            --accent-gold: #d4af37;
+            --light-gold: #e6c567;
+            --dark-gold: #b8860b;
+            --light-gray: #f5f5f5;
+            --medium-gray: #8c8c8c;
+            --success: #28a745;
+            --error: #dc3545;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--primary-dark);
+            color: var(--light-gray);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background-image: linear-gradient(rgba(18, 18, 18, 0.95), rgba(18, 18, 18, 0.95)), 
+                              url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><rect width="100" height="100" fill="none" stroke="%232a2a2a" stroke-width="1"/></svg>');
+            background-size: 50px;
+        }
+        
+        /* Header/Nav */
+        .navbar {
+            background-color: var(--primary-dark);
+            padding: 1.2rem 5%;
+            border-bottom: 1px solid rgba(212, 175, 55, 0.15);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .logo-img {
+            height: 42px;
+            filter: drop-shadow(0 0 4px rgba(212, 175, 55, 0.3));
+        }
+        
+        .logo-text {
+            font-size: 1.8rem;
+            font-weight: 600;
+            background: linear-gradient(to right, var(--accent-gold), var(--light-gold));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: 1px;
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .user-name {
+            color: var(--light-gold);
+            font-weight: 500;
+        }
+        
+        .logout-btn {
+            background: rgba(212, 175, 55, 0.1);
+            border: 1px solid rgba(212, 175, 55, 0.3);
+            color: var(--accent-gold);
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.9rem;
+        }
+        
+        .logout-btn:hover {
+            background: rgba(212, 175, 55, 0.2);
+        }
+        
+        /* Main Content */
+        .main-container {
+            flex: 1;
+            padding: 2rem 5%;
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+        }
+        
+        .page-header {
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+        
+        .page-title {
+            font-size: 2.2rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(to right, var(--accent-gold), var(--light-gold));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .section-container {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+        
+        @media (min-width: 992px) {
+            .section-container {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+        
+        .section-card {
+            background: linear-gradient(145deg, #1a1a1a, #151515);
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 
+                        0 0 0 1px rgba(212, 175, 55, 0.1);
+            padding: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .section-title {
+            font-size: 1.6rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            color: var(--light-gray);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .section-title i {
+            color: var(--accent-gold);
+        }
+        
+        .list {
+            list-style: none;
+        }
+        
+        .list-item {
+            padding: 1rem;
+            border-bottom: 1px solid rgba(212, 175, 55, 0.1);
+            transition: all 0.3s;
+        }
+        
+        .list-item:last-child {
+            border-bottom: none;
+        }
+        
+        .list-item:hover {
+            background-color: rgba(212, 175, 55, 0.05);
+        }
+        
+        .empty-message {
+            color: var(--medium-gray);
+            font-style: italic;
+            text-align: center;
+            padding: 1rem;
+        }
+        
+        /* Form Styles */
+        .form-container {
+            background: linear-gradient(145deg, #1a1a1a, #151515);
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 
+                        0 0 0 1px rgba(212, 175, 55, 0.1);
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+        
+        .form-title {
+            font-size: 1.4rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            color: var(--light-gray);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .form-title i {
+            color: var(--accent-gold);
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: 0.8rem;
+            font-size: 1rem;
+            color: var(--light-gray);
+            font-weight: 500;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 0.9rem 1.2rem;
+            background-color: rgba(30, 30, 30, 0.7);
+            border: 1px solid rgba(80, 80, 80, 0.3);
+            border-radius: 8px;
+            color: var(--light-gray);
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: var(--accent-gold);
+            box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.2);
+            background-color: rgba(40, 40, 40, 0.5);
+        }
+        
+        .btn {
+            padding: 0.9rem 1.5rem;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(to right, var(--accent-gold), var(--dark-gold));
+            color: var(--primary-dark);
+            box-shadow: 0 4px 15px rgba(212, 175, 55, 0.25);
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(212, 175, 55, 0.4);
+        }
+        
+        .btn-danger {
+            background: rgba(220, 53, 69, 0.1);
+            color: var(--error);
+            border: 1px solid rgba(220, 53, 69, 0.3);
+        }
+        
+        .btn-danger:hover {
+            background: rgba(220, 53, 69, 0.2);
+        }
+        
+        .btn-admin {
+            background: rgba(212, 175, 55, 0.1);
+            color: var(--accent-gold);
+            border: 1px solid rgba(212, 175, 55, 0.3);
+            text-decoration: none;
+        }
+        
+        .btn-admin:hover {
+            background: rgba(212, 175, 55, 0.2);
+        }
+        
+        .btn-container {
+            display: flex;
+            justify-content: center;
+            margin-top: 2rem;
+        }
+        
+        /* Responsividade */
+        @media (max-width: 768px) {
+            .navbar {
+                padding: 1rem 5%;
+            }
+            
+            .logo-text {
+                font-size: 1.5rem;
+            }
+            
+            .page-title {
+                font-size: 1.8rem;
+            }
+            
+            .section-card, .form-container {
+                padding: 1.5rem;
+            }
+        }
+        
+        /* Animações */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease forwards;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header/Navbar -->
+    <nav class="navbar">
+        <div class="logo-container">
+            <img src="assets/lbarberlogo.png" alt="LBarber Logo" class="logo-img">
+            <div class="logo-text">LBarber</div>
+        </div>
+        
+        <div class="user-info">
+            <span class="user-name" id="nomeUsuario">Olá, Barbeiro</span>
+            <button class="logout-btn" onclick="logout()">
+                <i class="fas fa-sign-out-alt"></i> Sair
+            </button>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="main-container">
+        <header class="page-header">
+            <h1 class="page-title">Gerenciar Agendamentos</h1>
+        </header>
+        
+        <div class="section-container">
+            <section class="section-card fade-in">
+                <h2 class="section-title"><i class="fas fa-calendar-check"></i> Meus Agendamentos</h2>
+                <ul class="list" id="agendamentos-list">
+                    <!-- Agendamentos serão carregados aqui -->
+                </ul>
+            </section>
+            
+            <section class="section-card fade-in">
+                <h2 class="section-title"><i class="fas fa-calendar-times"></i> Meus Bloqueios</h2>
+                <ul class="list" id="bloqueios-list">
+                    <!-- Bloqueios serão carregados aqui -->
+                </ul>
+            </section>
+        </div>
+        
+        <div class="form-container fade-in">
+            <h3 class="form-title"><i class="fas fa-plus-circle"></i> Adicionar Bloqueio de Horário</h3>
+            <form id="bloqueio-form-horario">
+                <div class="form-group">
+                    <label for="bloqueio-data" class="form-label">Data</label>
+                    <input type="date" id="bloqueio-data" class="form-control" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="bloqueio-hora" class="form-label">Hora</label>
+                    <input type="time" id="bloqueio-hora" class="form-control" required>
+                </div>
+                
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-calendar-plus"></i> Adicionar Bloqueio
+                </button>
+            </form>
+        </div>
+        
+        <div class="form-container fade-in">
+            <h3 class="form-title"><i class="fas fa-calendar-day"></i> Adicionar Bloqueio de Dia</h3>
+            <form id="bloqueio-form-dia">
+                <div class="form-group">
+                    <label for="bloqueio-dia" class="form-label">Data</label>
+                    <input type="date" id="bloqueio-dia" class="form-control" required>
+                </div>
+                
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-calendar-plus"></i> Adicionar Bloqueio
+                </button>
+            </form>
+        </div>
+        
+        <div class="btn-container">
+            <a href="admin.html" class="btn btn-admin">
+                <i class="fas fa-user-shield"></i> Painel Administrativo
+            </a>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            validarUsuario();
+        });
+
+        let barbeiroId;
+
+        // Função para validar se o usuário tem acesso
+        async function validarUsuario() {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                alert('Você não está logado. Redirecionando para o login...');
+                window.location.href = '/login.html';
+                return;
+            }
+
+            try {
+                const res = await fetch('http://localhost:3000/user-info', {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+
+                if (!res.ok) throw new Error('Erro ao validar usuário.');
+
+                const data = await res.json();
+                if (data.role !== 'barbeiro') {
+                    alert('Acesso negado. Somente barbeiros podem acessar esta página.');
+                    window.location.href = '/login.html';
+                    return;
+                }
+
+                document.getElementById('nomeUsuario').textContent = `Olá, ${data.nome || 'Barbeiro'}`;
+                barbeiroId = data.id;
+                carregarAgendamentos();
+                carregarBloqueios();
+            } catch (error) {
+                console.error('Erro na validação de usuário:', error);
+                alert('Erro na autenticação. Tente novamente.');
+                window.location.href = '/login.html';
+            }
+        }
+
+        // Função para carregar agendamentos
+        async function carregarAgendamentos() {
+            const token = localStorage.getItem('token');
+
+            try {
+                const res = await fetch('http://localhost:3000/agendamentos', {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+
+                if (!res.ok) {
+                    if(res.status === 401 || res.status === 403) {
+                        window.location.href = 'login.html';
+                    }
+                    throw new Error('Erro ao carregar agendamentos.');
+                }
+
+                const data = await res.json();
+                const agendamentos = Array.isArray(data.agendamentos) ? data.agendamentos : [];
+
+                const lista = document.getElementById('agendamentos-list');
+
+                lista.innerHTML = agendamentos.length
+                    ? agendamentos.map(a => {
+                        // Formata a data e hora mais elegantemente
+                        const dataObj = new Date(a.data_agendada);
+                        const dataFormatada = dataObj.toLocaleDateString('pt-BR', {
+                            weekday: 'long',
+                            day: 'numeric',
+                            month: 'long'
+                        }).replace(/^\w/, c => c.toUpperCase()); // Capitaliza a primeira letra
+                        
+                        // Formata a hora (remove os segundos)
+                        const horaFormatada = a.hora_agendada.substring(0, 5);
+                        
+                        return `
+                        <li class="list-item">
+                            <strong>${dataFormatada}</strong> às ${horaFormatada}<br>
+                            <strong>Cliente:</strong> ${a.nome_cliente || 'N/A'}<br>
+                            <strong>Serviço:</strong> ${a.nome_servico || 'N/A'}
+                        </li>`;
+                    }).join('')
+                    : '<li class="list-item empty-message">Nenhum agendamento futuro encontrado.</li>';
+            } catch (error) {
+                console.error('Erro ao carregar agendamentos:', error);
+                document.getElementById('agendamentos-list').innerHTML = 
+                    '<li class="list-item empty-message">Erro ao carregar agendamentos.</li>';
+            }
+        }
+
+        // Função para carregar bloqueios
+        async function carregarBloqueios() {
+            const token = localStorage.getItem('token');
+            try {
+                const res = await fetch('http://localhost:3000/bloqueios', {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+
+                if (!res.ok) throw new Error('Erro ao carregar bloqueios.');
+
+                const bloqueios = await res.json();
+                const lista = document.getElementById('bloqueios-list');
+                lista.innerHTML = bloqueios.length
+                    ? bloqueios.map(b => {
+                        const dataObj = new Date(b.data);
+                        const dataFormatada = dataObj.toLocaleDateString('pt-BR', {
+                            weekday: 'long',
+                            day: 'numeric',
+                            month: 'long'
+                        }).replace(/^\w/, c => c.toUpperCase());
+                        
+                        return `
+                        <li class="list-item">
+                            ${b.hora ? 
+                                `<strong>${dataFormatada}</strong> às ${b.hora.substring(0, 5)}` : 
+                                `<strong>Dia inteiro:</strong> ${dataFormatada}`}
+                            <button class="btn btn-danger" onclick="removerBloqueio(${b.id})">
+                                <i class="fas fa-trash-alt"></i> Remover
+                            </button>
+                        </li>`;
+                    }).join('')
+                    : '<li class="list-item empty-message">Sem bloqueios para exibir.</li>';
+            } catch (error) {
+                console.error('Erro ao carregar bloqueios:', error);
+                document.getElementById('bloqueios-list').innerHTML = 
+                    '<li class="list-item empty-message">Erro ao carregar bloqueios.</li>';
+            }
+        }
+
+        // Adicionar bloqueio de horário
+        document.getElementById('bloqueio-form-horario').onsubmit = async (event) => {
+            event.preventDefault();
+            const token = localStorage.getItem('token');
+            const data = document.getElementById('bloqueio-data').value;
+            const hora = document.getElementById('bloqueio-hora').value + ':00'; // Adiciona segundos
+
+            try {
+                const res = await fetch('http://localhost:3000/bloqueios', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ data, hora })
+                });
+
+                if (!res.ok) throw new Error('Erro ao adicionar bloqueio de horário.');
+
+                alert('Bloqueio de horário adicionado com sucesso!');
+                document.getElementById('bloqueio-form-horario').reset();
+                carregarBloqueios();
+            } catch (error) {
+                console.error('Erro ao adicionar bloqueio:', error);
+                alert('Erro ao adicionar bloqueio de horário.');
+            }
+        };
+
+        // Adicionar bloqueio de dia
+        document.getElementById('bloqueio-form-dia').onsubmit = async (event) => {
+            event.preventDefault();
+            const token = localStorage.getItem('token');
+            const data = document.getElementById('bloqueio-dia').value;
+
+            try {
+                const res = await fetch('http://localhost:3000/bloqueios/dia', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ data })
+                });
+
+                if (!res.ok) throw new Error('Erro ao adicionar bloqueio de dia.');
+
+                alert('Bloqueio de dia adicionado com sucesso!');
+                document.getElementById('bloqueio-form-dia').reset();
+                carregarBloqueios();
+            } catch (error) {
+                console.error('Erro ao adicionar bloqueio:', error);
+                alert('Erro ao adicionar bloqueio de dia.');
+            }
+        };
+
+        // Remover bloqueio
+        async function removerBloqueio(id) {
+            if (!confirm('Tem certeza que deseja remover este bloqueio?')) return;
+            
+            const token = localStorage.getItem('token');
+            try {
+                const res = await fetch(`http://localhost:3000/bloqueios/${id}`, {
+                    method: 'DELETE',
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+
+                if (!res.ok) throw new Error('Erro ao remover bloqueio.');
+
+                alert('Bloqueio removido com sucesso!');
+                carregarBloqueios();
+            } catch (error) {
+                console.error('Erro ao remover bloqueio:', error);
+                alert('Erro ao remover bloqueio.');
+            }
+        }
+        
+        // Função de logout
+        function logout() {
+            localStorage.removeItem('token');
+            // localStorage.removeItem('nome');
+            window.location.href = 'login.html';
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Administração - Barbeiros</title>
+</head>
+<body>
+    <h1>Interface do Administrador</h1>
+    <button onclick="window.location.href='registrar-barbeiro.html'">Registrar Barbeiro</button>
+
+    <h2>Lista de Barbeiros</h2>
+    <ul id="barbeiros-list"></ul>
+
+    <script>
+        // Função para carregar a lista de barbeiros
+        async function carregarBarbeiros() {
+            const token = localStorage.getItem('token');
+            const res = await fetch('http://localhost:3000/barbeiros', {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            
+            if (!res.ok) {
+                console.error('Erro ao carregar barbeiros');
+                return;
+            }
+
+            const barbeiros = await res.json();
+
+            // Popula a lista de barbeiros
+            const lista = document.getElementById('barbeiros-list');
+            lista.innerHTML = barbeiros.map(b => `
+                <li>
+                    ${b.nome} (${b.email})
+                    <button onclick="excluirBarbeiro(${b.id})">Excluir</button>
+                </li>
+            `).join('');
+        }
+
+        // Função para excluir barbeiro
+        async function excluirBarbeiro(id) {
+            const token = localStorage.getItem('token');
+            const res = await fetch(`http://localhost:3000/admin/barbeiros/${id}`, {
+                method: 'DELETE',
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            
+            if (res.ok) {
+                alert('Barbeiro excluído com sucesso');
+                carregarBarbeiros();  // Atualiza a lista
+            } else {
+                alert('Erro ao excluir barbeiro');
+            }
+        }
+
+        // Carrega os barbeiros quando a página é carregada
+        carregarBarbeiros();
+    </script>
+</body>
+</html>

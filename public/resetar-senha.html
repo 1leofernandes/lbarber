@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Redefinir Senha</title>
+    <style>
+        .message {
+            color: green;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h2>Redefinir Senha</h2>
+    <form id="resetForm">
+        <label for="senha">Nova Senha:</label>
+        <input type="password" id="senha" name="senha" required>
+        <br>
+        <label for="confirmSenha">Confirme a Nova Senha:</label>
+        <input type="password" id="confirmSenha" name="confirmSenha" required>
+        <br>
+        <button type="submit">Redefinir Senha</button>
+    </form>
+    <p id="message" class="message" style="display: none;">Senha redefinida com sucesso! Redirecionando para a página de login...</p>
+
+    <script>
+        document.getElementById('resetForm').addEventListener('submit', async function(event) {
+            event.preventDefault();
+            
+            const senha = document.getElementById('senha').value;
+            const confirmSenha = document.getElementById('confirmSenha').value;
+            
+            if (senha !== confirmSenha) {
+                alert('As senhas não coincidem.');
+                return;
+            }
+            
+            const urlParams = new URLSearchParams(window.location.search);
+            const token = urlParams.get('token');
+
+            try {
+                const response = await fetch(`/auth/resetar-senha/${token}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ senha })
+                });
+
+                if (response.ok) {
+                    const messageElement = document.getElementById('message');
+                    messageElement.style.display = 'block';
+
+                    // Espera 2 segundos antes de redirecionar
+                    setTimeout(() => {
+                        window.location.href = 'login.html';
+                    }, 2000);
+                } else {
+                    alert('Erro ao redefinir a senha. Tente novamente.');
+                }
+            } catch (error) {
+                console.error('Erro:', error);
+                alert('Erro ao redefinir a senha. Tente novamente.');
+            }
+        });
+    </script>
+</body>
+</html>

@@ -59,10 +59,10 @@ updateAdminRoles();
 
 // Rota para adicionar usuário e verificar roles
 app.post('/registrar', async (req, res) => {
-    const { nome, email, password } = req.body;
+    const { name, email, password } = req.body;
 
     // Validação dos campos obrigatórios
-    if (!nome || !email || !password) {
+    if (!name || !email || !password) {
         return res.status(400).json({ 
             success: false,
             message: 'Nome, email e senha são obrigatórios' 

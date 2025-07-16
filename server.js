@@ -386,38 +386,56 @@ function authenticateToken(req, res, next) {
 // Rota para obter todos os agendamentos
 app.get('/agendamentos', authenticateToken, async (req, res) => {
     const usuarioId = req.user.id;
-    const hoje = new Date().toISOString().split('T')[0];
+    const hoje = new Date().toISOString().split('T')[0]; // Formato YYYY-MM-DD
 
     try {
-        const { rows: [usuario] } = await db.query(`SELECT role FROM usuarios WHERE id = $1`, [usuarioId]);
+        // Verifica se o usuário é um barbeiro
+        const { rows: [usuario] } = await db.query(
+            'SELECT role FROM usuarios WHERE id = $1', 
+            [usuarioId]
+        );
 
         if (!usuario || usuario.role !== 'barbeiro') {
-            return res.status(403).json({ message: 'Acesso restrito a barbeiros' });
+            return res.status(403).json({ 
+                success: false,
+                message: 'Acesso restrito a barbeiros' 
+            });
         }
 
+        // Consulta corrigida para PostgreSQL
         const { rows: agendamentos } = await db.query(
             `SELECT 
-                agendamentos.id,
-                agendamentos.data_agendada,
-                agendamentos.hora_agendada,
-                clientes.nome AS nome_cliente,
-                barbeiros.nome AS nome_barbeiro,
-                servicos.servico AS nome_servico
-            FROM agendamentos
-            JOIN usuarios AS clientes ON agendamentos.usuario_id = clientes.id
-            JOIN usuarios AS barbeiros ON agendamentos.barbeiro_id = barbeiros.id
-            JOIN servicos ON agendamentos.servico_id = servicos.id
-            WHERE agendamentos.barbeiro_id = $1
-            AND (agendamentos.data_agendada > $2 OR 
-                (agendamentos.data_agendada = $2 AND agendamentos.hora_agendada >= TIME(NOW())))
-            ORDER BY agendamentos.data_agendada ASC, agendamentos.hora_agendada ASC`, 
+                a.id,
+                a.data_agendada,
+                a.hora_agendada,
+                c.nome AS nome_cliente,
+                b.nome AS nome_barbeiro,
+                s.servico AS nome_servico
+             FROM agendamentos a
+             JOIN usuarios c ON a.usuario_id = c.id
+             JOIN usuarios b ON a.barbeiro_id = b.id
+             JOIN servicos s ON a.servico_id = s.id
+             WHERE a.barbeiro_id = $1
+             AND (
+                 a.data_agendada > $2 OR 
+                 (a.data_agendada = $2 AND a.hora_agendada >= CURRENT_TIME)
+             )
+             ORDER BY a.data_agendada ASC, a.hora_agendada ASC`, 
             [usuarioId, hoje]
         );
 
-        res.json({ agendamentos: agendamentos || [] });
+        res.json({ 
+            success: true,
+            agendamentos: agendamentos || [] 
+        });
+
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: 'Erro ao buscar agendamentos' });
+        console.error('Erro ao buscar agendamentos:', error);
+        res.status(500).json({ 
+            success: false,
+            message: 'Erro ao carregar agendamentos',
+            error: process.env.NODE_ENV === 'development' ? error.message : undefined
+        });
     }
 });
 

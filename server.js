@@ -61,32 +61,67 @@ updateAdminRoles();
 app.post('/registrar', async (req, res) => {
     const { nome, email, password } = req.body;
 
+    // Validação dos campos obrigatórios
+    if (!nome || !email || !password) {
+        return res.status(400).json({ 
+            success: false,
+            message: 'Nome, email e senha são obrigatórios' 
+        });
+    }
+
     try {
         // Verifica se o usuário já existe
         const { rows } = await db.query('SELECT * FROM usuarios WHERE email = $1', [email]);
         if (rows.length > 0) {
-            return res.status(400).json({ message: 'Usuário já registrado' });
+            return res.status(400).json({ 
+                success: false,
+                message: 'Email já cadastrado' 
+            });
         }
 
-        // Criptografa a senha
-        const hashedPassword = await bcrypt.hash(password, 10);
+        // Criptografa a senha com tratamento seguro
+        const hashedPassword = await bcrypt.hash(password.toString(), 10);
 
-        // Define roles com base no e-mail
-        let roles = [];
+        // Define roles (admin se estiver na lista)
+        let roles = ['cliente']; // Todos são clientes por padrão
         if (adminEmails.includes(email)) {
-            roles.push('admin');
+            roles.push('admin'); // Adiciona role admin se o email estiver na lista
         }
 
         // Insere o usuário no banco de dados
         await db.query(
-            'INSERT INTO usuarios (nome, email, senha, roles) VALUES ($1, $2, $3, $4)',
-            [nome, email, hashedPassword, JSON.stringify(roles)]
+            `INSERT INTO usuarios (nome, email, senha, role, roles) 
+             VALUES ($1, $2, $3, $4, $5)`,
+            [
+                nome, 
+                email, 
+                hashedPassword,
+                'cliente', // Garante que a coluna role sempre será 'cliente'
+                JSON.stringify(roles) // Armazena o array de roles como JSON
+            ]
         );
 
-        res.status(201).json({ message: 'Usuário registrado com sucesso' });
+        res.status(201).json({ 
+            success: true,
+            message: 'Usuário registrado com sucesso',
+            isAdmin: roles.includes('admin') // Retorna se é admin
+        });
+
     } catch (error) {
         console.error('Erro ao registrar usuário:', error);
-        res.status(500).json({ message: 'Erro interno no servidor' });
+        
+        // Tratamento específico para erro de bcrypt
+        if (error.message.includes('Illegal arguments')) {
+            return res.status(400).json({
+                success: false,
+                message: 'Senha inválida'
+            });
+        }
+        res.status(500).json({ 
+            success: false,
+            message: 'Erro interno no servidor',
+            error: process.env.NODE_ENV === 'development' ? error.message : undefined
+        });
     }
 });
 

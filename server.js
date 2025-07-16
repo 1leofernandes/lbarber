@@ -59,10 +59,10 @@ updateAdminRoles();
 
 // Rota para adicionar usuário e verificar roles
 app.post('/registrar', async (req, res) => {
-    const { name, email, password } = req.body;
+    const { nome, email, senha } = req.body; // Mudei para receber "nome" e "senha"
 
     // Validação dos campos obrigatórios
-    if (!name || !email || !password) {
+    if (!nome || !email || !senha) { // Mudei para "senha"
         return res.status(400).json({ 
             success: false,
             message: 'Nome, email e senha são obrigatórios' 
@@ -80,12 +80,12 @@ app.post('/registrar', async (req, res) => {
         }
 
         // Criptografa a senha com tratamento seguro
-        const hashedPassword = await bcrypt.hash(password.toString(), 10);
+        const hashedPassword = await bcrypt.hash(senha.toString(), 10); // Mudei para "senha"
 
         // Define roles (admin se estiver na lista)
-        let roles = ['cliente']; // Todos são clientes por padrão
+        let roles = ['cliente'];
         if (adminEmails.includes(email)) {
-            roles.push('admin'); // Adiciona role admin se o email estiver na lista
+            roles.push('admin');
         }
 
         // Insere o usuário no banco de dados
@@ -93,24 +93,23 @@ app.post('/registrar', async (req, res) => {
             `INSERT INTO usuarios (nome, email, senha, role, roles) 
              VALUES ($1, $2, $3, $4, $5)`,
             [
-                nome, 
+                nome, // Corrigido para usar a variável "nome"
                 email, 
                 hashedPassword,
-                'cliente', // Garante que a coluna role sempre será 'cliente'
-                JSON.stringify(roles) // Armazena o array de roles como JSON
+                'cliente',
+                JSON.stringify(roles)
             ]
         );
 
         res.status(201).json({ 
             success: true,
             message: 'Usuário registrado com sucesso',
-            isAdmin: roles.includes('admin') // Retorna se é admin
+            isAdmin: roles.includes('admin')
         });
 
     } catch (error) {
         console.error('Erro ao registrar usuário:', error);
         
-        // Tratamento específico para erro de bcrypt
         if (error.message.includes('Illegal arguments')) {
             return res.status(400).json({
                 success: false,

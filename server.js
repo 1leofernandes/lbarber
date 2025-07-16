@@ -59,10 +59,10 @@ updateAdminRoles();
 
 // Rota para adicionar usuário e verificar roles
 app.post('/registrar', async (req, res) => {
-    const { nome, email, senha } = req.body; // Mudei para receber "nome" e "senha"
+    const { nome, email, senha } = req.body;
 
     // Validação dos campos obrigatórios
-    if (!nome || !email || !senha) { // Mudei para "senha"
+    if (!nome || !email || !senha) {
         return res.status(400).json({ 
             success: false,
             message: 'Nome, email e senha são obrigatórios' 
@@ -79,13 +79,13 @@ app.post('/registrar', async (req, res) => {
             });
         }
 
-        // Criptografa a senha com tratamento seguro
-        const hashedPassword = await bcrypt.hash(senha.toString(), 10); // Mudei para "senha"
+        // Criptografa a senha
+        const hashedPassword = await bcrypt.hash(senha.toString(), 10);
 
-        // Define roles (admin se estiver na lista)
-        let roles = ['cliente'];
+        // Define roles conforme a constraint da tabela
+        let roles = ['cliente']; // Valor padrão
         if (adminEmails.includes(email)) {
-            roles.push('admin');
+            roles = ['admin']; // Se for admin, substitui o array
         }
 
         // Insere o usuário no banco de dados
@@ -93,11 +93,11 @@ app.post('/registrar', async (req, res) => {
             `INSERT INTO usuarios (nome, email, senha, role, roles) 
              VALUES ($1, $2, $3, $4, $5)`,
             [
-                nome, // Corrigido para usar a variável "nome"
+                nome, 
                 email, 
                 hashedPassword,
-                'cliente',
-                JSON.stringify(roles)
+                'cliente', // Coluna role sempre como 'cliente'
+                JSON.stringify(roles) // Garante o formato correto para a constraint
             ]
         );
 
@@ -108,14 +108,16 @@ app.post('/registrar', async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Erro ao registrar usuário:', error);
+        console.error('Erro detalhado:', error);
         
-        if (error.message.includes('Illegal arguments')) {
+        if (error.code === '23514') { // Código de erro para violation of check constraint
             return res.status(400).json({
                 success: false,
-                message: 'Senha inválida'
+                message: 'Formato de roles inválido',
+                hint: 'O valor deve ser um array JSON válido contendo apenas roles permitidas'
             });
         }
+
         res.status(500).json({ 
             success: false,
             message: 'Erro interno no servidor',

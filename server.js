@@ -91,7 +91,7 @@ app.post('/registrar', async (req, res) => {
 });
 
 // Rota para registro de barbeiros
-router.post('/registrar-barbeiro', async (req, res) => {
+app.post('/registrar-barbeiro', async (req, res) => {
     const { nome, email, senha } = req.body;
     console.log('Recebido POST para registrar barbeiro:', req.body);
 

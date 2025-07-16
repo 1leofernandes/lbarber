@@ -30,6 +30,9 @@
     </div>
 
     <script>
+        const API_BASE_URL = window.location.hostname === 'localhost' 
+            ? 'http://localhost:3000' 
+            : 'https://lbarber.onrender.com';
         const form = document.getElementById('registerForm');
 
         form.addEventListener('submit', async (e) => {
@@ -39,7 +42,7 @@
             const password = document.getElementById('password').value;
 
             try {
-                const response = await fetch('http://localhost:3000/registrar', {
+                const response = await fetch(`${API_BASE_URL}/registrar`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'

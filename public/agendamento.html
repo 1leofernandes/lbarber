@@ -609,6 +609,9 @@
     </footer>
 
     <script>
+        const API_BASE_URL = window.location.hostname === 'localhost' 
+            ? 'http://localhost:3000' 
+            : 'https://lbarber.onrender.com';
         // Obter dados do usuário
         const token = localStorage.getItem('token');
         if (!token) {
@@ -649,7 +652,7 @@
         // Função para carregar barbeiros
         const loadBarbeiros = async () => {
             try {
-                const response = await fetch('http://localhost:3000/barbeiros', {
+                const response = await fetch(`${API_BASE_URL}/barbeiros`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 if (!response.ok) throw new Error('Falha ao carregar barbeiros');
@@ -669,7 +672,7 @@
         // Função para carregar serviços
         const loadServicos = async () => {
             try {
-                const response = await fetch('http://localhost:3000/servicos');
+                const response = await fetch(`${API_BASE_URL}/servicos`);
                 if (!response.ok) throw new Error('Falha ao carregar serviços');
                 const servicos = await response.json();
                 
@@ -687,7 +690,7 @@
         // Função para carregar horários disponíveis
         const loadHorarios = async (barbeiro_id, data_agendada) => {
             try {
-                const response = await fetch(`http://localhost:3000/agendamentos/barbeiro/${barbeiro_id}?data_agendada=${data_agendada}`, {
+                const response = await fetch(`${API_BASE_URL}/agendamentos/barbeiro/${barbeiro_id}?data_agendada=${data_agendada}`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 
@@ -799,7 +802,7 @@
             submitBtn.disabled = true;
             
             try {
-                const response = await fetch('http://localhost:3000/agendar', {
+                const response = await fetch(`${API_BASE_URL}/agendar`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

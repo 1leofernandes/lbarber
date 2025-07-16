@@ -26,6 +26,9 @@
     <p id="message" class="message" style="display: none;">Senha redefinida com sucesso! Redirecionando para a página de login...</p>
 
     <script>
+        const API_BASE_URL = window.location.hostname === 'localhost' 
+            ? 'http://localhost:3000' 
+            : 'https://lbarber.onrender.com';
         document.getElementById('resetForm').addEventListener('submit', async function(event) {
             event.preventDefault();
             
@@ -41,7 +44,7 @@
             const token = urlParams.get('token');
 
             try {
-                const response = await fetch(`/auth/resetar-senha/${token}`, {
+                const response = await fetch(`${API_BASE_URL}/auth/resetar-senha/${token}`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'

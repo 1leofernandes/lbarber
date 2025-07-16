@@ -1,12 +1,13 @@
-const express = require('express'); 
+const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
-const authRoutes = require('./auth'); // Arquivo que contém as rotas de autenticação
+const authRoutes = require('./auth');
 const path = require('path');
 const app = express();
-const port = 3000;
+const port = process.env.PORT || 3000; // Alterado para usar variável de ambiente
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+require('dotenv').config();
 
 // Lista de e-mails autorizados para administradores
 const adminEmails = ['leobarbeiro@gmail.com', 'leonardoff24@gmail.com'];
@@ -37,9 +38,14 @@ function authenticateToken(req, res, next) {
 // Middleware para verificar se o usuário é administrador
 async function updateAdminRoles() {
     try {
-        const placeholders = adminEmails.map(() => '?').join(', ');
-        const query = `UPDATE usuarios SET roles = 'admin' WHERE email IN (${placeholders})`;
-        await db.query(query, adminEmails);
+        // Método 1: Usando ANY (recomendado para PostgreSQL)
+        const query = `
+            UPDATE usuarios 
+            SET roles = 'admin' 
+            WHERE email = ANY($1::text[])
+        `;
+        await db.query(query, [adminEmails]);
+        
         console.log('Admin roles updated successfully!');
     } catch (error) {
         console.error('Error updating admin roles:', error);
@@ -57,7 +63,7 @@ app.post('/register', async (req, res) => {
 
     try {
         // Verifica se o usuário já existe
-        const [rows] = await db.query('SELECT * FROM usuarios WHERE email = ?', [email]);
+        const { rows } = await db.query('SELECT * FROM usuarios WHERE email = $1', [email]);
         if (rows.length > 0) {
             return res.status(400).json({ message: 'Usuário já registrado' });
         }
@@ -72,9 +78,10 @@ app.post('/register', async (req, res) => {
         }
 
         // Insere o usuário no banco de dados
-        await db.query('INSERT INTO usuarios (nome, email, senha, roles) VALUES (?, ?, ?, ?)', [
-            nome, email, hashedPassword, JSON.stringify(roles)
-        ]);
+        await db.query(
+            'INSERT INTO usuarios (nome, email, senha, roles) VALUES ($1, $2, $3, $4)',
+            [nome, email, hashedPassword, JSON.stringify(roles)]
+        );
 
         res.status(201).json({ message: 'Usuário registrado com sucesso' });
     } catch (error) {
@@ -90,9 +97,9 @@ app.post('/registrar-barbeiro', async (req, res) => {
 
     try {
         // Verifica se o email já existe no banco de dados
-        const [result] = await db.execute('SELECT * FROM usuarios WHERE email = ?', [email]);
+        const { rows } = await db.query('SELECT * FROM usuarios WHERE email = $1', [email]);
         
-        if (result.length > 0) {
+        if (rows.length > 0) {
             console.log('Email já registrado');
             return res.status(400).send({ mensagem: 'Email já registrado' });
         }
@@ -102,8 +109,8 @@ app.post('/registrar-barbeiro', async (req, res) => {
         console.log('Hash da senha gerado:', senhaHash);
 
         // Insere o barbeiro no banco de dados
-        await db.execute(
-            'INSERT INTO usuarios (nome, email, senha, role) VALUES (?, ?, ?, ?)',
+        await db.query(
+            'INSERT INTO usuarios (nome, email, senha, role) VALUES ($1, $2, $3, $4)',
             [nome, email, senhaHash, 'barbeiro']
         );
         console.log('Barbeiro registrado com sucesso');
@@ -120,9 +127,9 @@ app.post('/registrar', (req, res) => {
     const { nome, email, senha } = req.body;
 
     // Verifica se o email já existe no banco de dados
-    db.query('SELECT * FROM usuarios WHERE email = ?', [email], (err, result) => {
+    db.query('SELECT * FROM usuarios WHERE email = $1', [email], (err, result) => {
         if (err) return res.status(500).send({ erro: err });
-        if (result.length > 0) {
+        if (result.rows.length > 0) {
             return res.status(400).send({ mensagem: 'Email já registrado' });
         }
 
@@ -134,7 +141,7 @@ app.post('/registrar', (req, res) => {
 
         // Insere novo usuário com a senha criptografada e roles
         db.query(
-            'INSERT INTO usuarios (nome, email, senha, roles) VALUES (?, ?, ?, ?)',
+            'INSERT INTO usuarios (nome, email, senha, roles) VALUES ($1, $2, $3, $4)',
             [nome, email, senhaHash, roles],
             (err) => {
                 if (err) return res.status(500).send({ erro: err });
@@ -156,7 +163,7 @@ app.post('/auth/resetar-senha', async (req, res) => {
         const hashedPassword = await bcrypt.hash(newPassword, 10);
 
         // Atualiza a senha no banco de dados
-        await db.query('UPDATE usuarios SET senha = ? WHERE id = ?', [hashedPassword, decoded.id]);
+        await db.query('UPDATE usuarios SET senha = $1 WHERE id = $2', [hashedPassword, decoded.id]);
 
         res.status(200).json({ message: 'Senha redefinida com sucesso!' });
     } catch (error) {
@@ -176,7 +183,15 @@ app.get('/user-info', (req, res) => {
 
     try {
         const decoded = jwt.verify(token, secret); // Decodifica o token usando a chave secreta
-        res.send({ id: decoded.id, role: decoded.role });
+        
+        // Consulta adicional para buscar informações atualizadas do usuário
+        db.query('SELECT id, role FROM usuarios WHERE id = $1', [decoded.id], (err, result) => {
+            if (err) return res.status(500).send({ mensagem: 'Erro ao buscar informações do usuário' });
+            if (result.rows.length === 0) return res.status(404).send({ mensagem: 'Usuário não encontrado' });
+            
+            const user = result.rows[0];
+            res.send({ id: user.id, role: user.role });
+        });
     } catch (err) {
         res.status(401).send({ mensagem: 'Token inválido' });
     }
@@ -186,8 +201,8 @@ app.get('/user-info', (req, res) => {
 // Rota para obter a lista de barbeiros
 app.get('/barbeiros', async (req, res) => {
     try {
-        const [results] = await db.query("SELECT * FROM usuarios WHERE role = 'barbeiro'"); // Filtra apenas os barbeiros
-        res.status(200).json(results);
+        const { rows } = await db.query("SELECT * FROM usuarios WHERE role = 'barbeiro'"); // Filtra apenas os barbeiros
+        res.status(200).json(rows);
     } catch (error) {
         console.error('Erro ao carregar barbeiros:', error);
         res.status(500).json({ message: 'Erro ao carregar barbeiros' });
@@ -214,26 +229,26 @@ app.post('/agendar', async (req, res) => {
 
     try {
         // Consulta para verificar se já existe um agendamento para o barbeiro e horário
-        const [results] = await db.execute(`
+        const { rows } = await db.query(`
             SELECT * FROM agendamentos 
-            WHERE barbeiro_id = ? 
-            AND data_agendada = ? 
-            AND hora_agendada = ?
+            WHERE barbeiro_id = $1 
+            AND data_agendada = $2 
+            AND hora_agendada = $3
         `, [barbeiro_id, data_agendada, hora_agendada]);
 
-        console.log('Resultado da verificação de horário:', results);
+        console.log('Resultado da verificação de horário:', rows);
 
-        if (results.length > 0) {
+        if (rows.length > 0) {
             return res.status(400).json({ message: 'Horário já agendado para este barbeiro' });
         }
 
         // Caso não exista conflito, procede com o agendamento
-        const [insertResult] = await db.execute(`
+        await db.query(`
             INSERT INTO agendamentos (usuario_id, barbeiro_id, servico_id, data_agendada, hora_agendada) 
-            VALUES (?, ?, ?, ?, ?)
+            VALUES ($1, $2, $3, $4, $5)
         `, [usuario_id, barbeiro_id, servico_id, data_agendada, hora_agendada]);
 
-        console.log('Agendamento salvo com sucesso:', insertResult);
+        console.log('Agendamento salvo com sucesso');
         res.status(201).json({ message: 'Agendamento realizado com sucesso' });
 
     } catch (error) {
@@ -251,19 +266,19 @@ app.get('/agendamentos/barbeiro/:id', async (req, res) => {
 
     try {
         // 1. Obter os horários já agendados
-        const [agendamentos] = await db.execute(`
+        const { rows: agendamentos } = await db.query(`
             SELECT hora_agendada 
             FROM agendamentos 
-            WHERE barbeiro_id = ? AND data_agendada = ?
+            WHERE barbeiro_id = $1 AND data_agendada = $2
         `, [id, data_agendada]);
 
         console.log('Horários agendados encontrados:', agendamentos);
 
         // 2. Obter os horários bloqueados
-        const [bloqueios] = await db.execute(`
+        const { rows: bloqueios } = await db.query(`
             SELECT hora 
             FROM bloqueios 
-            WHERE barbeiro_id = ? AND data = ?
+            WHERE barbeiro_id = $1 AND data = $2
         `, [id, data_agendada]);
 
         console.log('Horários bloqueados encontrados:', bloqueios);
@@ -298,11 +313,11 @@ app.get('/agendamentos/barbeiro/:id', async (req, res) => {
 
 app.get('/servicos', async (req, res) => {
     try {
-      const [rows] = await db.execute('SELECT * FROM servicos');
-      res.json(rows);
+        const { rows } = await db.query('SELECT * FROM servicos');
+        res.json(rows);
     } catch (error) {
-      console.error('Erro ao buscar serviços:', error);
-      res.status(500).send('Erro ao buscar serviços');
+        console.error('Erro ao buscar serviços:', error);
+        res.status(500).send('Erro ao buscar serviços');
     }
 });
   
@@ -326,18 +341,16 @@ function authenticateToken(req, res, next) {
 // Rota para obter todos os agendamentos
 app.get('/agendamentos', authenticateToken, async (req, res) => {
     const usuarioId = req.user.id;
-    const hoje = new Date().toISOString().split('T')[0]; // Obtém a data atual no formato YYYY-MM-DD
+    const hoje = new Date().toISOString().split('T')[0];
 
     try {
-        // Verifica se o usuário é um barbeiro
-        const [[usuario]] = await db.query(`SELECT role FROM usuarios WHERE id = ?`, [usuarioId]);
+        const { rows: [usuario] } = await db.query(`SELECT role FROM usuarios WHERE id = $1`, [usuarioId]);
 
         if (!usuario || usuario.role !== 'barbeiro') {
             return res.status(403).json({ message: 'Acesso restrito a barbeiros' });
         }
 
-        // Consulta modificada para filtrar agendamentos futuros
-        const [agendamentos] = await db.query(
+        const { rows: agendamentos } = await db.query(
             `SELECT 
                 agendamentos.id,
                 agendamentos.data_agendada,
@@ -349,11 +362,11 @@ app.get('/agendamentos', authenticateToken, async (req, res) => {
             JOIN usuarios AS clientes ON agendamentos.usuario_id = clientes.id
             JOIN usuarios AS barbeiros ON agendamentos.barbeiro_id = barbeiros.id
             JOIN servicos ON agendamentos.servico_id = servicos.id
-            WHERE agendamentos.barbeiro_id = ?
-            AND (agendamentos.data_agendada > ? OR 
-                (agendamentos.data_agendada = ? AND agendamentos.hora_agendada >= TIME(NOW())))
+            WHERE agendamentos.barbeiro_id = $1
+            AND (agendamentos.data_agendada > $2 OR 
+                (agendamentos.data_agendada = $2 AND agendamentos.hora_agendada >= TIME(NOW())))
             ORDER BY agendamentos.data_agendada ASC, agendamentos.hora_agendada ASC`, 
-            [usuarioId, hoje, hoje]
+            [usuarioId, hoje]
         );
 
         res.json({ agendamentos: agendamentos || [] });
@@ -363,16 +376,14 @@ app.get('/agendamentos', authenticateToken, async (req, res) => {
     }
 });
 
-
-// Rota para adicionar um bloqueio
 app.post('/bloqueios', async (req, res) => {
     const { data, hora } = req.body;
     const barbeiro_id = req.user.id;
 
     try {
-        await db.execute(`
+        await db.query(`
             INSERT INTO bloqueios (barbeiro_id, data, hora) 
-            VALUES (?, ?, ?)
+            VALUES ($1, $2, $3)
         `, [barbeiro_id, data, hora]);
 
         res.status(201).json({ message: 'Bloqueio adicionado com sucesso' });
@@ -382,22 +393,18 @@ app.post('/bloqueios', async (req, res) => {
     }
 });
 
-
-// Rota para obter bloqueios do barbeiro autenticado
 app.get('/bloqueios', authenticateToken, async (req, res) => {
     const usuarioId = req.user.id;
 
     try {
-        // Verifica se o usuário é um barbeiro
-        const [[usuario]] = await db.query(`SELECT role FROM usuarios WHERE id = ?`, [usuarioId]);
+        const { rows: [usuario] } = await db.query(`SELECT role FROM usuarios WHERE id = $1`, [usuarioId]);
 
         if (usuario.role !== 'barbeiro') {
             return res.status(403).json({ message: 'Acesso restrito a barbeiros' });
         }
 
-        // Consulta para buscar bloqueios do barbeiro autenticado
-        const [bloqueios] = await db.query(
-            'SELECT * FROM bloqueios WHERE barbeiro_id = ?',
+        const { rows: bloqueios } = await db.query(
+            'SELECT * FROM bloqueios WHERE barbeiro_id = $1',
             [usuarioId]
         );
 
@@ -408,16 +415,14 @@ app.get('/bloqueios', authenticateToken, async (req, res) => {
     }
 });
 
-
-// Rota para remover um bloqueio
 app.delete('/bloqueios/:id', async (req, res) => {
     const { id } = req.params;
     const barbeiro_id = req.user.id;
 
     try {
-        await db.execute(`
+        await db.query(`
             DELETE FROM bloqueios 
-            WHERE id = ? AND barbeiro_id = ?`, 
+            WHERE id = $1 AND barbeiro_id = $2`, 
         [id, barbeiro_id]);
 
         res.status(200).json({ message: 'Bloqueio removido com sucesso' });
@@ -427,45 +432,38 @@ app.delete('/bloqueios/:id', async (req, res) => {
     }
 });
 
-// Rota para bloquear um dia inteiro
 app.post('/bloqueios/dia', authenticateToken, async (req, res) => {
-    const { data } = req.body; // A data a ser bloqueada no formato YYYY-MM-DD
+    const { data } = req.body;
     const usuarioId = req.user.id;
 
     try {
-        // Verifica se o usuário é um barbeiro
-        const [[usuario]] = await db.query(`SELECT role FROM usuarios WHERE id = ?`, [usuarioId]);
+        const { rows: [usuario] } = await db.query(`SELECT role FROM usuarios WHERE id = $1`, [usuarioId]);
         if (usuario.role !== 'barbeiro') {
             return res.status(403).json({ message: 'Acesso restrito a barbeiros' });
         }
 
-        // Define o intervalo de horas para o dia (ex.: 08:00 às 20:00) com intervalos de 30 minutos
         const horas = [];
         for (let hora = 8; hora < 20; hora++) {
             horas.push(`${String(hora).padStart(2, '0')}:00:00`);
             horas.push(`${String(hora).padStart(2, '0')}:30:00`);
         }
 
-        // Verifica se já existem bloqueios para a data e horas especificadas
-        const [bloqueiosExistentes] = await db.query(`
-            SELECT hora FROM bloqueios WHERE barbeiro_id = ? AND data = ?
+        const { rows: bloqueiosExistentes } = await db.query(`
+            SELECT hora FROM bloqueios WHERE barbeiro_id = $1 AND data = $2
         `, [usuarioId, data]);
 
         const horasBloqueadas = bloqueiosExistentes.map(b => b.hora);
-
-        // Filtra as horas que ainda não estão bloqueadas
         const horasParaBloquear = horas.filter(hora => !horasBloqueadas.includes(hora));
 
-        // Caso todas as horas já estejam bloqueadas
         if (horasParaBloquear.length === 0) {
             return res.status(400).json({ message: 'O dia já está completamente bloqueado.' });
         }
 
-        // Insere os bloqueios no banco de dados
-        const values = horasParaBloquear.map(hora => [usuarioId, data, hora]);
-        await db.query(`
-            INSERT INTO bloqueios (barbeiro_id, data, hora) VALUES ?
-        `, [values]);
+        for (const hora of horasParaBloquear) {
+            await db.query(`
+                INSERT INTO bloqueios (barbeiro_id, data, hora) VALUES ($1, $2, $3)
+            `, [usuarioId, data, hora]);
+        }
 
         res.status(201).json({
             message: `Dia ${data} bloqueado com sucesso.`,
@@ -477,57 +475,30 @@ app.post('/bloqueios/dia', authenticateToken, async (req, res) => {
     }
 });
 
-
-
-
-// Rota de login para administradores
 app.post('/admin-login', async (req, res) => {
     const { email, password } = req.body;
-    console.log("Email recebido:", email);
-    console.log("Senha recebida:", password);
 
     if (!email || !password) {
         return res.status(400).json({ message: "E-mail e senha são obrigatórios." });
     }
 
     try {
-        // Obtenha o usuário com base no email fornecido
-        const result = await db.query('SELECT id, nome, email, senha, role, created_at, roles FROM usuarios WHERE email = ?', [email]);
-
-        // Verificando o retorno da consulta - o resultado é um array de arrays
-        console.log("Resultado da consulta:", result);
-
-        // Aqui, acessamos o primeiro item do array
-        const user = result[0][0];  // Acessando o primeiro item do array que é o objeto do usuário
+        const { rows } = await db.query('SELECT id, nome, email, senha, role, created_at, roles FROM usuarios WHERE email = $1', [email]);
+        const user = rows[0];
+        
         if (!user) {
-            console.log("Usuário não encontrado.");
             return res.status(404).json({ message: "Usuário não encontrado." });
         }
 
-        console.log("Usuário encontrado:", user);
-
-        // Verificando o campo 'roles'
-        console.log("Verificando o campo 'roles':", user.roles);
-
-        // Verificação se a role é 'admin'
-        if (user && user.roles && user.roles.trim() === 'admin') {
-            // O usuário tem a role admin
-            console.log("Login de administrador bem-sucedido.");
-            // Continue o fluxo de login para admin aqui
-        } else {
-            console.log("Acesso negado: O campo 'roles' não é 'admin'.");
+        if (!user.roles || !user.roles.includes('admin')) {
             return res.status(403).json({ message: 'Acesso negado: O campo "roles" não é "admin".' });
         }
 
-        // Comparar a senha com a senha armazenada
-        const isPasswordValid = await bcrypt.compare(password, user.senha); // Comparar a senha
+        const isPasswordValid = await bcrypt.compare(password, user.senha);
         if (!isPasswordValid) {
-            console.log("Senha inválida.");
             return res.status(401).json({ message: "Senha inválida." });
         }
 
-        // Se a senha estiver correta
-        console.log("Login de administrador bem-sucedido.");
         res.status(200).json({ isAdmin: true });
     } catch (error) {
         console.error("Erro ao tentar fazer login de admin:", error);
@@ -535,12 +506,6 @@ app.post('/admin-login', async (req, res) => {
     }
 });
 
-
-
-
-
-
-// Protege a rota de administrador (página admin.html)
 app.get('/admin', (req, res) => {
     const token = req.headers.authorization?.split(' ')[1];
 
@@ -561,20 +526,16 @@ app.get('/admin', (req, res) => {
     }
 });
 
-
-// Rota para registrar um novo barbeiro
 app.post('/admin/barbeiros', authenticateToken, async (req, res) => {
     const { nome, email, senha } = req.body;
 
     try {
-        // Verifica se o usuário atual é um administrador
         if (req.user.role !== 'admin') {
             return res.status(403).json({ message: 'Acesso negado' });
         }
 
-        // Insere o novo barbeiro no banco de dados
         await db.query(
-            `INSERT INTO usuarios (nome, email, senha, role) VALUES (?, ?, ?, 'barbeiro')`,
+            `INSERT INTO usuarios (nome, email, senha, role) VALUES ($1, $2, $3, 'barbeiro')`,
             [nome, email, senha]
         );
 
@@ -585,15 +546,13 @@ app.post('/admin/barbeiros', authenticateToken, async (req, res) => {
     }
 });
 
-
-// Rota para listar todos os barbeiros
 app.get('/admin/barbeiros', authenticateToken, async (req, res) => {
     try {
         if (req.user.role !== 'admin') {
             return res.status(403).json({ message: 'Acesso negado' });
         }
 
-        const [barbeiros] = await db.query(`SELECT id, nome, email FROM usuarios WHERE role = 'barbeiro'`);
+        const { rows: barbeiros } = await db.query(`SELECT id, nome, email FROM usuarios WHERE role = 'barbeiro'`);
         res.json(barbeiros);
     } catch (error) {
         console.error(error);
@@ -601,8 +560,6 @@ app.get('/admin/barbeiros', authenticateToken, async (req, res) => {
     }
 });
 
-
-// Rota para excluir um barbeiro
 app.delete('/admin/barbeiros/:id', authenticateToken, async (req, res) => {
     const { id } = req.params;
 
@@ -611,7 +568,7 @@ app.delete('/admin/barbeiros/:id', authenticateToken, async (req, res) => {
             return res.status(403).json({ message: 'Acesso negado' });
         }
 
-        await db.query(`DELETE FROM usuarios WHERE id = ? AND role = 'barbeiro'`, [id]);
+        await db.query(`DELETE FROM usuarios WHERE id = $1 AND role = 'barbeiro'`, [id]);
         res.json({ message: 'Barbeiro excluído com sucesso' });
     } catch (error) {
         console.error(error);

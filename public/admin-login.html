@@ -55,6 +55,9 @@
     <p id="error-message"></p>
 
     <script>
+        const API_BASE_URL = window.location.hostname === 'localhost' 
+            ? 'http://localhost:3000' 
+            : 'https://lbarber.onrender.com';
         document.getElementById('adminLoginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
@@ -63,7 +66,7 @@
             const errorMessage = document.getElementById('error-message');
 
             try {
-                const res = await fetch('http://localhost:3000/admin-login', {
+                const res = await fetch(`${API_BASE_URL}/admin-login`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email, password })

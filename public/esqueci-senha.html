@@ -13,11 +13,14 @@
         <button type="submit">Enviar link de redefinição</button>
     </form>
     <script>
+        const API_BASE_URL = window.location.hostname === 'localhost' 
+            ? 'http://localhost:3000' 
+            : 'https://lbarber.onrender.com';
         document.getElementById('esqueciSenhaForm').addEventListener('submit', async (event) => {
             event.preventDefault();
             const email = document.getElementById('email').value;
             try {
-                const response = await fetch('http://localhost:3000/auth/esqueci-senha', {
+                const response = await fetch(`${API_BASE_URL}/auth/esqueci-senha`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email })

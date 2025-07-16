@@ -392,6 +392,9 @@
     </div>
 
     <script>
+        const API_BASE_URL = window.location.hostname === 'localhost' 
+            ? 'http://localhost:3000' 
+            : 'https://lbarber.onrender.com';
         document.addEventListener('DOMContentLoaded', () => {
             validarUsuario();
         });
@@ -408,7 +411,7 @@
             }
 
             try {
-                const res = await fetch('http://localhost:3000/user-info', {
+                const res = await fetch(`${API_BASE_URL}/user-info`, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
 
@@ -417,7 +420,7 @@
                 const data = await res.json();
                 if (data.role !== 'barbeiro') {
                     alert('Acesso negado. Somente barbeiros podem acessar esta página.');
-                    window.location.href = '/login.html';
+                    window.location.href = 'login.html';
                     return;
                 }
 
@@ -428,7 +431,7 @@
             } catch (error) {
                 console.error('Erro na validação de usuário:', error);
                 alert('Erro na autenticação. Tente novamente.');
-                window.location.href = '/login.html';
+                window.location.href = 'login.html';
             }
         }
 
@@ -437,7 +440,7 @@
             const token = localStorage.getItem('token');
 
             try {
-                const res = await fetch('http://localhost:3000/agendamentos', {
+                const res = await fetch(`${API_BASE_URL}/agendamentos`, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
 
@@ -485,7 +488,7 @@
         async function carregarBloqueios() {
             const token = localStorage.getItem('token');
             try {
-                const res = await fetch('http://localhost:3000/bloqueios', {
+                const res = await fetch(`${API_BASE_URL}/bloqueios`, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
 
@@ -528,7 +531,7 @@
             const hora = document.getElementById('bloqueio-hora').value + ':00'; // Adiciona segundos
 
             try {
-                const res = await fetch('http://localhost:3000/bloqueios', {
+                const res = await fetch(`${API_BASE_URL}/bloqueios`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -555,7 +558,7 @@
             const data = document.getElementById('bloqueio-dia').value;
 
             try {
-                const res = await fetch('http://localhost:3000/bloqueios/dia', {
+                const res = await fetch(`${API_BASE_URL}/bloqueios/dia`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -581,7 +584,7 @@
             
             const token = localStorage.getItem('token');
             try {
-                const res = await fetch(`http://localhost:3000/bloqueios/${id}`, {
+                const res = await fetch(`${API_BASE_URL}/bloqueios/${id}`, {
                     method: 'DELETE',
                     headers: { Authorization: `Bearer ${token}` }
                 });

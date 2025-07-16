@@ -1,23 +1,25 @@
-const mysql = require('mysql2/promise');
+const { Pool } = require('pg');
 
-const pool = mysql.createPool({
-  host: 'localhost',
-  user: 'root',
-  password: 'leonardo1234',
-  database: 'barbearia',
-  waitForConnections: true,
-  connectionLimit: 10,
-  queueLimit: 0
+// Configuração para PostgreSQL (Render)
+const pool = new Pool({
+  user: process.env.DB_USER, // || 'postgres', // Padrão para desenvolvimento local
+  host: process.env.DB_HOST, // || 'localhost',
+  database: process.env.DB_NAME, // || 'barbearia',
+  password: process.env.DB_PASSWORD, // || 'leonardo1234', // Altere para sua senha local
+  port: process.env.DB_PORT, // || 5432,
+  ssl: process.env.NODE_ENV === 'production' ? { 
+    rejectUnauthorized: false // Necessário para o Render
+  } : false
 });
 
 // Teste de conexão
 (async () => {
   try {
-    const connection = await pool.getConnection();
-    console.log("Conexão com o banco de dados estabelecida com sucesso!");
-    connection.release();
+    const client = await pool.connect();
+    console.log("Conexão com o PostgreSQL estabelecida com sucesso!");
+    client.release();
   } catch (err) {
-    console.error("Erro ao conectar ao banco de dados:", err);
+    console.error("Erro ao conectar ao PostgreSQL:", err);
   }
 })();
 

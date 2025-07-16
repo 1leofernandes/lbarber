@@ -58,7 +58,7 @@ updateAdminRoles();
 
 
 // Rota para adicionar usuário e verificar roles
-app.post('/register', async (req, res) => {
+app.post('/registrar', async (req, res) => {
     const { nome, email, password } = req.body;
 
     try {
@@ -91,12 +91,12 @@ app.post('/register', async (req, res) => {
 });
 
 // Rota para registro de barbeiros
-app.post('/registrar-barbeiro', async (req, res) => {
+router.post('/registrar-barbeiro', async (req, res) => {
     const { nome, email, senha } = req.body;
     console.log('Recebido POST para registrar barbeiro:', req.body);
 
     try {
-        // Verifica se o email já existe no banco de dados
+        // Verifica se o email já existe
         const { rows } = await db.query('SELECT * FROM usuarios WHERE email = $1', [email]);
         
         if (rows.length > 0) {
@@ -104,19 +104,28 @@ app.post('/registrar-barbeiro', async (req, res) => {
             return res.status(400).send({ mensagem: 'Email já registrado' });
         }
 
-        // Gera o hash da senha de forma assíncrona para evitar bloqueio de operações
+        // Gera o hash da senha
         const senhaHash = await bcrypt.hash(senha, 8);
         console.log('Hash da senha gerado:', senhaHash);
 
-        // Insere o barbeiro no banco de dados
+        // Insere o barbeiro (deixe o ID ser gerado automaticamente)
         await db.query(
             'INSERT INTO usuarios (nome, email, senha, role) VALUES ($1, $2, $3, $4)',
             [nome, email, senhaHash, 'barbeiro']
         );
+
         console.log('Barbeiro registrado com sucesso');
         res.status(201).send({ mensagem: 'Barbeiro registrado com sucesso!' });
     } catch (error) {
         console.error('Erro no servidor:', error);
+        
+        if (error.code === '23505') { // Erro de violação de chave única
+            return res.status(400).send({ 
+                mensagem: 'Erro ao registrar - ID ou email já existente',
+                detalhes: error.detail
+            });
+        }
+        
         res.status(500).send({ erro: 'Erro ao registrar barbeiro' });
     }
 });

@@ -6,7 +6,7 @@ const nodemailer = require('nodemailer');
 const db = require('./db');
 
 const router = express.Router();
-const secret = process.env.JWT_SECRET || 'secreta';
+const secret = 'secreta';
 
 // Registro
 router.post('/registrar', async (req, res) => {

@@ -387,14 +387,6 @@
                         <i class="fas fa-key"></i> Recuperar senha
                     </a>
                 </div>
-                
-                <!-- <div class="divider">
-                    <span class="divider-text">OU</span>
-                </div>
-                
-                <button type="button" class="admin-btn" onclick="window.location.href='admin-login.html'">
-                    <i class="fas fa-user-shield"></i> Acesso Administrador
-                </button> -->
             </form>
         </div>
     </div>
@@ -452,18 +444,16 @@
                 if (response.ok) {
                     localStorage.setItem('token', data.token);
                     localStorage.setItem('nome', data.nome);
-                    const role = JSON.parse(atob(data.token.split('.')[1])).role;
+                    localStorage.setItem('role', data.role);
+                    localStorage.setItem('roles', data.roles);
     
                     // Visual feedback before redirect
                     loginBtn.innerHTML = '<i class="fas fa-check"></i> Autenticado!';
                     loginBtn.style.background = 'linear-gradient(to right, #2ecc71, #27ae60)';
                     
                     setTimeout(() => {
-                        if (role === 'cliente') {
-                            window.location.href = 'agendamento.html';
-                        } else if (role === 'barbeiro') {
-                            window.location.href = 'barbeiro.html';
-                        }
+                        // Redirecionar usando a página retornada pelo backend
+                        window.location.href = data.redirectPage;
                     }, 1000);
                 } else {
                     loginBtn.innerHTML = originalBtnText;

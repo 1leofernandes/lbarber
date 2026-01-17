@@ -56,7 +56,7 @@ router.post('/registrar-barbeiro', async (req, res) => {
     }
 });
 
-// Login
+// Login unificado (cliente, barbeiro e admin)
 router.post('/login', async (req, res) => {
     const { email, senha } = req.body;
 
@@ -74,8 +74,19 @@ router.post('/login', async (req, res) => {
             return res.status(401).json({ message: 'Email ou senha inválidos' });
         }
 
+        // Determinando a página de redirecionamento baseado na combinação de role e roles
+        let redirectPage = 'cliente-home.html'; // Padrão
+        
+        if (usuario.role === 'cliente' && usuario.roles === 'cliente') {
+            redirectPage = 'cliente-home.html';
+        } else if (usuario.role === 'barbeiro' && usuario.roles === 'cliente') {
+            redirectPage = 'barbeiro.html';
+        } else if (usuario.roles === 'admin') {
+            redirectPage = 'admin.html';
+        }
+
         const token = jwt.sign(
-            { id: usuario.id, nome: usuario.nome, role: usuario.role },
+            { id: usuario.id, nome: usuario.nome, role: usuario.role, roles: usuario.roles },
             secret,
             { expiresIn: '1h' }
         );
@@ -84,8 +95,10 @@ router.post('/login', async (req, res) => {
             message: 'Login bem-sucedido!', 
             token, 
             role: usuario.role, 
+            roles: usuario.roles,
             nome: usuario.nome,
-            id: usuario.id
+            id: usuario.id,
+            redirectPage: redirectPage
         });
     } catch (err) {
         console.error('Erro ao fazer login:', err);

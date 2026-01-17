@@ -69,70 +69,65 @@ updateAdminRoles();
 app.post('/registrar', async (req, res) => {
     const { nome, email, senha } = req.body;
 
-    // Validação dos campos obrigatórios
+    // Validação básica
     if (!nome || !email || !senha) {
-        return res.status(400).json({ 
+        return res.status(400).json({
             success: false,
-            message: 'Nome, email e senha são obrigatórios' 
+            message: 'Nome, email e senha são obrigatórios'
         });
     }
 
     try {
-        // Verifica se o usuário já existe
-        const { rows } = await db.query('SELECT * FROM usuarios WHERE email = $1', [email]);
+        // Verifica se já existe
+        const { rows } = await db.query(
+            'SELECT 1 FROM usuarios WHERE email = $1',
+            [email]
+        );
+
         if (rows.length > 0) {
-            return res.status(400).json({ 
+            return res.status(400).json({
                 success: false,
-                message: 'Email já cadastrado' 
+                message: 'Email já cadastrado'
             });
         }
 
-        // Criptografa a senha
-        const hashedPassword = await bcrypt.hash(senha.toString(), 10);
+        // Hash da senha
+        const hashedPassword = await bcrypt.hash(senha, 10);
 
-        // Define roles conforme a constraint da tabela
-        let roles = ['cliente']; // Valor padrão
-        if (adminEmails.includes(email)) {
-            roles = ['admin']; // Se for admin, substitui o array
-        }
+        // Define nível de acesso (STRING, não array)
+        const roles = adminEmails.includes(email) ? 'admin' : 'cliente';
 
-        // Insere o usuário no banco de dados
+        // Insere no banco
         await db.query(
-            `INSERT INTO usuarios (nome, email, senha, role, roles) 
-             VALUES ($1, $2, $3, $4, $5)`,
+            `
+            INSERT INTO usuarios (nome, email, senha, role, roles)
+            VALUES ($1, $2, $3, $4, $5)
+            `,
             [
-                nome, 
-                email, 
+                nome,
+                email,
                 hashedPassword,
-                'cliente', // Coluna role sempre como 'cliente'
-                JSON.stringify(roles) // Garante o formato correto para a constraint
+                'cliente', // tipo do usuário (cliente/barbeiro futuramente)
+                roles      // nível de acesso (cliente/admin)
             ]
         );
 
-        res.status(201).json({ 
+        return res.status(201).json({
             success: true,
             message: 'Usuário registrado com sucesso',
-            isAdmin: roles.includes('admin')
+            isAdmin: roles === 'admin'
         });
 
     } catch (error) {
-        console.error('Erro detalhado:', error);
-        
-        if (error.code === '23514') { // Código de erro para violation of check constraint
-            return res.status(400).json({
-                success: false,
-                message: 'Formato de roles inválido',
-                hint: 'O valor deve ser um array JSON válido contendo apenas roles permitidas'
-            });
-        }
+        console.error('Erro ao registrar usuário:', error);
 
-        res.status(500).json({ 
+        return res.status(500).json({
             success: false,
-            message: 'Erro interno no servidor',
-            error: process.env.NODE_ENV === 'development' ? error.message : undefined
+            message: 'Erro interno no servidor'
         });
     }
 });
+
 
 // Rota para registro de barbeiros
 app.post('/registrar-barbeiro', async (req, res) => {
@@ -543,37 +538,6 @@ app.post('/bloqueios/dia', authenticateToken, async (req, res) => {
     } catch (error) {
         console.error('Erro ao bloquear dia inteiro:', error);
         res.status(500).json({ message: 'Erro ao bloquear dia inteiro' });
-    }
-});
-
-app.post('/admin-login', async (req, res) => {
-    const { email, password } = req.body;
-
-    if (!email || !password) {
-        return res.status(400).json({ message: "E-mail e senha são obrigatórios." });
-    }
-
-    try {
-        const { rows } = await db.query('SELECT id, nome, email, senha, role, created_at, roles FROM usuarios WHERE email = $1', [email]);
-        const user = rows[0];
-        
-        if (!user) {
-            return res.status(404).json({ message: "Usuário não encontrado." });
-        }
-
-        if (!user.roles || !user.roles.includes('admin')) {
-            return res.status(403).json({ message: 'Acesso negado: O campo "roles" não é "admin".' });
-        }
-
-        const isPasswordValid = await bcrypt.compare(password, user.senha);
-        if (!isPasswordValid) {
-            return res.status(401).json({ message: "Senha inválida." });
-        }
-
-        res.status(200).json({ isAdmin: true });
-    } catch (error) {
-        console.error("Erro ao tentar fazer login de admin:", error);
-        res.status(500).json({ message: "Erro no servidor." });
     }
 });
 

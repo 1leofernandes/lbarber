@@ -13,7 +13,15 @@ require('dotenv').config();
 const adminEmails = ['leobarbeiro@gmail.com', 'leonardoff24@gmail.com'];
 
 // Middleware
-app.use(cors()); // Permite CORS
+
+const corsOptions = {
+    origin: ['', 'http://localhost:3000', 'http://127.0.0.1:5500'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true
+};
+
+app.use(cors(corsOptions)); // Permite CORS
 app.use(bodyParser.json()); // Analisa o corpo das requisições como JSON
 app.use('/auth', authRoutes); // Usa as rotas de autenticação definidas no arquivo auth.js
 app.use(express.static('public')); // Serve os arquivos estáticos (HTML, CSS, JS)
@@ -21,7 +29,7 @@ app.use(express.static('public')); // Serve os arquivos estáticos (HTML, CSS, J
 // Conexão ao banco de dados (MySQL)
 const db = require('./db'); // Certifique-se de que 'db.js' está configurado corretamente
 
-const secret = 'secreta'; // Defina sua chave secreta
+const secret = process.env.JWT_SECRET; // Defina sua chave secreta
 
 // Middleware de autenticação
 function authenticateToken(req, res, next) {
@@ -41,7 +49,7 @@ async function updateAdminRoles() {
         // Método 1: Usando ANY (recomendado para PostgreSQL)
         const query = `
             UPDATE usuarios 
-            SET roles = 'admin' 
+            SET role = 'admin' 
             WHERE email = ANY($1::text[])
         `;
         await db.query(query, [adminEmails]);

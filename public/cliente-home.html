@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Agendamento - LBarber</title>
+    <title>Início - Barbearia Silva</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -17,6 +17,7 @@
             --medium-gray: #8c8c8c;
             --success: #28a745;
             --error: #dc3545;
+            --card-bg: #1e1e1e;
         }
         
         * {
@@ -35,82 +36,168 @@
             background-image: linear-gradient(rgba(18, 18, 18, 0.95), rgba(18, 18, 18, 0.95)), 
                               url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><rect width="100" height="100" fill="none" stroke="%232a2a2a" stroke-width="1"/></svg>');
             background-size: 50px;
+            overflow-x: hidden;
         }
         
-        /* Header/Nav */
-        .navbar {
-            background-color: var(--primary-dark);
-            padding: 1.2rem 5%;
-            border-bottom: 1px solid rgba(212, 175, 55, 0.15);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+        /* Sidebar Menu */
+        .sidebar {
+            position: fixed;
+            left: -300px;
+            top: 0;
+            width: 280px;
+            height: 100%;
+            background: linear-gradient(145deg, #1a1a1a, #151515);
+            border-right: 1px solid rgba(212, 175, 55, 0.15);
+            z-index: 1000;
+            transition: left 0.3s ease;
+            box-shadow: 5px 0 25px rgba(0, 0, 0, 0.5);
+            overflow-y: auto;
         }
         
-        .logo-container {
+        .sidebar.active {
+            left: 0;
+        }
+        
+        .sidebar-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid rgba(212, 175, 55, 0.1);
             display: flex;
             align-items: center;
             gap: 12px;
         }
         
-        .logo-img {
-            height: 42px;
+        .sidebar-logo {
+            height: 40px;
             filter: drop-shadow(0 0 4px rgba(212, 175, 55, 0.3));
         }
         
-        .logo-text {
-            font-size: 1.8rem;
+        .sidebar-brand {
+            font-size: 1.4rem;
             font-weight: 600;
             background: linear-gradient(to right, var(--accent-gold), var(--light-gold));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            letter-spacing: 1px;
         }
         
-        .user-info {
+        .sidebar-menu {
+            padding: 1rem 0;
+        }
+        
+        .menu-item {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 15px;
+            padding: 1rem 1.5rem;
+            color: var(--light-gray);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            border-left: 3px solid transparent;
         }
         
-        .user-name {
-            color: var(--light-gold);
-            font-weight: 500;
-        }
-        
-        .logout-btn {
-            background: rgba(212, 175, 55, 0.1);
-            border: 1px solid rgba(212, 175, 55, 0.3);
+        .menu-item:hover {
+            background-color: rgba(212, 175, 55, 0.1);
+            border-left-color: var(--accent-gold);
             color: var(--accent-gold);
-            padding: 0.5rem 1rem;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: all 0.3s;
-            font-size: 0.9rem;
         }
         
-        .logout-btn:hover {
-            background: rgba(212, 175, 55, 0.2);
+        .menu-item.active {
+            background-color: rgba(212, 175, 55, 0.15);
+            border-left-color: var(--accent-gold);
+            color: var(--accent-gold);
+        }
+        
+        .menu-item i {
+            width: 20px;
+            text-align: center;
+            font-size: 1.2rem;
+        }
+        
+        .menu-item.logout {
+            color: var(--error);
+            margin-top: 2rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .menu-item.logout:hover {
+            background-color: rgba(220, 53, 69, 0.1);
+        }
+        
+        /* Overlay para fechar sidebar */
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+            display: none;
+        }
+        
+        .overlay.active {
+            display: block;
+        }
+        
+        /* Navbar */
+        .navbar {
+            background-color: var(--primary-dark);
+            padding: 1.2rem 1.5rem;
+            border-bottom: 1px solid rgba(212, 175, 55, 0.15);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .navbar-left {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        
+        .menu-toggle {
+            background: none;
+            border: none;
+            color: var(--accent-gold);
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+        }
+        
+        .menu-toggle:hover {
+            background-color: rgba(212, 175, 55, 0.1);
+        }
+        
+        .page-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--light-gray);
+        }
+        
+        .navbar-logo {
+            height: 40px;
+            filter: drop-shadow(0 0 4px rgba(212, 175, 55, 0.3));
         }
         
         /* Main Content */
-        .main-container {
-            display: flex;
+        .main-content {
             flex: 1;
-            flex-direction: column;
-            align-items: center;
-            padding: 2rem 5%;
-        }
-        
-        .welcome-section {
-            text-align: center;
-            margin-bottom: 2.5rem;
-            max-width: 800px;
+            padding: 2rem 1.5rem;
+            max-width: 1200px;
+            margin: 0 auto;
             width: 100%;
         }
         
+        .welcome-section {
+            margin-bottom: 2.5rem;
+        }
+        
         .welcome-title {
-            font-size: 2.2rem;
+            font-size: 2rem;
             font-weight: 600;
             margin-bottom: 0.5rem;
             background: linear-gradient(to right, var(--accent-gold), var(--light-gold));
@@ -121,280 +208,229 @@
         .welcome-subtitle {
             font-size: 1.1rem;
             color: var(--medium-gray);
-            margin-bottom: 1.5rem;
         }
         
-        .booking-container {
+        /* Cards */
+        .cards-container {
             display: flex;
             flex-direction: column;
-            gap: 30px;
-            max-width: 1200px;
-            width: 100%;
+            gap: 1.5rem;
+            margin-bottom: 5rem;
         }
         
-        .booking-form-container {
-            background: linear-gradient(145deg, #1a1a1a, #151515);
+        .card {
+            background: linear-gradient(145deg, var(--card-bg), #191919);
             border-radius: 16px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 
-                        0 0 0 1px rgba(212, 175, 55, 0.1);
-            padding: 2rem;
-            position: relative;
-            overflow: hidden;
-            order: 1;
+            padding: 1.8rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(212, 175, 55, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
         
-        .calendar-preview {
-            background: linear-gradient(145deg, #1a1a1a, #151515);
-            border-radius: 16px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 
-                        0 0 0 1px rgba(212, 175, 55, 0.1);
-            padding: 2rem;
-            text-align: center;
-            order: 2;
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
         }
         
-        .form-header {
-            margin-bottom: 2rem;
-            position: relative;
-        }
-        
-        .form-title {
-            font-size: 1.6rem;
-            font-weight: 600;
-            margin-bottom: 0.5rem;
-            color: var(--light-gray);
-        }
-        
-        .form-subtitle {
-            color: var(--medium-gray);
-            font-size: 1rem;
-        }
-        
-        .form-group {
-            margin-bottom: 1.8rem;
-            position: relative;
-        }
-        
-        .form-label {
-            display: block;
-            margin-bottom: 0.8rem;
-            font-size: 1rem;
-            color: var(--light-gray);
-            font-weight: 500;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        
-        .form-label i {
-            color: var(--accent-gold);
-            font-size: 1.1rem;
-        }
-        
-        .form-control {
-            width: 100%;
-            padding: 0.9rem 1.2rem;
-            background-color: rgba(30, 30, 30, 0.7);
-            border: 1px solid rgba(80, 80, 80, 0.3);
-            border-radius: 8px;
-            color: var(--light-gray);
-            font-size: 1rem;
-            transition: all 0.3s ease;
-        }
-        
-        .form-control:focus {
-            outline: none;
-            border-color: var(--accent-gold);
-            box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.2);
-            background-color: rgba(40, 40, 40, 0.5);
-        }
-        
-        .form-control:disabled {
-            background-color: rgba(40, 40, 40, 0.3);
-            color: var(--medium-gray);
-        }
-        
-        .btn-submit {
-            width: 100%;
-            padding: 1.1rem;
-            background: linear-gradient(to right, var(--accent-gold), var(--dark-gold));
-            border: none;
-            border-radius: 8px;
-            color: var(--primary-dark);
-            font-size: 1.1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            margin-top: 0.8rem;
-            box-shadow: 0 4px 15px rgba(212, 175, 55, 0.25);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-        
-        .btn-submit:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(212, 175, 55, 0.4);
-        }
-        
-        .btn-submit:disabled {
-            background: linear-gradient(to right, #555, #444);
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
-        }
-        
-        /* Calendar Styles */
-        .calendar-header {
+        .card-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 1.5rem;
         }
         
-        .calendar-title {
-            font-size: 1.2rem;
-            font-weight: 500;
+        .card-title {
+            font-size: 1.4rem;
+            font-weight: 600;
             color: var(--light-gray);
-        }
-        
-        .calendar-nav {
             display: flex;
+            align-items: center;
             gap: 10px;
         }
         
-        .calendar-nav-btn {
-            background: rgba(212, 175, 55, 0.1);
-            border: 1px solid rgba(212, 175, 55, 0.3);
+        .card-title i {
             color: var(--accent-gold);
-            width: 30px;
-            height: 30px;
+        }
+        
+        .plan-status {
+            display: inline-block;
+            padding: 0.4rem 1rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .status-active {
+            background-color: rgba(40, 167, 69, 0.15);
+            color: var(--success);
+        }
+        
+        .status-inactive {
+            background-color: rgba(108, 117, 125, 0.15);
+            color: var(--medium-gray);
+        }
+        
+        .plan-description {
+            color: var(--medium-gray);
+            margin-bottom: 1.5rem;
+            line-height: 1.6;
+            font-size: 1.1rem;
+        }
+        
+        .btn {
+            padding: 0.8rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: none;
+            font-size: 1rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(to right, var(--accent-gold), var(--dark-gold));
+            color: var(--primary-dark);
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(212, 175, 55, 0.4);
+        }
+        
+        .btn-outline {
+            background: transparent;
+            border: 2px solid var(--accent-gold);
+            color: var(--accent-gold);
+        }
+        
+        .btn-outline:hover {
+            background-color: rgba(212, 175, 55, 0.1);
+        }
+        
+        /* Agendamentos List */
+        .agendamentos-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .agendamento-item {
+            background-color: rgba(40, 40, 40, 0.5);
+            border-radius: 12px;
+            padding: 1.2rem;
+            border-left: 4px solid var(--accent-gold);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background-color 0.3s ease;
+        }
+        
+        .agendamento-item:hover {
+            background-color: rgba(212, 175, 55, 0.05);
+        }
+        
+        .agendamento-info {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        
+        .agendamento-barbeiro {
+            font-weight: 600;
+            color: var(--light-gray);
+            font-size: 1.1rem;
+        }
+        
+        .agendamento-details {
+            display: flex;
+            gap: 15px;
+            color: var(--medium-gray);
+            font-size: 0.95rem;
+        }
+        
+        .agendamento-details span {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 3rem 2rem;
+            color: var(--medium-gray);
+        }
+        
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            color: var(--medium-gray);
+            opacity: 0.5;
+        }
+        
+        .empty-state p {
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+        }
+        
+        /* Botão Flutuante */
+        .floating-btn {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            background: linear-gradient(to right, var(--accent-gold), var(--dark-gold));
+            color: var(--primary-dark);
+            width: 60px;
+            height: 60px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
+            font-size: 1.5rem;
             cursor: pointer;
-            transition: all 0.3s;
+            box-shadow: 0 6px 20px rgba(212, 175, 55, 0.4);
+            transition: all 0.3s ease;
+            z-index: 99;
+            border: none;
+            text-decoration: none;
         }
         
-        .calendar-nav-btn:hover {
-            background: rgba(212, 175, 55, 0.2);
+        .floating-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 8px 25px rgba(212, 175, 55, 0.6);
         }
         
-        .calendar-weekdays {
-            display: grid;
-            grid-template-columns: repeat(7, 1fr);
-            gap: 5px;
-            margin-bottom: 10px;
-        }
-        
-        .weekday {
-            font-size: 0.9rem;
-            color: var(--accent-gold);
-            font-weight: 500;
-        }
-        
-        .calendar-days {
-            display: grid;
-            grid-template-columns: repeat(7, 1fr);
-            gap: 5px;
-        }
-        
-        .calendar-day {
-            padding: 8px;
+        .floating-btn-text {
+            position: absolute;
+            right: 70px;
+            background: var(--card-bg);
+            padding: 0.6rem 1.2rem;
             border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.3s;
-            font-weight: 500;
-        }
-        
-        .calendar-day:hover {
-            background: rgba(212, 175, 55, 0.1);
-        }
-        
-        .calendar-day.selected {
-            background: var(--accent-gold);
-            color: var(--primary-dark);
-        }
-        
-        .calendar-day.disabled {
-            color: var(--medium-gray);
-            cursor: not-allowed;
-        }
-        
-        .calendar-day.disabled:hover {
-            background: transparent;
-        }
-        
-        .calendar-day.past {
-            color: var(--medium-gray);
-            cursor: not-allowed;
-        }
-        
-        .time-slots {
-            margin-top: 1.5rem;
-        }
-        
-        .time-slots-title {
-            font-size: 1.1rem;
-            margin-bottom: 1rem;
-            color: var(--light-gray);
-            font-weight: 500;
-        }
-        
-        .slots-container {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 8px;
-        }
-        
-        .time-slot {
-            border-radius: 6px;
-            padding: 0.5rem;
-            text-align: center;
             font-size: 0.9rem;
-            transition: all 0.3s;
-        }
-        
-        .time-slot.available {
-            background: rgba(40, 40, 40, 0.7);
-            border: 1px solid rgba(80, 80, 80, 0.3);
-            cursor: pointer;
-        }
-        
-        .time-slot.available:hover {
-            border-color: var(--accent-gold);
-            background: rgba(212, 175, 55, 0.1);
-        }
-        
-        .time-slot.selected {
-            background: var(--accent-gold);
-            color: var(--primary-dark);
-            border-color: var(--accent-gold);
             font-weight: 600;
+            white-space: nowrap;
+            opacity: 0;
+            transform: translateX(10px);
+            transition: all 0.3s ease;
+            pointer-events: none;
+            border: 1px solid rgba(212, 175, 55, 0.2);
         }
         
-        .time-slot.unavailable {
-            background: rgba(220, 53, 69, 0.1);
-            color: var(--medium-gray);
-            text-decoration: line-through;
-            cursor: not-allowed;
-            border: 1px solid rgba(220, 53, 69, 0.3);
-        }
-        
-        .time-slot.unavailable:hover {
-            border-color: rgba(220, 53, 69, 0.3);
-        }
-        
-        /* Hidden form inputs */
-        .hidden-inputs {
-            display: none;
+        .floating-btn:hover .floating-btn-text {
+            opacity: 1;
+            transform: translateX(0);
         }
         
         /* Footer */
         .footer {
             background-color: var(--primary-dark);
             border-top: 1px solid rgba(212, 175, 55, 0.1);
-            padding: 1.5rem 5%;
+            padding: 1.5rem;
             text-align: center;
             color: var(--medium-gray);
             font-size: 0.9rem;
@@ -419,47 +455,103 @@
         }
         
         /* Responsividade */
-        @media (min-width: 992px) {
-            .booking-container {
-                flex-direction: row;
+        @media (min-width: 768px) {
+            .cards-container {
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 2rem;
             }
             
-            .booking-form-container {
-                order: 2;
-                flex: 1;
+            .card-plano {
+                grid-column: span 2;
             }
             
-            .calendar-preview {
-                order: 1;
-                width: 350px;
+            .navbar {
+                padding: 1.2rem 2rem;
             }
             
-            .slots-container {
-                grid-template-columns: repeat(3, 1fr);
+            .main-content {
+                padding: 2.5rem 2rem;
+            }
+            
+            .floating-btn {
+                width: 70px;
+                height: 70px;
+                font-size: 1.8rem;
             }
         }
         
-        @media (max-width: 768px) {
+        @media (min-width: 1024px) {
+            .sidebar {
+                left: 0;
+                width: 280px;
+            }
+            
+            .main-content {
+                margin-left: 280px;
+                padding: 2.5rem 3rem;
+            }
+            
+            .navbar-left {
+                margin-left: 280px;
+            }
+            
+            .menu-toggle {
+                display: none;
+            }
+            
+            .cards-container {
+                grid-template-columns: 2fr 1fr;
+            }
+            
+            .card-plano {
+                grid-column: span 2;
+            }
+        }
+        
+        @media (max-width: 1023px) {
+            .sidebar.active ~ .main-content,
+            .sidebar.active ~ .navbar-left {
+                margin-left: 0;
+            }
+        }
+        
+        @media (max-width: 767px) {
             .navbar {
-                padding: 1rem 5%;
+                padding: 1rem;
             }
             
-            .logo-text {
-                font-size: 1.5rem;
+            .page-title {
+                font-size: 1.3rem;
             }
             
-            .welcome-title {
-                font-size: 1.8rem;
+            .navbar-logo {
+                height: 35px;
             }
             
-            .booking-form-container, .calendar-preview {
+            .main-content {
+                padding: 1.5rem 1rem;
+            }
+            
+            .card {
                 padding: 1.5rem;
+            }
+            
+            .agendamento-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+            
+            .agendamento-details {
+                flex-direction: column;
+                gap: 5px;
             }
         }
         
         /* Animações */
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
+            from { opacity: 0; transform: translateY(20px); }
             to { opacity: 1; transform: translateY(0); }
         }
         
@@ -467,140 +559,154 @@
             animation: fadeIn 0.5s ease forwards;
         }
         
-        .success-message {
-            background: var(--success);
-            color: white;
-            padding: 1rem;
-            border-radius: 8px;
-            margin-top: 1rem;
-            text-align: center;
-            display: none;
+        /* Estilo do plano ativo */
+        .plan-highlight {
+            background: linear-gradient(145deg, rgba(212, 175, 55, 0.05), rgba(180, 140, 11, 0.05));
+            border: 1px solid rgba(212, 175, 55, 0.2);
         }
     </style>
 </head>
 <body>
-    <!-- Header/Navbar -->
+    <!-- Overlay para fechar sidebar em mobile -->
+    <div class="overlay" id="overlay"></div>
+    
+    <!-- Sidebar Menu -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <img src="assets/lbarberlogo.png" alt="Barbearia Silva Logo" class="sidebar-logo">
+            <div class="sidebar-brand">Barbearia Silva</div>
+        </div>
+        
+        <nav class="sidebar-menu">
+            <a href="#" class="menu-item active" data-page="inicio">
+                <i class="fas fa-home"></i>
+                <span>Início</span>
+            </a>
+            <a href="agendamento.html" class="menu-item" data-page="agendamentos">
+                <i class="fas fa-calendar-alt"></i>
+                <span>Agendamentos</span>
+            </a>
+            <a href="#" class="menu-item" data-page="assinatura">
+                <i class="fas fa-crown"></i>
+                <span>Assinatura</span>
+            </a>
+            <a href="#" class="menu-item" data-page="perfil">
+                <i class="fas fa-user"></i>
+                <span>Perfil</span>
+            </a>
+            <a href="#" class="menu-item" data-page="informacoes">
+                <i class="fas fa-info-circle"></i>
+                <span>Informações</span>
+            </a>
+            <a href="#" class="menu-item logout" id="logoutBtn">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>Sair</span>
+            </a>
+        </nav>
+    </aside>
+    
+    <!-- Navbar -->
     <nav class="navbar">
-        <div class="logo-container">
-            <img src="assets/lbarberlogo.png" alt="LBarber Logo" class="logo-img">
-            <div class="logo-text">LBarber</div>
-        </div>
-        
-        <div class="user-info">
-            <span class="user-name" id="nomeUsuario">Olá, Usuário</span>
-            <button class="logout-btn" onclick="logout()">
-                <i class="fas fa-sign-out-alt"></i> Sair
+        <div class="navbar-left">
+            <button class="menu-toggle" id="menuToggle">
+                <i class="fas fa-bars"></i>
             </button>
+            <div class="page-title" id="pageTitle">Início</div>
         </div>
+        <img src="assets/lbarberlogo.png" alt="Barbearia Silva Logo" class="navbar-logo">
     </nav>
-
+    
     <!-- Main Content -->
-    <div class="main-container">
+    <main class="main-content">
         <div class="welcome-section">
-            <h1 class="welcome-title">Agende seu horário</h1>
-            <p class="welcome-subtitle">Escolha seu barbeiro, serviço e horário preferido para garantir o melhor atendimento</p>
+            <h1 class="welcome-title" id="welcomeTitle">Bem-vindo, Cliente</h1>
+            <p class="welcome-subtitle">Gerencie seus agendamentos e aproveite nossos serviços</p>
         </div>
         
-        <div class="booking-container">
-            <div class="booking-form-container fade-in">
-                <div class="form-header">
-                    <h2 class="form-title"><i class="fas fa-calendar-alt"></i> Novo Agendamento</h2>
-                    <p class="form-subtitle">Preencha os detalhes do seu agendamento</p>
+        <div class="cards-container">
+            <!-- Card do Plano -->
+            <div class="card card-plano fade-in" id="planCard">
+                <div class="card-header">
+                    <h2 class="card-title">
+                        <i class="fas fa-crown"></i>
+                        Seu Plano
+                    </h2>
+                    <span class="plan-status" id="planStatus">Inativo</span>
                 </div>
-                
-                <form id="agendamentoForm">
-                    <div class="form-group">
-                        <label for="barbeiro" class="form-label">
-                            <i class="fas fa-user"></i> Barbeiro
-                        </label>
-                        <select class="form-control" id="barbeiro" required>
-                            <option value="">Selecione seu barbeiro</option>
-                        </select>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="servico" class="form-label">
-                            <i class="fas fa-cut"></i> Serviço
-                        </label>
-                        <select id="servico" class="form-control" required>
-                            <option value="">Escolha o serviço</option>
-                        </select>
-                    </div>
-                    
-                    <!-- Hidden inputs for data and hora -->
-                    <div class="hidden-inputs">
-                        <input type="date" id="data" required>
-                        <input type="text" id="hora" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label class="form-label">
-                            <i class="fas fa-calendar-day"></i> Data selecionada
-                        </label>
-                        <div id="selectedDateDisplay" class="form-control" style="background-color: rgba(40, 40, 40, 0.5);">
-                            Nenhuma data selecionada
-                        </div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label class="form-label">
-                            <i class="fas fa-clock"></i> Horário selecionado
-                        </label>
-                        <div id="selectedTimeDisplay" class="form-control" style="background-color: rgba(40, 40, 40, 0.5);">
-                            Nenhum horário selecionado
-                        </div>
-                    </div>
-                    
-                    <button type="submit" class="btn-submit" id="submitBtn" disabled>
-                        <i class="fas fa-calendar-check"></i> Confirmar Agendamento
-                    </button>
-                    
-                    <div class="success-message" id="successMessage">
-                        <i class="fas fa-check-circle"></i> Agendamento realizado com sucesso!
-                    </div>
-                </form>
+                <p class="plan-description" id="planDescription">
+                    Aproveite diversos benefícios com uma assinatura recorrente
+                </p>
+                <button class="btn btn-primary" id="planActionBtn">
+                    <i class="fas fa-gem"></i>
+                    Se torne um assinante
+                </button>
             </div>
             
-            <div class="calendar-preview fade-in">
-                <div class="calendar-header">
-                    <div class="calendar-nav">
-                        <div class="calendar-nav-btn" id="prevMonth">
-                            <i class="fas fa-chevron-left"></i>
-                        </div>
-                        <div class="calendar-nav-btn" id="nextMonth">
-                            <i class="fas fa-chevron-right"></i>
-                        </div>
+            <!-- Card de Próximos Agendamentos -->
+            <div class="card fade-in">
+                <div class="card-header">
+                    <h2 class="card-title">
+                        <i class="fas fa-calendar-check"></i>
+                        Próximos Agendamentos
+                    </h2>
+                </div>
+                <div class="agendamentos-list" id="agendamentosList">
+                    <!-- Os agendamentos serão carregados aqui via JavaScript -->
+                    <div class="empty-state">
+                        <i class="far fa-calendar"></i>
+                        <p>Você não tem nenhum agendamento marcado</p>
+                        <a href="agendamento.html" class="btn btn-outline">
+                            <i class="fas fa-plus"></i>
+                            Agendar agora
+                        </a>
                     </div>
-                    <h3 class="calendar-title" id="currentMonth">Junho 2023</h3>
                 </div>
-                
-                <div class="calendar-weekdays">
-                    <div class="weekday">Dom</div>
-                    <div class="weekday">Seg</div>
-                    <div class="weekday">Ter</div>
-                    <div class="weekday">Qua</div>
-                    <div class="weekday">Qui</div>
-                    <div class="weekday">Sex</div>
-                    <div class="weekday">Sáb</div>
+            </div>
+            
+            <!-- Card de Últimos Serviços (Opcional) -->
+            <div class="card fade-in">
+                <div class="card-header">
+                    <h2 class="card-title">
+                        <i class="fas fa-cut"></i>
+                        Serviços Populares
+                    </h2>
                 </div>
-                
-                <div class="calendar-days" id="calendarDays">
-                    <!-- Days will be populated by JavaScript -->
-                </div>
-                
-                <div class="time-slots" id="timeSlotsSection" style="display: none;">
-                    <h4 class="time-slots-title">Horários Disponíveis</h4>
-                    <div class="slots-container" id="timeSlots">
-                        <!-- Time slots will be populated by JavaScript -->
+                <div class="servicos-populares">
+                    <div class="servico-item">
+                        <div>
+                            <h4>Corte Social</h4>
+                            <p>Estilo clássico e moderno</p>
+                        </div>
+                        <span>R$ 45,00</span>
+                    </div>
+                    <div class="servico-item">
+                        <div>
+                            <h4>Barba Completa</h4>
+                            <p>Tratamento e modelagem</p>
+                        </div>
+                        <span>R$ 35,00</span>
+                    </div>
+                    <div class="servico-item">
+                        <div>
+                            <h4>Corte + Barba</h4>
+                            <p>Pacote completo</p>
+                        </div>
+                        <span>R$ 70,00</span>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
-
+    </main>
+    
+    <!-- Botão Flutuante -->
+    <a href="agendamento.html" class="floating-btn">
+        <i class="fas fa-plus"></i>
+        <span class="floating-btn-text">Novo Agendamento</span>
+    </a>
+    
     <!-- Footer -->
     <footer class="footer">
-        <p>&copy; 2023 LBarber - Sistema de Agendamento. Todos os direitos reservados.</p>
+        <p>&copy; 2023 Barbearia Silva - Sistema de Agendamento. Todos os direitos reservados.</p>
         <div class="social-links">
             <a href="#" class="social-link"><i class="fab fa-facebook-f"></i></a>
             <a href="#" class="social-link"><i class="fab fa-instagram"></i></a>
@@ -609,246 +715,193 @@
     </footer>
 
     <script>
+        // Configurações iniciais
         const API_BASE_URL = window.location.hostname === 'localhost' 
             ? 'http://localhost:3000' 
             : 'https://barbeariasilva.onrender.com';
-        // Obter dados do usuário
+        
+        // Verificar autenticação
         const token = localStorage.getItem('token');
+        const nomeUsuario = localStorage.getItem('nome') || 'Cliente';
+        
         if (!token) {
             window.location.href = 'login.html';
         }
         
-        const payload = JSON.parse(atob(token.split('.')[1]));
-        const nomeUsuario = localStorage.getItem('nome') || 'Cliente';
-        document.getElementById('nomeUsuario').textContent = `Olá, ${nomeUsuario}`;
+        // Estado do usuário (simulação)
+        let usuario = {
+            nome: nomeUsuario,
+            assinante: false, // Mudar para true para testar o plano ativo
+            assinaturaAtiva: null
+        };
+        
+        // Dados de agendamentos (simulação)
+        const agendamentos = [
+            /* Exemplo de agendamento:
+            {
+                id: 1,
+                barbeiro: "João Silva",
+                servico: "Corte Social",
+                data: "2023-12-15",
+                hora: "14:30",
+                status: "confirmado"
+            }
+            */
+        ];
         
         // Elementos DOM
-        const form = document.getElementById('agendamentoForm');
-        const selectBarbeiro = document.getElementById('barbeiro');
-        const servicoSelect = document.getElementById('servico');
-        const inputData = document.getElementById('data');
-        const inputHora = document.getElementById('hora');
-        const submitBtn = document.getElementById('submitBtn');
-        const successMessage = document.getElementById('successMessage');
-        const selectedDateDisplay = document.getElementById('selectedDateDisplay');
-        const selectedTimeDisplay = document.getElementById('selectedTimeDisplay');
-        const timeSlotsSection = document.getElementById('timeSlotsSection');
+        const sidebar = document.getElementById('sidebar');
+        const menuToggle = document.getElementById('menuToggle');
+        const overlay = document.getElementById('overlay');
+        const pageTitle = document.getElementById('pageTitle');
+        const welcomeTitle = document.getElementById('welcomeTitle');
+        const planCard = document.getElementById('planCard');
+        const planStatus = document.getElementById('planStatus');
+        const planDescription = document.getElementById('planDescription');
+        const planActionBtn = document.getElementById('planActionBtn');
+        const agendamentosList = document.getElementById('agendamentosList');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const menuItems = document.querySelectorAll('.menu-item');
         
-        // Variáveis globais
-        let selectedBarbeiroId = null;
-        let selectedDate = null;
-        let selectedTime = null;
-        
-        // Função para gerar todos os horários possíveis (de meia em meia hora)
-        function generateAllTimeSlots() {
-            const slots = [];
-            for (let h = 8; h < 18; h++) {
-                slots.push(`${String(h).padStart(2, '0')}:00:00`); // Formato HH:MM:SS
-                slots.push(`${String(h).padStart(2, '0')}:30:00`); // Formato HH:MM:SS
-            }
-            return slots;
-        }
-
-        // Função para carregar barbeiros
-        const loadBarbeiros = async () => {
-            try {
-                const response = await fetch(`${API_BASE_URL}/barbeiros`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                if (!response.ok) throw new Error('Falha ao carregar barbeiros');
-                const barbeiros = await response.json();
-                
-                barbeiros.forEach(barbeiro => {
-                    const option = document.createElement('option');
-                    option.value = barbeiro.id;
-                    option.textContent = barbeiro.nome;
-                    selectBarbeiro.appendChild(option);
-                });
-            } catch (error) {
-                console.error('Erro ao carregar barbeiros:', error);
-            }
-        };
-        
-        // Função para carregar serviços
-        const loadServicos = async () => {
-            try {
-                const response = await fetch(`${API_BASE_URL}/servicos`);
-                if (!response.ok) throw new Error('Falha ao carregar serviços');
-                const servicos = await response.json();
-                
-                servicos.forEach(servico => {
-                    const option = document.createElement('option');
-                    option.value = servico.id;
-                    option.textContent = servico.servico;
-                    servicoSelect.appendChild(option);
-                });
-            } catch (error) {
-                console.error('Erro ao carregar serviços:', error);
-            }
-        };
-        
-        // Função para carregar horários disponíveis
-        const loadHorarios = async (barbeiro_id, data_agendada) => {
-            try {
-                const response = await fetch(`${API_BASE_URL}/agendamentos/barbeiro/${barbeiro_id}?data_agendada=${data_agendada}`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                
-                if (!response.ok) throw new Error('Falha ao carregar horários');
-                
-                const data = await response.json();
-                const horariosIndisponiveis = data.horariosIndisponiveis || [];
-                
-                // Gerar todos os slots possíveis
-                const allSlots = generateAllTimeSlots();
-                
-                // Atualizar os slots de tempo no calendário
-                updateTimeSlots(allSlots, horariosIndisponiveis);
-                timeSlotsSection.style.display = 'block';
-            } catch (error) {
-                console.error('Erro ao carregar horários:', error);
-                updateTimeSlots([], []);
-            }
-        };
-
-        // Atualizar slots de tempo (versão corrigida)
-        function updateTimeSlots(allSlots, horariosIndisponiveis) {
-            const timeSlotsContainer = document.getElementById('timeSlots');
-            timeSlotsContainer.innerHTML = '';
+        // Inicializar página
+        function initPage() {
+            // Atualizar nome do usuário
+            welcomeTitle.textContent = `Bem-vindo, ${usuario.nome}`;
             
-            // Ordenar os horários
-            allSlots.sort((a, b) => {
-                const timeA = a.split(':').map(Number);
-                const timeB = b.split(':').map(Number);
-                return timeA[0] - timeB[0] || timeA[1] - timeB[1] || timeA[2] - timeB[2];
+            // Configurar plano do usuário
+            setupUserPlan();
+            
+            // Carregar agendamentos
+            loadAgendamentos();
+            
+            // Configurar eventos
+            setupEventListeners();
+            
+            // Verificar se há parâmetro de assinante na URL (para teste)
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.has('assinante')) {
+                usuario.assinante = urlParams.get('assinante') === 'true';
+                setupUserPlan();
+            }
+        }
+        
+        // Configurar plano do usuário
+        function setupUserPlan() {
+            if (usuario.assinante) {
+                planCard.classList.add('plan-highlight');
+                planStatus.textContent = 'Ativo';
+                planStatus.className = 'plan-status status-active';
+                planDescription.textContent = 'Você está aproveitando as vantagens do "Corte Ilimitado"';
+                planActionBtn.innerHTML = '<i class="fas fa-info-circle"></i> Detalhes sobre o plano';
+                planActionBtn.onclick = () => {
+                    alert('Detalhes da assinatura:\n\n• Corte ilimitado mensal\n• Desconto de 20% em produtos\n• Prioridade nos agendamentos\n• Custo: R$ 89,90/mês');
+                };
+            } else {
+                planCard.classList.remove('plan-highlight');
+                planStatus.textContent = 'Inativo';
+                planStatus.className = 'plan-status status-inactive';
+                planDescription.textContent = 'Aproveite diversos benefícios com uma assinatura recorrente';
+                planActionBtn.innerHTML = '<i class="fas fa-gem"></i> Se torne um assinante';
+                planActionBtn.onclick = () => {
+                    window.location.href = 'assinatura.html';
+                };
+            }
+        }
+        
+        // Carregar agendamentos
+        function loadAgendamentos() {
+            if (agendamentos.length === 0) {
+                // Manter o estado vazio
+                return;
+            }
+            
+            // Limpar lista
+            agendamentosList.innerHTML = '';
+            
+            // Adicionar agendamentos
+            agendamentos.forEach(agendamento => {
+                const agendamentoItem = document.createElement('div');
+                agendamentoItem.className = 'agendamento-item fade-in';
+                
+                const dataFormatada = formatarData(agendamento.data);
+                
+                agendamentoItem.innerHTML = `
+                    <div class="agendamento-info">
+                        <div class="agendamento-barbeiro">${agendamento.barbeiro}</div>
+                        <div class="agendamento-details">
+                            <span>
+                                <i class="fas fa-cut"></i>
+                                ${agendamento.servico}
+                            </span>
+                            <span>
+                                <i class="far fa-calendar"></i>
+                                ${dataFormatada}
+                            </span>
+                            <span>
+                                <i class="far fa-clock"></i>
+                                ${agendamento.hora}
+                            </span>
+                        </div>
+                    </div>
+                    <span class="badge ${agendamento.status === 'confirmado' ? 'status-active' : 'status-inactive'}">
+                        ${agendamento.status === 'confirmado' ? 'Confirmado' : 'Pendente'}
+                    </span>
+                `;
+                
+                agendamentosList.appendChild(agendamentoItem);
+            });
+        }
+        
+        // Formatar data
+        function formatarData(dataString) {
+            const data = new Date(dataString);
+            return data.toLocaleDateString('pt-BR', {
+                weekday: 'long',
+                day: 'numeric',
+                month: 'long'
+            });
+        }
+        
+        // Configurar eventos
+        function setupEventListeners() {
+            // Toggle sidebar
+            menuToggle.addEventListener('click', () => {
+                sidebar.classList.toggle('active');
+                overlay.classList.toggle('active');
             });
             
-            allSlots.forEach(time => {
-                const slot = document.createElement('div');
-                
-                // Converter para formato de exibição (HH:MM)
-                const displayTime = time.substring(0, 5);
-                
-                // Verificar disponibilidade
-                const isAvailable = !horariosIndisponiveis.includes(time);
-                
-                if (isAvailable) {
-                    slot.className = 'time-slot available';
-                    slot.textContent = displayTime;
+            // Fechar sidebar ao clicar no overlay
+            overlay.addEventListener('click', () => {
+                sidebar.classList.remove('active');
+                overlay.classList.remove('active');
+            });
+            
+            // Menu items
+            menuItems.forEach(item => {
+                item.addEventListener('click', (e) => {
+                    if (item.classList.contains('logout')) {
+                        e.preventDefault();
+                        logout();
+                        return;
+                    }
                     
-                    slot.addEventListener('click', () => {
-                        // Remover seleção anterior
-                        document.querySelectorAll('.time-slot.selected').forEach(el => {
-                            el.classList.remove('selected');
-                        });
+                    if (!item.hasAttribute('href') || item.getAttribute('href') === '#') {
+                        e.preventDefault();
+                        const page = item.getAttribute('data-page');
                         
-                        // Selecionar novo slot
-                        slot.classList.add('selected');
-                        selectedTime = time; // Guardar valor completo (HH:MM:SS)
-                        inputHora.value = time;
-                        selectedTimeDisplay.textContent = displayTime;
-                        selectedTimeDisplay.style.backgroundColor = 'rgba(212, 175, 55, 0.1)';
-                        checkFormCompletion();
-                    });
-                } else {
-                    slot.className = 'time-slot unavailable';
-                    slot.textContent = displayTime;
-                    slot.title = "Horário indisponível";
-                }
-                
-                timeSlotsContainer.appendChild(slot);
-            });
-        }
-        
-        // Verificar se o formulário está completo
-        function checkFormCompletion() {
-            const isComplete = selectedBarbeiroId && servicoSelect.value && selectedDate && selectedTime;
-            submitBtn.disabled = !isComplete;
-        }
-        
-        // Event Listeners
-        selectBarbeiro.addEventListener('change', () => {
-            selectedBarbeiroId = selectBarbeiro.value;
-            timeSlotsSection.style.display = 'none';
-            selectedDate = null;
-            selectedTime = null;
-            inputData.value = '';
-            inputHora.value = '';
-            selectedDateDisplay.textContent = 'Nenhuma data selecionada';
-            selectedTimeDisplay.textContent = 'Nenhum horário selecionado';
-            selectedDateDisplay.style.backgroundColor = 'rgba(40, 40, 40, 0.5)';
-            selectedTimeDisplay.style.backgroundColor = 'rgba(40, 40, 40, 0.5)';
-            
-            // Resetar seleção no calendário
-            document.querySelectorAll('.calendar-day.selected').forEach(el => {
-                el.classList.remove('selected');
-            });
-            
-            checkFormCompletion();
-        });
-        
-        servicoSelect.addEventListener('change', checkFormCompletion);
-        
-        // Form submission
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const barbeiro_id = selectedBarbeiroId;
-            const data_agendada = inputData.value;
-            const hora_agendada = selectedTime;
-            const servico_id = servicoSelect.value;
-            
-            // Mostrar loading
-            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Agendando...';
-            submitBtn.disabled = true;
-            
-            try {
-                const response = await fetch(`${API_BASE_URL}/agendar`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    },
-                    body: JSON.stringify({ 
-                        usuario_id: payload.id, 
-                        barbeiro_id, 
-                        servico_id, 
-                        data_agendada, 
-                        hora_agendada 
-                    })
+                        // Atualizar item ativo
+                        menuItems.forEach(i => i.classList.remove('active'));
+                        item.classList.add('active');
+                        
+                        // Atualizar título da página
+                        pageTitle.textContent = page.charAt(0).toUpperCase() + page.slice(1);
+                    }
                 });
-                
-                if (response.ok) {
-                    // Mostrar mensagem de sucesso
-                    successMessage.style.display = 'block';
-                    submitBtn.innerHTML = '<i class="fas fa-calendar-check"></i> Agendado com sucesso!';
-                    
-                    // Resetar formulário após 2 segundos
-                    setTimeout(() => {
-                        form.reset();
-                        selectedBarbeiroId = null;
-                        selectedDate = null;
-                        selectedTime = null;
-                        timeSlotsSection.style.display = 'none';
-                        selectedDateDisplay.textContent = 'Nenhuma data selecionada';
-                        selectedTimeDisplay.textContent = 'Nenhum horário selecionado';
-                        selectedDateDisplay.style.backgroundColor = 'rgba(40, 40, 40, 0.5)';
-                        selectedTimeDisplay.style.backgroundColor = 'rgba(40, 40, 40, 0.5)';
-                        submitBtn.disabled = true;
-                        successMessage.style.display = 'none';
-                        submitBtn.innerHTML = '<i class="fas fa-calendar-check"></i> Confirmar Agendamento';
-                    }, 3000);
-                } else {
-                    const error = await response.json();
-                    alert(`Erro: ${error.message || 'Tente novamente mais tarde.'}`);
-                    submitBtn.innerHTML = '<i class="fas fa-calendar-check"></i> Confirmar Agendamento';
-                    submitBtn.disabled = false;
-                }
-            } catch (error) {
-                alert('Ocorreu um erro ao tentar realizar o agendamento.');
-                submitBtn.innerHTML = '<i class="fas fa-calendar-check"></i> Confirmar Agendamento';
-                submitBtn.disabled = false;
-            }
-        });
+            });
+            
+            // Logout
+            logoutBtn.addEventListener('click', logout);
+        }
         
         // Função de logout
         function logout() {
@@ -857,120 +910,78 @@
             window.location.href = 'login.html';
         }
         
-        // Calendário
-        function generateCalendar(year, month) {
-            const calendarDays = document.getElementById('calendarDays');
-            calendarDays.innerHTML = '';
-            
-            const firstDay = new Date(year, month, 1).getDay();
-            const daysInMonth = new Date(year, month + 1, 0).getDate();
-            const today = new Date();
-            
-            // Preencher dias vazios no início
-            for (let i = 0; i < firstDay; i++) {
-                const emptyDay = document.createElement('div');
-                emptyDay.className = 'calendar-day disabled';
-                emptyDay.textContent = '';
-                calendarDays.appendChild(emptyDay);
-            }
-            
-            // Preencher os dias do mês
-            for (let day = 1; day <= daysInMonth; day++) {
-                const dayElement = document.createElement('div');
-                dayElement.className = 'calendar-day';
-                dayElement.textContent = day;
+        // Simular carregamento de dados da API
+        function fetchUserData() {
+            // Simulação de chamada à API
+            setTimeout(() => {
+                // Aqui você faria a chamada real à API
+                // fetch(`${API_BASE_URL}/usuario`, {
+                //     headers: { 'Authorization': `Bearer ${token}` }
+                // })
+                // .then(response => response.json())
+                // .then(data => {
+                //     usuario = data;
+                //     setupUserPlan();
+                // });
                 
-                const currentDate = new Date(year, month, day);
-                
-                // Verificar se é hoje
-                if (day === today.getDate() && month === today.getMonth() && year === today.getFullYear()) {
-                    dayElement.style.border = '1px solid var(--accent-gold)';
-                }
-                
-                // Marcar dias passados como indisponíveis
-                if (currentDate < today && !(day === today.getDate() && month === today.getMonth() && year === today.getFullYear())) {
-                    dayElement.classList.add('past');
-                }
-                
-                // Adicionar evento de clique apenas para dias futuros
-                if (currentDate >= today) {
-                    dayElement.addEventListener('click', () => {
-                        // Só permite selecionar data se barbeiro e serviço estiverem selecionados
-                        if (!selectedBarbeiroId || !servicoSelect.value) {
-                            alert('Por favor, selecione primeiro um barbeiro e um serviço');
-                            return;
-                        }
-                        
-                        // Remover seleção anterior
-                        document.querySelectorAll('.calendar-day.selected').forEach(el => {
-                            el.classList.remove('selected');
-                        });
-                        
-                        // Selecionar novo dia
-                        dayElement.classList.add('selected');
-                        
-                        // Atualizar input de data
-                        selectedDate = currentDate.toISOString().split('T')[0];
-                        inputData.value = selectedDate;
-                        
-                        // Formatando a data para exibição
-                        const options = { weekday: 'long', day: 'numeric', month: 'long' };
-                        const formattedDate = currentDate.toLocaleDateString('pt-BR', options);
-                        selectedDateDisplay.textContent = formattedDate.charAt(0).toUpperCase() + formattedDate.slice(1);
-                        selectedDateDisplay.style.backgroundColor = 'rgba(212, 175, 55, 0.1)';
-                        
-                        // Resetar horário selecionado
-                        selectedTime = null;
-                        inputHora.value = '';
-                        selectedTimeDisplay.textContent = 'Nenhum horário selecionado';
-                        selectedTimeDisplay.style.backgroundColor = 'rgba(40, 40, 40, 0.5)';
-                        
-                        // Carregar horários disponíveis
-                        loadHorarios(selectedBarbeiroId, selectedDate);
-                        
-                        checkFormCompletion();
-                    });
-                }
-                
-                calendarDays.appendChild(dayElement);
-            }
-            
-            // Atualizar título do calendário
-            const monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 
-                               'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
-            document.getElementById('currentMonth').textContent = `${monthNames[month]} ${year}`;
+                // Para demonstração, vamos usar os dados simulados
+                console.log('Dados do usuário carregados');
+            }, 500);
         }
         
-        // Inicializar calendário
-        const now = new Date();
-        let currentYear = now.getFullYear();
-        let currentMonth = now.getMonth();
-        
-        generateCalendar(currentYear, currentMonth);
-        
-        // Navegação do calendário
-        document.getElementById('prevMonth').addEventListener('click', () => {
-            currentMonth--;
-            if (currentMonth < 0) {
-                currentMonth = 11;
-                currentYear--;
-            }
-            generateCalendar(currentYear, currentMonth);
-        });
-        
-        document.getElementById('nextMonth').addEventListener('click', () => {
-            currentMonth++;
-            if (currentMonth > 11) {
-                currentMonth = 0;
-                currentYear++;
-            }
-            generateCalendar(currentYear, currentMonth);
-        });
-        
-        // Carregar dados iniciais
+        // Inicializar quando a página carregar
         document.addEventListener('DOMContentLoaded', () => {
-            loadBarbeiros();
-            loadServicos();
+            initPage();
+            fetchUserData();
+            
+            // Adicionar estilo para os itens de serviço
+            const style = document.createElement('style');
+            style.textContent = `
+                .servicos-populares {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 1rem;
+                }
+                
+                .servico-item {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    padding: 1rem;
+                    background-color: rgba(40, 40, 40, 0.5);
+                    border-radius: 8px;
+                    transition: background-color 0.3s ease;
+                }
+                
+                .servico-item:hover {
+                    background-color: rgba(212, 175, 55, 0.05);
+                }
+                
+                .servico-item h4 {
+                    color: var(--light-gray);
+                    margin-bottom: 5px;
+                    font-size: 1rem;
+                }
+                
+                .servico-item p {
+                    color: var(--medium-gray);
+                    font-size: 0.9rem;
+                }
+                
+                .servico-item span {
+                    color: var(--accent-gold);
+                    font-weight: 600;
+                    font-size: 1.1rem;
+                }
+                
+                .badge {
+                    padding: 0.4rem 0.8rem;
+                    border-radius: 20px;
+                    font-size: 0.8rem;
+                    font-weight: 600;
+                }
+            `;
+            document.head.appendChild(style);
         });
     </script>
 </body>

@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: barbearia-backend
+    runtime: node
+    runtimeVersion: "20.11.1"
+    plan: free
+    buildCommand: npm install
+    startCommand: node server.js
+    envVars:
+      - key: NODE_ENV
+        value: production

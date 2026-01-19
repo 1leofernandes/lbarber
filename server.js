@@ -5,7 +5,6 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const cors = require('cors');
 const bodyParser = require('body-parser');
-const session = require('express-session');
 const passport = require('passport');
 
 // Importar configuração do Passport
@@ -60,7 +59,7 @@ const corsOptions = {
   ],
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true,
+  credentials: false,
   maxAge: 86400 // 24 horas
 };
 
@@ -69,10 +68,6 @@ app.use(cors(corsOptions));
 // ==================== SESSION & PASSPORT ====================
 
 app.use(passport.initialize());
-
-app.use(passport.initialize());
-app.use(passport.session());
-
 // ==================== PARSING ====================
 
 app.use(bodyParser.json({ limit: '10mb' }));

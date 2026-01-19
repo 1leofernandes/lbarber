@@ -24,14 +24,14 @@ passport.use(
         }
 
         // Verificar se usuário existe
-        const query = 'SELECT * FROM users WHERE email = $1';
+        const query = 'SELECT * FROM usuarios WHERE email = $1';
         const result = await db.query(query, [email]);
 
         if (result.rows.length > 0) {
           // Usuário existe, atualizar nome
           const user = result.rows[0];
           const updateQuery = `
-            UPDATE users 
+            UPDATE usuarios 
             SET google_id = $1, nome = $2, atualizado_em = NOW()
             WHERE email = $3
             RETURNING *
@@ -41,7 +41,7 @@ passport.use(
         } else {
           // Criar novo usuário via Google
           const insertQuery = `
-            INSERT INTO users (nome, email, google_id, role, telefone, criado_em, atualizado_em)
+            INSERT INTO usuarios (nome, email, google_id, role, telefone, criado_em, atualizado_em)
             VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
             RETURNING *
           `;

@@ -26,6 +26,9 @@ const port = process.env.PORT || 3000;
 
 // ==================== SEGURANÇA E OTIMIZAÇÃO ====================
 
+app.set('trust proxy', 1);
+
+
 // Helmet: Headers de segurança
 app.use(helmet());
 

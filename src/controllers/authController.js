@@ -8,7 +8,6 @@ class AuthController {
     try {
       const { nome, email, telefone, senha, role } = req.body;
 
-      // Validar campos obrigatórios
       const errors = validateRequired(['nome', 'email', 'telefone', 'senha'], req.body);
       if (errors.length > 0) {
         return res.status(400).json({
@@ -18,12 +17,8 @@ class AuthController {
         });
       }
 
-      // Validar formato
       if (!validators.email(email)) {
-        return res.status(400).json({
-          success: false,
-          message: 'Email inválido'
-        });
+        return res.status(400).json({ success: false, message: 'Email inválido' });
       }
 
       if (!validators.password(senha)) {
@@ -40,7 +35,14 @@ class AuthController {
         });
       }
 
-      const result = await AuthService.register(nome, email, telefone, senha, role || 'cliente');
+      const result = await AuthService.register(
+        nome,
+        email,
+        telefone,
+        senha,
+        role || 'cliente'
+      );
+
       res.status(201).json(result);
     } catch (err) {
       next(err);
@@ -51,7 +53,6 @@ class AuthController {
     try {
       const { nome, email, telefone, senha } = req.body;
 
-      // Validar campos
       const errors = validateRequired(['nome', 'email', 'telefone', 'senha'], req.body);
       if (errors.length > 0) {
         return res.status(400).json({
@@ -68,7 +69,14 @@ class AuthController {
         });
       }
 
-      const result = await AuthService.register(nome, email, telefone, senha, 'barbeiro');
+      const result = await AuthService.register(
+        nome,
+        email,
+        telefone,
+        senha,
+        'barbeiro'
+      );
+
       res.status(201).json(result);
     } catch (err) {
       next(err);
@@ -139,20 +147,35 @@ class AuthController {
     }
   }
 
+  // ==================== GOOGLE CALLBACK ====================
+
   static async googleCallback(req, res, next) {
     try {
       const user = req.user;
 
       if (!user) {
-        return res.redirect('/login.html?error=google_auth_failed');
+        return res.redirect(
+          `${process.env.FRONTEND_URL}/login.html?error=google_auth_failed`
+        );
       }
 
-      // Gerar token JWT
+      // 🔐 Gerar JWT
       const token = AuthService.generateToken(user);
 
-      // Redirecionar para o frontend com o token
-      const redirectUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/cliente-home.html?token=${token}&user_id=${user.id}&role=${user.role}`;
-      res.redirect(redirectUrl);
+      // 🎯 Definir destino por role
+      let redirectPage = '/login.html';
+
+      if (user.roles === 'admin') {
+        redirectPage = '/admin.html';
+      } else if (user.role === 'cliente' && user.roles === 'cliente') {
+        redirectPage = '/cliente-home.html';
+      } else if (user.role === 'barbeiro' && user.roles === 'cliente') {
+        redirectPage = '/barbeiro.html';
+      }
+
+      return res.redirect(
+        `${process.env.FRONTEND_URL}${redirectPage}?token=${token}`
+      );
     } catch (err) {
       logger.error('Erro no callback do Google:', err);
       next(err);

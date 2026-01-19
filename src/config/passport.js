@@ -32,7 +32,7 @@ passport.use(
           const user = result.rows[0];
           const updateQuery = `
             UPDATE usuarios 
-            SET google_id = $1, nome = $2, atualizado_em = NOW()
+            SET google_id = $1, nome = $2, updated_at = NOW()
             WHERE email = $3
             RETURNING *
           `;
@@ -41,7 +41,7 @@ passport.use(
         } else {
           // Criar novo usuário via Google
           const insertQuery = `
-            INSERT INTO usuarios (nome, email, google_id, role, telefone, criado_em, atualizado_em)
+            INSERT INTO usuarios (nome, email, google_id, role, telefone, created_at, updated_at)
             VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
             RETURNING *
           `;

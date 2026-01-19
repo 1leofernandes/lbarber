@@ -68,16 +68,7 @@ app.use(cors(corsOptions));
 
 // ==================== SESSION & PASSPORT ====================
 
-app.use(session({
-  secret: process.env.SESSION_SECRET || 'seu_secret_seguro_aqui_mudando_em_producao',
-  resave: false,
-  saveUninitialized: false,
-  cookie: {
-    secure: process.env.NODE_ENV === 'production',
-    httpOnly: true,
-    maxAge: 24 * 60 * 60 * 1000 // 24 horas
-  }
-}));
+app.use(passport.initialize());
 
 app.use(passport.initialize());
 app.use(passport.session());

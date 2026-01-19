@@ -1,24 +1,53 @@
 // Service de autenticação com lógica de negócio
+
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const nodemailer = require('nodemailer');
 const User = require('../models/User');
 const logger = require('../utils/logger');
 
-const secret = process.env.JWT_SECRET || 'secreta';
-const adminEmails = (process.env.ADMIN_EMAILS || '').split(',').map(e => e.trim());
+/**
+ * ENV OBRIGATÓRIAS
+ */
+if (!process.env.JWT_SECRET) {
+  throw new Error('JWT_SECRET não definido no .env');
+}
 
+const JWT_SECRET = process.env.JWT_SECRET;
+const JWT_EXPIRATION = process.env.JWT_EXPIRATION || '1h';
+
+/**
+ * Emails que terão permissão de admin
+ */
+const adminEmails = (process.env.ADMIN_EMAILS || '')
+  .split(',')
+  .map(e => e.trim())
+  .filter(Boolean);
+
+/**
+ * Transporter de email
+ */
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
-    user: process.env.EMAIL_USER || 'lbarberoficial1@gmail.com',
-    pass: process.env.EMAIL_PASS || 'wgpr yemc neow ursr'
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS
   }
 });
 
 class AuthService {
+
+  /**
+   * Registro de usuário
+   */
   static async register(nome, email, telefone, senha, role = 'cliente') {
-    // Verificar duplicata
+    if (!nome || !email || !senha) {
+      throw {
+        status: 400,
+        message: 'Nome, email e senha são obrigatórios'
+      };
+    }
+
     const existing = await User.findByEmail(email);
     if (existing) {
       throw {
@@ -27,20 +56,51 @@ class AuthService {
       };
     }
 
-    const senhaHash = bcrypt.hashSync(senha, 8);
+    const senhaHash = await bcrypt.hash(senha, 10);
+
+    /**
+     * roles = permissão especial (admin)
+     * role  = perfil do sistema (cliente, barbeiro)
+     */
     const roles = adminEmails.includes(email) ? 'admin' : null;
 
-    const user = await User.create(nome, email, telefone, senhaHash, role, roles);
-    logger.info('Novo usuário registrado', { userId: user.id, email });
+    const user = await User.create(
+      nome,
+      email,
+      telefone || null,
+      senhaHash,
+      role,
+      roles
+    );
 
-    return { success: true, message: 'Usuário registrado com sucesso!' };
+    logger.info('Novo usuário registrado', {
+      userId: user.id,
+      email,
+      role,
+      roles
+    });
+
+    return {
+      success: true,
+      message: 'Usuário registrado com sucesso!'
+    };
   }
 
+  /**
+   * Login
+   */
   static async login(email, senha) {
+    if (!email || !senha) {
+      throw {
+        status: 400,
+        message: 'Email e senha são obrigatórios'
+      };
+    }
+
     const user = await User.findByEmail(email);
-    
-    if (!user || !bcrypt.compareSync(senha, user.senha)) {
-      logger.warn('Tentativa de login falhou', { email });
+
+    if (!user || !(await bcrypt.compare(senha, user.senha))) {
+      logger.warn('Tentativa de login inválida', { email });
       throw {
         status: 401,
         message: 'Email ou senha inválidos'
@@ -52,94 +112,138 @@ class AuthService {
         id: user.id,
         nome: user.nome,
         email: user.email,
-        telefone: user.telefone,
         role: user.role,
         roles: user.roles
       },
-      secret,
-      { expiresIn: process.env.JWT_EXPIRATION || '1h' }
+      JWT_SECRET,
+      { expiresIn: JWT_EXPIRATION }
     );
 
-    // Determinar página de redirecionamento
+    /**
+     * Redirecionamento por prioridade
+     */
     let redirectPage = 'cliente-home.html';
+
     if (user.roles === 'admin') {
       redirectPage = 'admin.html';
     } else if (user.role === 'barbeiro') {
       redirectPage = 'barbeiro.html';
     }
 
-    logger.info('Login bem-sucedido', { userId: user.id, email });
+    logger.info('Login bem-sucedido', {
+      userId: user.id,
+      email
+    });
 
     return {
       success: true,
-      message: 'Login bem-sucedido!',
+      message: 'Login realizado com sucesso!',
       token,
+      id: user.id,
+      nome: user.nome,
       role: user.role,
       roles: user.roles,
-      nome: user.nome,
-      id: user.id,
       redirectPage
     };
   }
 
+  /**
+   * Solicitação de redefinição de senha
+   */
   static async requestPasswordReset(email) {
+    if (!email) {
+      throw {
+        status: 400,
+        message: 'Email é obrigatório'
+      };
+    }
+
     const user = await User.findByEmail(email);
-    
+
+    /**
+     * Segurança: nunca revelar se o email existe
+     */
     if (!user) {
-      // Não revelar se email existe (segurança)
-      logger.warn('Password reset solicitado para email inexistente', { email });
-      return { success: true, message: 'Se o email existe, receberá instruções' };
+      logger.warn('Reset solicitado para email inexistente', { email });
+      return {
+        success: true,
+        message: 'Se o email existir, você receberá instruções'
+      };
     }
 
     const token = jwt.sign(
       { id: user.id },
-      secret,
+      JWT_SECRET,
       { expiresIn: '15m' }
     );
 
-    const resetLink = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/resetar-senha?token=${token}`;
+    const resetLink = `${process.env.FRONTEND_URL}/resetar-senha?token=${token}`;
 
     try {
       await transporter.sendMail({
-        from: process.env.EMAIL_USER || 'lbarberoficial1@gmail.com',
+        from: process.env.EMAIL_USER,
         to: email,
         subject: 'Redefinição de Senha - Barbearia',
         html: `
           <h2>Redefinição de Senha</h2>
-          <p>Clique no link para redefinir sua senha:</p>
-          <a href="${resetLink}">${resetLink}</a>
-          <p>Este link expira em 15 minutos.</p>
+          <p>Clique no link abaixo para redefinir sua senha:</p>
+          <p><a href="${resetLink}">${resetLink}</a></p>
+          <p>Este link expira em <strong>15 minutos</strong>.</p>
         `
       });
-      logger.info('Email de reset enviado', { email });
-    } catch (err) {
-      logger.error('Erro ao enviar email', { email, error: err.message });
+
+      logger.info('Email de redefinição enviado', { email });
+
+    } catch (error) {
+      logger.error('Erro ao enviar email de reset', {
+        email,
+        error: error.message
+      });
+
       throw {
         status: 500,
-        message: 'Erro ao enviar email'
+        message: 'Erro ao enviar email de redefinição'
       };
     }
 
-    return { success: true, message: 'Email de redefinição enviado!' };
+    return {
+      success: true,
+      message: 'Email de redefinição enviado!'
+    };
   }
 
+  /**
+   * Reset de senha
+   */
   static async resetPassword(token, novaSenha) {
+    if (!token || !novaSenha) {
+      throw {
+        status: 400,
+        message: 'Token e nova senha são obrigatórios'
+      };
+    }
+
     let decoded;
     try {
-      decoded = jwt.verify(token, secret);
-    } catch (err) {
+      decoded = jwt.verify(token, JWT_SECRET);
+    } catch {
       throw {
         status: 400,
         message: 'Token inválido ou expirado'
       };
     }
 
-    const senhaHash = bcrypt.hashSync(novaSenha, 8);
+    const senhaHash = await bcrypt.hash(novaSenha, 10);
     await User.updatePassword(decoded.id, senhaHash);
 
-    logger.info('Senha redefinida', { userId: decoded.id });
+    logger.info('Senha redefinida com sucesso', {
+      userId: decoded.id
+    });
 
-    return { success: true, message: 'Senha redefinida com sucesso!' };
+    return {
+      success: true,
+      message: 'Senha redefinida com sucesso!'
+    };
   }
 }
 

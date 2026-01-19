@@ -6,10 +6,10 @@ const logger = require('../utils/logger');
 class AuthController {
   static async register(req, res, next) {
     try {
-      const { nome, email, senha, role } = req.body;
+      const { nome, email, telefone, senha, role } = req.body;
 
       // Validar campos obrigatórios
-      const errors = validateRequired(['nome', 'email', 'senha'], req.body);
+      const errors = validateRequired(['nome', 'email', 'telefone', 'senha'], req.body);
       if (errors.length > 0) {
         return res.status(400).json({
           success: false,
@@ -40,7 +40,7 @@ class AuthController {
         });
       }
 
-      const result = await AuthService.register(nome, email, senha, role || 'cliente');
+      const result = await AuthService.register(nome, email, telefone, senha, role || 'cliente');
       res.status(201).json(result);
     } catch (err) {
       next(err);
@@ -49,10 +49,10 @@ class AuthController {
 
   static async registerBarber(req, res, next) {
     try {
-      const { nome, email, senha } = req.body;
+      const { nome, email, telefone, senha } = req.body;
 
       // Validar campos
-      const errors = validateRequired(['nome', 'email', 'senha'], req.body);
+      const errors = validateRequired(['nome', 'email', 'telefone', 'senha'], req.body);
       if (errors.length > 0) {
         return res.status(400).json({
           success: false,
@@ -68,7 +68,7 @@ class AuthController {
         });
       }
 
-      const result = await AuthService.register(nome, email, senha, 'barbeiro');
+      const result = await AuthService.register(nome, email, telefone, senha, 'barbeiro');
       res.status(201).json(result);
     } catch (err) {
       next(err);
@@ -135,6 +135,26 @@ class AuthController {
       const result = await AuthService.resetPassword(token, senha);
       res.json(result);
     } catch (err) {
+      next(err);
+    }
+  }
+
+  static async googleCallback(req, res, next) {
+    try {
+      const user = req.user;
+
+      if (!user) {
+        return res.redirect('/login.html?error=google_auth_failed');
+      }
+
+      // Gerar token JWT
+      const token = AuthService.generateToken(user);
+
+      // Redirecionar para o frontend com o token
+      const redirectUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/cliente-home.html?token=${token}&user_id=${user.id}&role=${user.role}`;
+      res.redirect(redirectUrl);
+    } catch (err) {
+      logger.error('Erro no callback do Google:', err);
       next(err);
     }
   }

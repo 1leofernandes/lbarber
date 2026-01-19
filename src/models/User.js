@@ -4,7 +4,7 @@ const pool = require('../config/database');
 class User {
   static async findByEmail(email) {
     const query = `
-      SELECT id, nome, email, senha, role, roles, created_at, updated_at
+      SELECT id, nome, email, telefone, senha, role, roles, created_at, updated_at
       FROM usuarios
       WHERE email = $1
       LIMIT 1

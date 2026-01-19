@@ -19,6 +19,10 @@
                 <input type="email" class="form-control" id="email" required>
             </div>
             <div class="mb-3">
+                <label for="telefone" class="form-label">Telefone</label>
+                <input type="tel" class="form-control" id="telefone" required>
+            </div>
+            <div class="mb-3">
                 <label for="senha" class="form-label">Senha</label>
                 <input type="password" class="form-control" id="senha" required>
             </div>
@@ -40,6 +44,7 @@
             const nome = document.getElementById('nome').value;
             const email = document.getElementById('email').value;
             const senha = document.getElementById('senha').value;
+            const telefone = document.getElementById('telefone').value;
 
             try {
                 const response = await fetch(`${API_BASE_URL}/registrar-barbeiro`, {
@@ -47,7 +52,7 @@
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({ nome, email, senha })
+                    body: JSON.stringify({ nome, email, telefone, senha })
                 });
 
                 const data = await response.json();

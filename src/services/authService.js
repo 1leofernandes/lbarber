@@ -17,7 +17,7 @@ const transporter = nodemailer.createTransport({
 });
 
 class AuthService {
-  static async register(nome, email, senha, role = 'cliente') {
+  static async register(nome, email, telefone, senha, role = 'cliente') {
     // Verificar duplicata
     const existing = await User.findByEmail(email);
     if (existing) {
@@ -30,7 +30,7 @@ class AuthService {
     const senhaHash = bcrypt.hashSync(senha, 8);
     const roles = adminEmails.includes(email) ? 'admin' : null;
 
-    const user = await User.create(nome, email, senhaHash, role, roles);
+    const user = await User.create(nome, email, telefone, senhaHash, role, roles);
     logger.info('Novo usuário registrado', { userId: user.id, email });
 
     return { success: true, message: 'Usuário registrado com sucesso!' };
@@ -52,6 +52,7 @@ class AuthService {
         id: user.id,
         nome: user.nome,
         email: user.email,
+        telefone: user.telefone,
         role: user.role,
         roles: user.roles
       },

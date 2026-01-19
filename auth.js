@@ -22,7 +22,7 @@ router.post('/registrar', async (req, res) => {
 
         await db.query(
             'INSERT INTO usuarios (nome, email, senha, role) VALUES ($1, $2, $3, $4)', 
-            [nome, email, senhaHash, role || 'cliente']
+            [nome, email, senhaHash, role]
         );
         res.json({ message: 'Usuário registrado com sucesso!' });
     } catch (err) {

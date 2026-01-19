@@ -5,6 +5,11 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const cors = require('cors');
 const bodyParser = require('body-parser');
+const session = require('express-session');
+const passport = require('passport');
+
+// Importar configuração do Passport
+require('./src/config/passport');
 
 // Importar rotas
 const authRoutes = require('./src/routes/auth');
@@ -60,6 +65,22 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
+
+// ==================== SESSION & PASSPORT ====================
+
+app.use(session({
+  secret: process.env.SESSION_SECRET || 'seu_secret_seguro_aqui_mudando_em_producao',
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    secure: process.env.NODE_ENV === 'production',
+    httpOnly: true,
+    maxAge: 24 * 60 * 60 * 1000 // 24 horas
+  }
+}));
+
+app.use(passport.initialize());
+app.use(passport.session());
 
 // ==================== PARSING ====================
 

@@ -5,6 +5,7 @@ CREATE TABLE IF NOT EXISTS usuarios (
   id SERIAL PRIMARY KEY,
   nome VARCHAR(255) NOT NULL,
   email VARCHAR(255) UNIQUE NOT NULL,
+  telefone VARCHAR(20),
   senha VARCHAR(255) NOT NULL,
   role VARCHAR(50) NOT NULL DEFAULT 'cliente', -- cliente, barbeiro
   roles VARCHAR(50), -- admin, null

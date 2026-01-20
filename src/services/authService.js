@@ -86,6 +86,26 @@ class AuthService {
     };
   }
 
+  static generateToken(user) {
+    if (!user || !user.id) {
+      throw new Error('Usuário inválido para geração de token');
+    }
+
+    return jwt.sign(
+      {
+        id: user.id,
+        nome: user.nome,
+        email: user.email,
+        role: user.role,
+        roles: user.roles
+      },
+      JWT_SECRET,
+      {
+        expiresIn: JWT_EXPIRATION
+      }
+    );
+  }
+
   /**
    * Login
    */

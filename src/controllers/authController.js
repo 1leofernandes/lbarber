@@ -163,19 +163,28 @@ class AuthController {
       const token = AuthService.generateToken(user);
 
       // 🎯 Definir destino por role
-      let redirectPage = '/login.html';
+      let redirectPage = 'login.html';
 
       if (user.roles === 'admin') {
-        redirectPage = '/admin.html';
-      } else if (user.role === 'cliente' && user.roles === 'cliente') {
-        redirectPage = '/cliente-home.html';
-      } else if (user.role === 'barbeiro' && user.roles === 'cliente') {
-        redirectPage = '/barbeiro.html';
+        redirectPage = 'admin.html';
+      } else if (user.role === 'barbeiro') {
+        redirectPage = 'barbeiro.html';
+      } else if (user.role === 'cliente') {
+        redirectPage = 'cliente-home.html';
       }
 
-      return res.redirect(
-        `${process.env.FRONTEND_URL}${redirectPage}?token=${token}`
-      );
+      const frontendUrl = process.env.FRONTEND_URL || 'https://lbarber.vercel.app';
+      const redirectUrl = `${frontendUrl}/${redirectPage}?token=${token}`;
+
+      logger.info('Google OAuth callback com sucesso', {
+        userId: user.id,
+        email: user.email,
+        role: user.role,
+        roles: user.roles,
+        redirectPage
+      });
+
+      return res.redirect(redirectUrl);
     } catch (err) {
       logger.error('Erro no callback do Google:', err);
       next(err);

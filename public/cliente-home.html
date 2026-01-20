@@ -715,6 +715,15 @@
     </footer>
 
     <script>
+        const params = new URLSearchParams(window.location.search);
+        const tokenFromUrl = params.get('token');
+
+        if (tokenFromUrl) {
+            localStorage.setItem('token', tokenFromUrl);
+
+            // (opcional) remover token da URL por segurança
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }
         // Configurações iniciais
         const API_BASE_URL = window.location.hostname === 'localhost' 
             ? 'http://localhost:3000' 
@@ -727,6 +736,16 @@
         if (!token) {
             window.location.href = 'login.html';
         }
+        function parseJwt(token) {
+        const base64Url = token.split('.')[1];
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        return JSON.parse(atob(base64));
+        }
+
+        const userData = parseJwt(token);
+        localStorage.setItem('nome', userData.nome);
+        localStorage.setItem('role', userData.role);
+        localStorage.setItem('roles', userData.roles);
         
         // Estado do usuário (simulação)
         let usuario = {

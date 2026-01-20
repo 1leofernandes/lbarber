@@ -174,10 +174,11 @@ class AuthController {
       }
 
       const frontendUrl = process.env.FRONTEND_URL || 'https://lbarber.vercel.app';
-      const redirectUrl = `${frontendUrl}/${redirectPage}?token=${token}`;
+      const redirectUrl = `${frontendUrl}/${redirectPage}`;
 
       logger.info('Google OAuth callback com sucesso', {
         userId: user.id,
+        name: user.nome,
         email: user.email,
         role: user.role,
         roles: user.roles,

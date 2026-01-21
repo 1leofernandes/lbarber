@@ -61,7 +61,7 @@ class UsuarioService {
     // Verificar senha do usuário
     async verificarSenha(userId, senha) {
         try {
-            const query = 'SELECT senha FROM usuarios WHERE id = $1';
+            const query = 'SELECT senha FROM usuarios WHERE id = $1 AND ativo = true';
             const result = await pool.query(query, [userId]);
             
             if (result.rows.length === 0) return false;
@@ -74,8 +74,8 @@ class UsuarioService {
         }
     }
     
-    // Deletar conta permanentemente
-    async deleteUsuario(id) {
+    // Soft delete (marcar como inativo)
+    async softDeleteUsuario(id) {
         try {
             // Iniciar transação
             await pool.query('BEGIN');
@@ -103,22 +103,6 @@ class UsuarioService {
             // Rollback em caso de erro
             await pool.query('ROLLBACK');
             console.error('Erro no deleteUsuario:', error);
-            throw error;
-        }
-    }
-    
-    // Buscar dados do usuário incluindo senha (para verificação)
-    async getUsuarioComSenha(id) {
-        try {
-            const query = `
-                SELECT id, nome, email, telefone, senha, role
-                FROM usuarios 
-                WHERE id = $1
-            `;
-            const result = await pool.query(query, [id]);
-            return result.rows[0];
-        } catch (error) {
-            console.error('Erro no getUsuarioComSenha:', error);
             throw error;
         }
     }

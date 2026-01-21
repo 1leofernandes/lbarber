@@ -141,6 +141,7 @@ class AuthService {
         id: user.id,
         nome: user.nome,
         email: user.email,
+        telefone: user.telefone,
         role: user.role,
         roles: user.roles
       },

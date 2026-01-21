@@ -102,6 +102,7 @@ app.use('/auth/esqueci-senha', authLimiter);
 
 // Rotas com rate limit geral
 app.use('/auth', limiter, authRoutes);
+app.use('/usuarios', limiter, require('./routes/usuarioRoutes'));
 app.use('/agendamentos', limiter, appointmentRoutes);
 app.use('/servicos', limiter, serviceRoutes);
 app.use('/barbeiros', limiter, barberRoutes);

@@ -19,6 +19,7 @@
             --success: #28a745;
             --error: #dc3545;
             --card-bg: #1e1e1e;
+            --modal-bg: rgba(0, 0, 0, 0.85);
         }
         
         * {
@@ -94,6 +95,7 @@
             text-decoration: none;
             transition: all 0.3s ease;
             border-left: 3px solid transparent;
+            cursor: pointer;
         }
         
         .menu-item:hover {
@@ -124,7 +126,7 @@
             background-color: rgba(220, 53, 69, 0.1);
         }
         
-        /* Overlay para fechar sidebar */
+        /* Overlay para fechar sidebar em mobile */
         .overlay {
             position: fixed;
             top: 0;
@@ -138,6 +140,202 @@
         
         .overlay.active {
             display: block;
+        }
+        
+        /* Modal Overlay - Para Perfil e Informações */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--modal-bg);
+            backdrop-filter: blur(5px);
+            z-index: 2000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            padding: 1rem;
+            overflow-y: auto;
+        }
+        
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .modal-content {
+            background: linear-gradient(145deg, #1a1a1a, #151515);
+            border-radius: 20px;
+            width: 100%;
+            max-width: 800px;
+            max-height:85vh;
+            overflow-y: auto;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(212, 175, 55, 0.2);
+            transform: translateY(30px);
+            transition: transform 0.4s ease;
+            margin: auto;
+        }
+        
+        .modal-overlay.active .modal-content {
+            transform: translateY(0);
+        }
+        
+        .modal-header {
+            padding: 1.5rem 1.5rem 1rem;
+            border-bottom: 1px solid rgba(212, 175, 55, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--light-gray);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .modal-title i {
+            color: var(--accent-gold);
+        }
+        
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--medium-gray);
+            font-size: 1.5rem;
+            cursor: pointer;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+        }
+        
+        .modal-close:hover {
+            background-color: rgba(212, 175, 55, 0.1);
+            color: var(--accent-gold);
+        }
+        
+        .modal-body {
+            padding: 1.5rem;
+        }
+        
+        /* Form Styles */
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--light-gray);
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 0.9rem 1rem;
+            background-color: rgba(40, 40, 40, 0.7);
+            border: 1px solid rgba(80, 80, 80, 0.3);
+            border-radius: 8px;
+            color: var(--light-gray);
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: var(--accent-gold);
+            box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.2);
+            background-color: rgba(50, 50, 50, 0.7);
+        }
+        
+        .form-control:disabled {
+            background-color: rgba(30, 30, 30, 0.5);
+            color: var(--medium-gray);
+            cursor: not-allowed;
+        }
+        
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+        }
+        
+        .info-item {
+            background-color: rgba(40, 40, 40, 0.5);
+            border-radius: 12px;
+            padding: 1.2rem;
+            border-left: 4px solid var(--accent-gold);
+        }
+        
+        .info-item-title {
+            font-weight: 600;
+            color: var(--light-gray);
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .info-item-title i {
+            color: var(--accent-gold);
+        }
+        
+        .info-item-content {
+            color: var(--medium-gray);
+            line-height: 1.6;
+        }
+        
+        /* Button Styles */
+        .btn {
+            padding: 0.8rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: none;
+            font-size: 1rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(to right, var(--accent-gold), var(--dark-gold));
+            color: var(--primary-dark);
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(212, 175, 55, 0.4);
+        }
+        
+        .btn-outline {
+            background: transparent;
+            border: 2px solid var(--accent-gold);
+            color: var(--accent-gold);
+        }
+        
+        .btn-outline:hover {
+            background-color: rgba(212, 175, 55, 0.1);
+        }
+        
+        .btn-block {
+            width: 100%;
+            justify-content: center;
         }
         
         /* Navbar */
@@ -280,40 +478,6 @@
             margin-bottom: 1.5rem;
             line-height: 1.6;
             font-size: 1.1rem;
-        }
-        
-        .btn {
-            padding: 0.8rem 1.5rem;
-            border-radius: 8px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            border: none;
-            font-size: 1rem;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            text-decoration: none;
-        }
-        
-        .btn-primary {
-            background: linear-gradient(to right, var(--accent-gold), var(--dark-gold));
-            color: var(--primary-dark);
-        }
-        
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(212, 175, 55, 0.4);
-        }
-        
-        .btn-outline {
-            background: transparent;
-            border: 2px solid var(--accent-gold);
-            color: var(--accent-gold);
-        }
-        
-        .btn-outline:hover {
-            background-color: rgba(212, 175, 55, 0.1);
         }
         
         /* Agendamentos List */
@@ -482,6 +646,10 @@
                 height: 70px;
                 font-size: 1.8rem;
             }
+            
+            .info-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
         }
         
         @media (min-width: 1024px) {
@@ -567,11 +735,199 @@
             background: linear-gradient(145deg, rgba(212, 175, 55, 0.05), rgba(180, 140, 11, 0.05));
             border: 1px solid rgba(212, 175, 55, 0.2);
         }
+        
+        /* Serviços Populares */
+        .servicos-populares {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .servico-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            background-color: rgba(40, 40, 40, 0.5);
+            border-radius: 8px;
+            transition: background-color 0.3s ease;
+        }
+        
+        .servico-item:hover {
+            background-color: rgba(212, 175, 55, 0.05);
+        }
+        
+        .servico-item h4 {
+            color: var(--light-gray);
+            margin-bottom: 5px;
+            font-size: 1rem;
+        }
+        
+        .servico-item p {
+            color: var(--medium-gray);
+            font-size: 0.9rem;
+        }
+        
+        .servico-item span {
+            color: var(--accent-gold);
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+        
+        .badge {
+            padding: 0.4rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        .btn-danger {
+            background: linear-gradient(to right, var(--error), #c82333);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: linear-gradient(to right, #c82333, #bd2130);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(220, 53, 69, 0.4);
+        }
+
+        /* Estilo para o ícone de lixeira no botão outline */
+        .btn-outline .fa-trash {
+            color: var(--error);
+        }
     </style>
 </head>
 <body>
     <!-- Overlay para fechar sidebar em mobile -->
     <div class="overlay" id="overlay"></div>
+    
+    <!-- Modal para Perfil -->
+    <div class="modal-overlay" id="perfilModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">
+                    <i class="fas fa-user"></i>
+                    Meu Perfil
+                </h2>
+                <button class="modal-close" id="closePerfilModal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">Nome Completo</label>
+                    <input type="text" class="form-control" id="profileName" value="Cliente Silva">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">E-mail</label>
+                    <input type="email" class="form-control" id="profileEmail" value="cliente@email.com">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Telefone</label>
+                    <input type="tel" class="form-control" id="profilePhone" value="(11) 99999-9999">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Status da Assinatura</label>
+                    <input type="text" class="form-control" value="Plano Básico" disabled>
+                </div>
+                <!-- <button class="btn btn-primary btn-block" id="saveProfileBtn">
+                    <i class="fas fa-save"></i>
+                    Salvar Alterações
+                </button> -->
+                <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+                    <button class="btn btn-primary btn-block" id="saveProfileBtn">
+                        <i class="fas fa-save"></i>
+                        Salvar Alterações
+                    </button>
+                    <button class="btn btn-outline" id="deleteAccountBtn" style="flex: 0 0 auto;">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal para Informações -->
+    <div class="modal-overlay" id="informacoesModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">
+                    <i class="fas fa-info-circle"></i>
+                    Informações da Barbearia
+                </h2>
+                <button class="modal-close" id="closeInfoModal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="info-grid">
+                    <div class="info-item">
+                        <h3 class="info-item-title">
+                            <i class="fas fa-clock"></i>
+                            Horário de Funcionamento
+                        </h3>
+                        <div class="info-item-content">
+                            <p><strong>Segunda a Sexta:</strong> 08:30 - 19:00</p>
+                            <p><strong>Sábado:</strong> 08:30 - 18:30</p>
+                            <p><strong>Domingo:</strong> Fechado</p>
+                        </div>
+                    </div>
+                    
+                    <div class="info-item">
+                        <h3 class="info-item-title">
+                            <i class="fas fa-map-marker-alt"></i>
+                            Localização
+                        </h3>
+                        <div class="info-item-content">
+                            <p><strong>Endereço:</strong> Av. Esmeraldas QD 28 LT 02</p>
+                            <p><strong>Setor:</strong> Recanto das Minas Gerais</p>
+                            <p><strong>Cidade:</strong> Goiânia - GO</p>
+                        </div>
+                    </div>
+                    
+                    <div class="info-item">
+                        <h3 class="info-item-title">
+                            <i class="fas fa-phone"></i>
+                            Contato
+                        </h3>
+                        <div class="info-item-content">
+                            <p><strong>Instagram:</strong> sillvabarbearia</p>
+                            <p><strong>WhatsApp:</strong> (62) 9 8259-4295</p>
+                            <p><strong>E-mail:</strong> contato@barbeariasilva.com</p>
+                        </div>
+                    </div>
+                    
+                    <div class="info-item">
+                        <h3 class="info-item-title">
+                            <i class="fas fa-star"></i>
+                            Nossos Valores
+                        </h3>
+                        <div class="info-item-content">
+                            <p>• Atendimento personalizado</p>
+                            <p>• Produtos de qualidade premium</p>
+                            <p>• Ambiente climatizado e aconchegante</p>
+                            <p>• Profissionais especializados</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 2rem;">
+                    <h3 class="info-item-title">
+                        <i class="fas fa-shield-alt"></i>
+                        Políticas
+                    </h3>
+                    <div class="info-item-content">
+                        <p><strong>Cancelamento:</strong> Até 2 horas antes do horário marcado.</p>
+                        <p><strong>Atraso:</strong> Tolerância de 15 minutos.</p>
+                        <p><strong>Pagamento:</strong> Aceitamos todas as bandeiras.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
     
     <!-- Sidebar Menu -->
     <aside class="sidebar" id="sidebar">
@@ -593,11 +949,11 @@
                 <i class="fas fa-crown"></i>
                 <span>Assinatura</span>
             </a>
-            <a href="#" class="menu-item" data-page="perfil">
+            <a href="#" class="menu-item" id="openPerfilModal" data-page="perfil">
                 <i class="fas fa-user"></i>
                 <span>Perfil</span>
             </a>
-            <a href="#" class="menu-item" data-page="informacoes">
+            <a href="#" class="menu-item" id="openInfoModal" data-page="informacoes">
                 <i class="fas fa-info-circle"></i>
                 <span>Informações</span>
             </a>
@@ -706,6 +1062,45 @@
         <i class="fas fa-plus"></i>
         <span class="floating-btn-text">Novo Agendamento</span>
     </a>
+    <!-- Adicione este modal antes do footer -->
+    <div class="modal-overlay" id="confirmDeleteModal">
+        <div class="modal-content" style="max-width: 400px;">
+            <div class="modal-header">
+                <h2 class="modal-title">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    Confirmar Exclusão
+                </h2>
+                <button class="modal-close" id="closeDeleteModal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div style="text-align: center; margin-bottom: 1.5rem;">
+                    <i class="fas fa-trash" style="font-size: 3rem; color: var(--error); margin-bottom: 1rem;"></i>
+                    <h3 style="color: var(--light-gray); margin-bottom: 0.5rem;">Tem certeza?</h3>
+                    <p style="color: var(--medium-gray); line-height: 1.6;">
+                        Esta ação não pode ser desfeita. Todos os seus dados, agendamentos e histórico serão permanentemente removidos.
+                    </p>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Digite sua senha para confirmar</label>
+                    <input type="password" class="form-control" id="confirmPassword" placeholder="Sua senha atual">
+                </div>
+                
+                <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                    <button class="btn btn-outline" id="cancelDeleteBtn" style="flex: 1;">
+                        <i class="fas fa-times"></i>
+                        Cancelar
+                    </button>
+                    <button class="btn" id="confirmDeleteBtn" style="flex: 1; background: var(--error); color: white;">
+                        <i class="fas fa-trash"></i>
+                        Excluir Conta
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
     
     <!-- Footer -->
     <footer class="footer">
@@ -723,10 +1118,9 @@
 
         if (tokenFromUrl) {
             localStorage.setItem('token', tokenFromUrl);
-
-            // (opcional) remover token da URL por segurança
             window.history.replaceState({}, document.title, window.location.pathname);
         }
+        
         // Configurações iniciais
         const API_BASE_URL = window.location.hostname === 'localhost' 
             ? 'http://localhost:3000' 
@@ -739,10 +1133,11 @@
         if (!token) {
             window.location.href = 'login.html';
         }
+        
         function parseJwt(token) {
-        const base64Url = token.split('.')[1];
-        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-        return JSON.parse(atob(base64));
+            const base64Url = token.split('.')[1];
+            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+            return JSON.parse(atob(base64));
         }
 
         document.getElementById('welcomeTitle').textContent = `bem-vindo, ${nomeUsuario}`;
@@ -752,26 +1147,15 @@
         localStorage.setItem('role', userData.role);
         localStorage.setItem('roles', userData.roles);
         
-        // Estado do usuário (simulação)
+        // Estado do usuário
         let usuario = {
             nome: nomeUsuario,
-            assinante: false, // Mudar para true para testar o plano ativo
+            assinante: false,
             assinaturaAtiva: null
         };
         
-        // Dados de agendamentos (simulação)
-        const agendamentos = [
-            /* Exemplo de agendamento:
-            {
-                id: 1,
-                barbeiro: "João Silva",
-                servico: "Corte Social",
-                data: "2023-12-15",
-                hora: "14:30",
-                status: "confirmado"
-            }
-            */
-        ];
+        // Dados de agendamentos
+        const agendamentos = [];
         
         // Elementos DOM
         const sidebar = document.getElementById('sidebar');
@@ -787,6 +1171,25 @@
         const logoutBtn = document.getElementById('logoutBtn');
         const menuItems = document.querySelectorAll('.menu-item');
         
+        // Modal Elements
+        const perfilModal = document.getElementById('perfilModal');
+        const informacoesModal = document.getElementById('informacoesModal');
+        const openPerfilModalBtn = document.getElementById('openPerfilModal');
+        const openInfoModalBtn = document.getElementById('openInfoModal');
+        const closePerfilModalBtn = document.getElementById('closePerfilModal');
+        const closeInfoModalBtn = document.getElementById('closeInfoModal');
+        const saveProfileBtn = document.getElementById('saveProfileBtn');
+        const profileName = document.getElementById('profileName');
+        const profileEmail = document.getElementById('profileEmail');
+        const profilePhone = document.getElementById('profilePhone');
+
+        const confirmDeleteModal = document.getElementById('confirmDeleteModal');
+        const deleteAccountBtn = document.getElementById('deleteAccountBtn');
+        const closeDeleteModalBtn = document.getElementById('closeDeleteModal');
+        const cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
+        const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+        const confirmPassword = document.getElementById('confirmPassword');
+        
         // Inicializar página
         function initPage() {
             // Atualizar nome do usuário
@@ -801,12 +1204,15 @@
             // Configurar eventos
             setupEventListeners();
             
-            // Verificar se há parâmetro de assinante na URL (para teste)
+            // Verificar se há parâmetro de assinante na URL
             const urlParams = new URLSearchParams(window.location.search);
             if (urlParams.has('assinante')) {
                 usuario.assinante = urlParams.get('assinante') === 'true';
                 setupUserPlan();
             }
+            
+            // Carregar dados do perfil se existirem
+            loadProfileData();
         }
         
         // Configurar plano do usuário
@@ -832,10 +1238,216 @@
             }
         }
         
+        // Carregar dados do perfil do localStorage
+        async function loadProfileData() {
+            try {
+                // Buscar dados da API
+                const response = await fetch(`${API_BASE_URL}/usuarios/me`, {
+                    headers: { 
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (response.ok) {
+                    const userDataFromAPI = await response.json();
+                    
+                    // Preencher campos com dados da API
+                    if (userDataFromAPI.nome) {
+                        profileName.value = userDataFromAPI.nome;
+                    }
+                    if (userDataFromAPI.email) {
+                        profileEmail.value = userDataFromAPI.email;
+                    }
+                    if (userDataFromAPI.telefone) {
+                        profilePhone.value = userDataFromAPI.telefone;
+                    }
+                    
+                    // Salvar no localStorage para cache
+                    localStorage.setItem('userName', userDataFromAPI.nome || '');
+                    localStorage.setItem('userEmail', userDataFromAPI.email || '');
+                    localStorage.setItem('userPhone', userDataFromAPI.telefone || '');
+                    
+                } else {
+                    // Se API falhar, usar dados do localStorage ou token
+                    console.log('API falhou, usando cache...');
+                    useFallbackData();
+                }
+            } catch (error) {
+                console.error('Erro ao carregar perfil:', error);
+                useFallbackData();
+            }
+        }
+
+        function useFallbackData() {
+            const savedName = localStorage.getItem('userName');
+            const savedEmail = localStorage.getItem('userEmail');
+            const savedPhone = localStorage.getItem('userPhone');
+            
+            if (savedName) profileName.value = savedName;
+            if (savedEmail) profileEmail.value = savedEmail;
+            if (savedPhone) profilePhone.value = savedPhone;
+            
+            // Usar dados do token como fallback
+            if (!savedName && userData.nome) {
+                profileName.value = userData.nome;
+            }
+            if (!savedEmail && userData.email) {
+                profileEmail.value = userData.email;
+            }
+            if (!savedPhone && userData.telefone) {
+                profilePhone.value = userData.telefone;
+            }
+        }
+        
+        // Salvar dados do perfil
+        async function saveProfileData() {
+            const dadosAtualizados = {
+                nome: profileName.value.trim(),
+                email: profileEmail.value.trim(),
+                telefone: profilePhone.value.trim()
+            };
+            
+            // Validação básica
+            if (!dadosAtualizados.nome || !dadosAtualizados.email) {
+                showNotification('Nome e email são obrigatórios', 'error');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/usuarios/me`, {
+                    method: 'PUT',
+                    headers: { 
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(dadosAtualizados)
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    // Atualizar localStorage
+                    localStorage.setItem('userName', dadosAtualizados.nome);
+                    localStorage.setItem('userEmail', dadosAtualizados.email);
+                    localStorage.setItem('userPhone', dadosAtualizados.telefone || '');
+                    
+                    showNotification('Perfil atualizado com sucesso!', 'success');
+                    
+                    setTimeout(() => {
+                        closeModal(perfilModal);
+                    }, 1500);
+                } else {
+                    showNotification(data.error || 'Erro ao atualizar perfil', 'error');
+                }
+            } catch (error) {
+                console.error('Erro ao salvar perfil:', error);
+                showNotification('Erro de conexão. Tente novamente.', 'error');
+            }
+        }
+
+        async function deleteAccount() {
+            const senha = confirmPassword.value.trim();
+            
+            if (!senha) {
+                showNotification('Digite sua senha para confirmar', 'error');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/usuarios/me`, {
+                    method: 'DELETE',
+                    headers: { 
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ senha })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showNotification('Conta excluída com sucesso', 'success');
+                    
+                    // Limpar localStorage e redirecionar
+                    setTimeout(() => {
+                        localStorage.clear();
+                        window.location.href = 'login.html';
+                    }, 2000);
+                    
+                } else {
+                    showNotification(data.error || 'Erro ao excluir conta', 'error');
+                }
+            } catch (error) {
+                console.error('Erro ao excluir conta:', error);
+                showNotification('Erro de conexão. Tente novamente.', 'error');
+            }
+        }
+        
+        // Mostrar notificação
+        function showNotification(message, type = 'success') {
+            // Remover notificação anterior se existir
+            const existingNotification = document.querySelector('.notification');
+            if (existingNotification) {
+                existingNotification.remove();
+            }
+            
+            const notification = document.createElement('div');
+            notification.className = `notification notification-${type}`;
+            notification.innerHTML = `
+                <div style="position: fixed; top: 20px; right: 20px; background: ${type === 'success' ? '#28a745' : '#dc3545'}; 
+                     color: white; padding: 1rem 1.5rem; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); 
+                     z-index: 3000; display: flex; align-items: center; gap: 10px; animation: slideIn 0.3s ease;">
+                    <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i>
+                    ${message}
+                </div>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            // Remover após 3 segundos
+            setTimeout(() => {
+                notification.style.animation = 'slideOut 0.3s ease';
+                setTimeout(() => {
+                    notification.remove();
+                }, 300);
+            }, 3000);
+            
+            // Adicionar animação CSS
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes slideIn {
+                    from { transform: translateX(100%); opacity: 0; }
+                    to { transform: translateX(0); opacity: 1; }
+                }
+                @keyframes slideOut {
+                    from { transform: translateX(0); opacity: 1; }
+                    to { transform: translateX(100%); opacity: 0; }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+        
+        // Abrir modal
+        function openModal(modal) {
+            // Fechar sidebar se estiver aberta
+            sidebar.classList.remove('active');
+            overlay.classList.remove('active');
+            
+            // Abrir modal
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+        
+        // Fechar modal
+        function closeModal(modal) {
+            modal.classList.remove('active');
+            document.body.style.overflow = 'auto';
+        }
+        
         // Carregar agendamentos
         function loadAgendamentos() {
             if (agendamentos.length === 0) {
-                // Manter o estado vazio
                 return;
             }
             
@@ -923,6 +1535,85 @@
                 });
             });
             
+            // Abrir modais
+            openPerfilModalBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                openModal(perfilModal);
+                pageTitle.textContent = 'Perfil';
+                menuItems.forEach(i => i.classList.remove('active'));
+                openPerfilModalBtn.classList.add('active');
+            });
+            
+            openInfoModalBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                openModal(informacoesModal);
+                pageTitle.textContent = 'Informações';
+                menuItems.forEach(i => i.classList.remove('active'));
+                openInfoModalBtn.classList.add('active');
+            });
+            
+            // Fechar modais
+            closePerfilModalBtn.addEventListener('click', () => {
+                closeModal(perfilModal);
+                pageTitle.textContent = 'Início';
+                menuItems.forEach(i => i.classList.remove('active'));
+                document.querySelector('.menu-item[data-page="inicio"]').classList.add('active');
+            });
+            
+            closeInfoModalBtn.addEventListener('click', () => {
+                closeModal(informacoesModal);
+                pageTitle.textContent = 'Início';
+                menuItems.forEach(i => i.classList.remove('active'));
+                document.querySelector('.menu-item[data-page="inicio"]').classList.add('active');
+            });
+            
+            // Fechar modal ao clicar no overlay
+            [perfilModal, informacoesModal].forEach(modal => {
+                modal.addEventListener('click', (e) => {
+                    if (e.target === modal) {
+                        closeModal(modal);
+                        pageTitle.textContent = 'Início';
+                        menuItems.forEach(i => i.classList.remove('active'));
+                        document.querySelector('.menu-item[data-page="inicio"]').classList.add('active');
+                    }
+                });
+            });
+
+            deleteAccountBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                confirmPassword.value = ''; // Limpar campo
+                openModal(confirmDeleteModal);
+            });
+
+            // Fechar modal de confirmação
+            closeDeleteModalBtn.addEventListener('click', () => {
+                closeModal(confirmDeleteModal);
+            });
+            
+            cancelDeleteBtn.addEventListener('click', () => {
+                closeModal(confirmDeleteModal);
+            });
+            
+            // Confirmar exclusão
+            confirmDeleteBtn.addEventListener('click', deleteAccount);
+            
+            // Permitir Enter no campo de senha
+            confirmPassword.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    deleteAccount();
+                }
+            });
+            
+            // Fechar modal ao clicar fora
+            confirmDeleteModal.addEventListener('click', (e) => {
+                if (e.target === confirmDeleteModal) {
+                    closeModal(confirmDeleteModal);
+                }
+            });
+            
+            // Salvar perfil
+            saveProfileBtn.addEventListener('click', saveProfileData);
+            
             // Logout
             logoutBtn.addEventListener('click', logout);
         }
@@ -931,81 +1622,22 @@
         function logout() {
             localStorage.removeItem('token');
             localStorage.removeItem('nome');
+            localStorage.removeItem('userName');
+            localStorage.removeItem('userEmail');
+            localStorage.removeItem('userPhone');
             window.location.href = 'login.html';
         }
         
         // Simular carregamento de dados da API
         function fetchUserData() {
-            // Simulação de chamada à API
-            setTimeout(() => {
-                // Aqui você faria a chamada real à API
-                // fetch(`${API_BASE_URL}/usuario`, {
-                //     headers: { 'Authorization': `Bearer ${token}` }
-                // })
-                // .then(response => response.json())
-                // .then(data => {
-                //     usuario = data;
-                //     setupUserPlan();
-                // });
-                
-                // Para demonstração, vamos usar os dados simulados
-                console.log('Dados do usuário carregados');
-            }, 500);
+            // Aqui você faria a chamada real à API
+            console.log('Dados do usuário carregados');
         }
         
         // Inicializar quando a página carregar
         document.addEventListener('DOMContentLoaded', () => {
             initPage();
             fetchUserData();
-            
-            // Adicionar estilo para os itens de serviço
-            const style = document.createElement('style');
-            style.textContent = `
-                .servicos-populares {
-                    display: flex;
-                    flex-direction: column;
-                    gap: 1rem;
-                }
-                
-                .servico-item {
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                    padding: 1rem;
-                    background-color: rgba(40, 40, 40, 0.5);
-                    border-radius: 8px;
-                    transition: background-color 0.3s ease;
-                }
-                
-                .servico-item:hover {
-                    background-color: rgba(212, 175, 55, 0.05);
-                }
-                
-                .servico-item h4 {
-                    color: var(--light-gray);
-                    margin-bottom: 5px;
-                    font-size: 1rem;
-                }
-                
-                .servico-item p {
-                    color: var(--medium-gray);
-                    font-size: 0.9rem;
-                }
-                
-                .servico-item span {
-                    color: var(--accent-gold);
-                    font-weight: 600;
-                    font-size: 1.1rem;
-                }
-                
-                .badge {
-                    padding: 0.4rem 0.8rem;
-                    border-radius: 20px;
-                    font-size: 0.8rem;
-                    font-weight: 600;
-                }
-            `;
-            document.head.appendChild(style);
         });
     </script>
 </body>

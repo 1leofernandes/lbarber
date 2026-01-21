@@ -1082,12 +1082,6 @@
                         Esta ação não pode ser desfeita. Todos os seus dados, agendamentos e histórico serão permanentemente removidos.
                     </p>
                 </div>
-                
-                <div class="form-group">
-                    <label class="form-label">Digite sua senha para confirmar</label>
-                    <input type="password" class="form-control" id="confirmPassword" placeholder="Sua senha atual">
-                </div>
-                
                 <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
                     <button class="btn btn-outline" id="cancelDeleteBtn" style="flex: 1;">
                         <i class="fas fa-times"></i>
@@ -1347,15 +1341,13 @@
         }
 
         async function deleteAccount() {
-            const senha = confirmPassword.value.trim();
-            
-            if (!senha) {
-                showNotification('Digite sua senha para confirmar', 'error');
-                return;
-            }
+
+            const originalText = confirmDeleteBtn.innerHTML;
+            confirmDeleteBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Excluindo...';
+            confirmDeleteBtn.disabled = true;
             
             try {
-                const response = await fetch(`${API_BASE_URL}/api/usuarios/me`, {
+                const response = await fetch(`${API_BASE_URL}/usuarios/me`, {
                     method: 'DELETE',
                     headers: { 
                         'Authorization': `Bearer ${token}`,

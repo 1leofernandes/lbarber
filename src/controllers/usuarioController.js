@@ -67,15 +67,7 @@ class UsuarioController {
                 });
             }
             
-            // Verificar senha antes de deletar
-            const senhaValida = await usuarioService.verificarSenha(userId, senha);
-            if (!senhaValida) {
-                return res.status(401).json({ 
-                    error: 'Senha incorreta. Não foi possível excluir a conta.' 
-                });
-            }
-            
-            await usuarioService.softDeleteUsuario(userId);
+            await usuarioService.deleteUsuario(userId);
             
             res.json({
                 success: true,

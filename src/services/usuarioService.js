@@ -58,24 +58,8 @@ class UsuarioService {
         }
     }
     
-    // Verificar senha do usuário
-    async verificarSenha(userId, senha) {
-        try {
-            const query = 'SELECT senha FROM usuarios WHERE id = $1 AND ativo = true';
-            const result = await pool.query(query, [userId]);
-            
-            if (result.rows.length === 0) return false;
-            
-            const usuario = result.rows[0];
-            return await bcrypt.compare(senha, usuario.senha);
-        } catch (error) {
-            console.error('Erro no verificarSenha:', error);
-            throw error;
-        }
-    }
-    
     // Soft delete (marcar como inativo)
-    async softDeleteUsuario(id) {
+    async deleteUsuario(id) {
         try {
             // Iniciar transação
             await pool.query('BEGIN');

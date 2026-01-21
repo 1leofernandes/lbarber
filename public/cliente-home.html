@@ -69,13 +69,14 @@
         
         .sidebar-logo {
             height: 40px;
-            filter: drop-shadow(0 0 4px rgba(212, 175, 55, 0.3));
+            filter: drop-shadow(0 0 4px rgb(255, 255, 255));
+            border-radius: 8px;
         }
         
         .sidebar-brand {
             font-size: 1.4rem;
             font-weight: 600;
-            background: linear-gradient(to right, var(--accent-gold), var(--light-gold));
+            background: linear-gradient(to right, #ffffff);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
@@ -181,7 +182,8 @@
         
         .navbar-logo {
             height: 40px;
-            filter: drop-shadow(0 0 4px rgba(212, 175, 55, 0.3));
+            filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.87));
+            border-radius: 8px;
         }
         
         /* Main Content */
@@ -574,7 +576,7 @@
     <!-- Sidebar Menu -->
     <aside class="sidebar" id="sidebar">
         <div class="sidebar-header">
-            <img src="assets/lbarberlogo.png" alt="Barbearia Silva Logo" class="sidebar-logo">
+            <img src="assets/image0 (1).jpeg" alt="Barbearia Silva Logo" class="sidebar-logo">
             <div class="sidebar-brand">Barbearia Silva</div>
         </div>
         
@@ -599,7 +601,7 @@
                 <i class="fas fa-info-circle"></i>
                 <span>Informações</span>
             </a>
-            <a href="#" class="menu-item logout" id="logoutBtn">
+            <a href="login.html" class="menu-item logout" id="logoutBtn">
                 <i class="fas fa-sign-out-alt"></i>
                 <span>Sair</span>
             </a>
@@ -614,13 +616,13 @@
             </button>
             <div class="page-title" id="pageTitle">Início</div>
         </div>
-        <img src="assets/lbarberlogo.png" alt="Barbearia Silva Logo" class="navbar-logo">
+        <img src="assets/image0 (1).jpeg" alt="Barbearia Silva Logo" class="navbar-logo">
     </nav>
     
     <!-- Main Content -->
     <main class="main-content">
         <div class="welcome-section">
-            <h1 class="welcome-title" id="nomeUsuario">Bem-vindo, Cliente </h1>
+            <h1 class="welcome-title" id="welcomeTitle">Bem-vindo, Cliente </h1>
             <p class="welcome-subtitle">Gerencie seus agendamentos e aproveite nossos serviços</p>
         </div>
         
@@ -743,7 +745,7 @@
         return JSON.parse(atob(base64));
         }
 
-        document.getElementById('nomeUsuario').textContent = `bem-vindo, ${nomeUsuario}`;
+        document.getElementById('welcomeTitle').textContent = `bem-vindo, ${nomeUsuario}`;
 
         const userData = parseJwt(token);
         localStorage.setItem('nome', userData.nome);

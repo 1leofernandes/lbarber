@@ -474,12 +474,27 @@
             : 'https://barbeariasilva.onrender.com';
         const form = document.getElementById('registerForm');
 
+        const togglePassword = document.querySelector('#togglePassword');
+        const password = document.querySelector('#password');
+
+        togglePassword.addEventListener('click', function() {
+            const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
+            password.setAttribute('type', type);
+            this.classList.toggle('fa-eye');
+            this.classList.toggle('fa-eye-slash');
+        });
+
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
             const name = document.getElementById('name').value;
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
             const telefone = document.getElementById('telefone').value;
+
+            const loginBtn = document.querySelector('.btn-login');
+            const originalBtnText = loginBtn.innerHTML;
+            loginBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Autenticando...';
+            loginBtn.disabled = true;
 
             try {
                 const response = await fetch(`${API_BASE_URL}/auth/registrar`, {
@@ -493,8 +508,14 @@
                 const data = await response.json();
 
                 if (response.ok) {
-                    alert('Usuário registrado com sucesso!');
-                    window.location.href = 'login.html';
+                    // Visual feedback before redirect
+                    loginBtn.innerHTML = '<i class="fas fa-check"></i> Autenticado!';
+                    loginBtn.style.background = 'linear-gradient(to right, #2ecc71, #27ae60)';
+
+                    setTimeout(() => {
+                        // Redirecionar usando a página retornada pelo backend
+                        window.location.href = 'login.html';
+                    }, 1000);
                 } else {
                     alert(data.message);
                 }

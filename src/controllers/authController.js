@@ -6,7 +6,7 @@ const logger = require('../utils/logger');
 class AuthController {
   static async register(req, res, next) {
     try {
-      const { nome, email, telefone, senha, role } = req.body;
+      const { nome, email, telefone, senha } = req.body;
 
       const errors = validateRequired(['nome', 'email', 'telefone', 'senha'], req.body);
       if (errors.length > 0) {
@@ -39,8 +39,7 @@ class AuthController {
         nome,
         email,
         telefone,
-        senha,
-        role || 'cliente'
+        senha
       );
 
       res.status(201).json(result);

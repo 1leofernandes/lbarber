@@ -24,13 +24,13 @@ class User {
     return result.rows[0] || null;
   }
 
-  static async create(nome, email, senhaHash, role = 'cliente', roles = null) {
+  static async create(nome, email, telefone, senhaHash, role = 'cliente', roles = null) {
     const query = `
-      INSERT INTO usuarios (nome, email, senha, role, roles, created_at, updated_at)
-      VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
-      RETURNING id, nome, email, role, roles
+      INSERT INTO usuarios (nome, email, telefone, senha, role, roles, created_at, updated_at)
+      VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
+      RETURNING id, nome, email, telefone, role, roles
     `;
-    const result = await pool.query(query, [nome, email, senhaHash, role, roles]);
+    const result = await pool.query(query, [nome, email, telefone, senhaHash, role, roles]);
     return result.rows[0];
   }
 

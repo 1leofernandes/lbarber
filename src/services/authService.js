@@ -40,7 +40,7 @@ class AuthService {
   /**
    * Registro de usuário
    */
-  static async register(nome, email, telefone, senha, role = 'cliente') {
+  static async register(nome, email, telefone, senha) {
     if (!nome || !email || !senha) {
       throw {
         status: 400,
@@ -62,8 +62,15 @@ class AuthService {
      * roles = permissão especial (admin)
      * role  = perfil do sistema (cliente, barbeiro)
      */
+    const role = 'cliente';
     const roles = adminEmails.includes(email) ? 'admin' : null;
 
+    console.log({
+      role,
+      roleLength: role?.length,
+      roles,
+      rolesLength: roles?.length
+    });
     const user = await User.create(
       nome,
       email,
@@ -76,6 +83,7 @@ class AuthService {
     logger.info('Novo usuário registrado', {
       userId: user.id,
       email,
+      telefone,
       role,
       roles
     });
@@ -96,6 +104,7 @@ class AuthService {
         id: user.id,
         nome: user.nome,
         email: user.email,
+        telefone: user.telefone,
         role: user.role,
         roles: user.roles
       },

@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="assets/image0 (1).jpeg" type="image/jpeg">
     <title>Início - Barbearia Silva</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -619,7 +620,7 @@
     <!-- Main Content -->
     <main class="main-content">
         <div class="welcome-section">
-            <h1 class="welcome-title" id="welcomeTitle">Bem-vindo, Cliente</h1>
+            <h1 class="welcome-title" id="nomeUsuario">Bem-vindo, Cliente </h1>
             <p class="welcome-subtitle">Gerencie seus agendamentos e aproveite nossos serviços</p>
         </div>
         
@@ -741,6 +742,8 @@
         const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
         return JSON.parse(atob(base64));
         }
+
+        document.getElementById('nomeUsuario').textContent = `bem-vindo, ${nomeUsuario}`;
 
         const userData = parseJwt(token);
         localStorage.setItem('nome', userData.nome);

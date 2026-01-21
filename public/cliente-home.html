@@ -1353,7 +1353,6 @@
                         'Authorization': `Bearer ${token}`,
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({ senha })
                 });
                 
                 const data = await response.json();
@@ -1572,8 +1571,6 @@
             });
 
             deleteAccountBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                confirmPassword.value = ''; // Limpar campo
                 openModal(confirmDeleteModal);
             });
 
@@ -1588,13 +1585,6 @@
             
             // Confirmar exclusão
             confirmDeleteBtn.addEventListener('click', deleteAccount);
-            
-            // Permitir Enter no campo de senha
-            confirmPassword.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') {
-                    deleteAccount();
-                }
-            });
             
             // Fechar modal ao clicar fora
             confirmDeleteModal.addEventListener('click', (e) => {

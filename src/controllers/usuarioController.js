@@ -59,13 +59,6 @@ class UsuarioController {
     async deleteMe(req, res) {
         try {
             const userId = req.user.id;
-            const { senha } = req.body; // Pedir senha para confirmação
-            
-            if (!senha) {
-                return res.status(400).json({ 
-                    error: 'Por favor, confirme sua senha para excluir a conta' 
-                });
-            }
             
             await usuarioService.deleteUsuario(userId);
             

@@ -4,7 +4,7 @@ class UsuarioController {
     // Obter dados do usuário logado
     async getMe(req, res) {
         try {
-            const userId = req.userId;
+            const userId = req.user.id;
             const usuario = await usuarioService.getUsuarioById(userId);
             
             if (!usuario) {
@@ -23,7 +23,7 @@ class UsuarioController {
     // Atualizar dados do usuário
     async updateMe(req, res) {
         try {
-            const userId = req.userId;
+            const userId = req.user.id;
             const { nome, email, telefone } = req.body;
             
             // Validação básica
@@ -58,7 +58,7 @@ class UsuarioController {
     // Deletar conta do usuário (soft delete)
     async deleteMe(req, res) {
         try {
-            const userId = req.userId;
+            const userId = req.user.id;
             const { senha } = req.body; // Pedir senha para confirmação
             
             if (!senha) {

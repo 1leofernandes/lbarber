@@ -7,9 +7,9 @@ class UsuarioService {
     async getUsuarioById(id) {
         try {
             const query = `
-                SELECT id, nome, email, telefone, ativo, role, created_at, updated_at
+                SELECT id, nome, email, telefone, role, created_at, updated_at
                 FROM usuarios 
-                WHERE id = $1 AND ativo = true
+                WHERE id = $1
             `;
             const values = [id];
             
@@ -26,7 +26,7 @@ class UsuarioService {
         try {
             const query = `
                 SELECT id FROM usuarios 
-                WHERE email = $1 AND id != $2 AND ativo = true
+                WHERE email = $1 AND id != $2
             `;
             const values = [email, usuarioId];
             
@@ -46,7 +46,7 @@ class UsuarioService {
                 UPDATE usuarios 
                 SET nome = $1, email = $2, telefone = $3, updated_at = NOW()
                 WHERE id = $4 
-                RETURNING id, nome, email, telefone, role, ativo
+                RETURNING id, nome, email, telefone, role
             `;
             const values = [nome, email, telefone, id];
             
@@ -61,7 +61,7 @@ class UsuarioService {
     // Verificar senha do usuário
     async verificarSenha(userId, senha) {
         try {
-            const query = 'SELECT senha FROM usuarios WHERE id = $1 AND ativo = true';
+            const query = 'SELECT senha FROM usuarios WHERE id = $1';
             const result = await pool.query(query, [userId]);
             
             if (result.rows.length === 0) return false;
@@ -74,21 +74,51 @@ class UsuarioService {
         }
     }
     
-    // Soft delete (marcar como inativo)
-    async softDeleteUsuario(id) {
+    // Deletar conta permanentemente
+    async deleteUsuario(id) {
+        try {
+            // Iniciar transação
+            await pool.query('BEGIN');
+            
+            // 1. Primeiro deletar agendamentos do usuário
+            const deleteAgendamentosQuery = `
+                DELETE FROM agendamentos 
+                WHERE cliente_id = $1
+            `;
+            await pool.query(deleteAgendamentosQuery, [id]);
+            
+            // 2. Deletar o usuário
+            const deleteUsuarioQuery = `
+                DELETE FROM usuarios 
+                WHERE id = $1
+                RETURNING id
+            `;
+            const result = await pool.query(deleteUsuarioQuery, [id]);
+            
+            // 3. Commit da transação
+            await pool.query('COMMIT');
+            
+            return result.rows[0];
+        } catch (error) {
+            // Rollback em caso de erro
+            await pool.query('ROLLBACK');
+            console.error('Erro no deleteUsuario:', error);
+            throw error;
+        }
+    }
+    
+    // Buscar dados do usuário incluindo senha (para verificação)
+    async getUsuarioComSenha(id) {
         try {
             const query = `
-                UPDATE usuarios 
-                SET ativo = false, 
-                    deleted_at = NOW(), 
-                    email = CONCAT(email, '_deleted_', EXTRACT(EPOCH FROM NOW())),
-                    updated_at = NOW()
+                SELECT id, nome, email, telefone, senha, role
+                FROM usuarios 
                 WHERE id = $1
             `;
-            await pool.query(query, [id]);
-            return true;
+            const result = await pool.query(query, [id]);
+            return result.rows[0];
         } catch (error) {
-            console.error('Erro no softDeleteUsuario:', error);
+            console.error('Erro no getUsuarioComSenha:', error);
             throw error;
         }
     }

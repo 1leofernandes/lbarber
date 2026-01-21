@@ -1,3 +1,4 @@
+// src/controllers/usuarioController.js
 const usuarioService = require('../services/usuarioService');
 
 class UsuarioController {
@@ -8,15 +9,22 @@ class UsuarioController {
             const usuario = await usuarioService.getUsuarioById(userId);
             
             if (!usuario) {
-                return res.status(404).json({ error: 'Usuário não encontrado' });
+                return res.status(404).json({ 
+                    success: false,
+                    message: 'Usuário não encontrado' 
+                });
             }
             
-            // Não retornar senha
-            const { senha, ...usuarioSemSenha } = usuario;
-            res.json(usuarioSemSenha);
+            res.json({
+                success: true,
+                usuario: usuario
+            });
         } catch (error) {
             console.error('Erro ao buscar usuário:', error);
-            res.status(500).json({ error: 'Erro interno do servidor' });
+            res.status(500).json({ 
+                success: false,
+                message: 'Erro interno do servidor' 
+            });
         }
     }
     
@@ -29,7 +37,17 @@ class UsuarioController {
             // Validação básica
             if (!nome || !email) {
                 return res.status(400).json({ 
-                    error: 'Nome e email são obrigatórios' 
+                    success: false,
+                    message: 'Nome e email são obrigatórios' 
+                });
+            }
+            
+            // Validar formato do email
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                return res.status(400).json({ 
+                    success: false,
+                    message: 'Formato de email inválido' 
                 });
             }
             
@@ -37,7 +55,8 @@ class UsuarioController {
             const emailEmUso = await usuarioService.verificarEmailEmUso(email, userId);
             if (emailEmUso) {
                 return res.status(400).json({ 
-                    error: 'Este email já está em uso por outro usuário' 
+                    success: false,
+                    message: 'Este email já está em uso por outro usuário' 
                 });
             }
             
@@ -51,39 +70,65 @@ class UsuarioController {
             });
         } catch (error) {
             console.error('Erro ao atualizar usuário:', error);
-            res.status(500).json({ error: 'Erro interno do servidor' });
+            res.status(500).json({ 
+                success: false,
+                message: 'Erro interno do servidor' 
+            });
         }
     }
     
-    // Deletar conta do usuário (soft delete)
+    // Deletar conta do usuário permanentemente
     async deleteMe(req, res) {
         try {
             const userId = req.user.id;
-            const { senha } = req.body; // Pedir senha para confirmação
+            const { senha } = req.body;
             
             if (!senha) {
                 return res.status(400).json({ 
-                    error: 'Por favor, confirme sua senha para excluir a conta' 
+                    success: false,
+                    message: 'Por favor, confirme sua senha para excluir a conta' 
                 });
             }
             
-            // Verificar senha antes de deletar
-            const senhaValida = await usuarioService.verificarSenha(userId, senha);
+            // 1. Verificar se o usuário existe e obter senha
+            const usuario = await usuarioService.getUsuarioComSenha(userId);
+            if (!usuario) {
+                return res.status(404).json({ 
+                    success: false,
+                    message: 'Usuário não encontrado' 
+                });
+            }
+            
+            // 2. Verificar senha
+            const bcrypt = require('bcrypt');
+            const senhaValida = await bcrypt.compare(senha, usuario.senha);
             if (!senhaValida) {
                 return res.status(401).json({ 
-                    error: 'Senha incorreta. Não foi possível excluir a conta.' 
+                    success: false,
+                    message: 'Senha incorreta. Não foi possível excluir a conta.' 
                 });
             }
             
-            await usuarioService.softDeleteUsuario(userId);
+            // 3. Deletar o usuário e todos os seus dados relacionados
+            const usuarioDeletado = await usuarioService.deleteUsuario(userId);
+            
+            if (!usuarioDeletado) {
+                return res.status(500).json({ 
+                    success: false,
+                    message: 'Não foi possível excluir a conta' 
+                });
+            }
             
             res.json({
                 success: true,
-                message: 'Conta excluída com sucesso'
+                message: 'Conta e todos os dados relacionados foram excluídos permanentemente'
             });
         } catch (error) {
             console.error('Erro ao excluir conta:', error);
-            res.status(500).json({ error: 'Erro interno do servidor' });
+            res.status(500).json({ 
+                success: false,
+                message: 'Erro interno do servidor' 
+            });
         }
     }
 }

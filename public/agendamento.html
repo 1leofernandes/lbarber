@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" href="assets/image0 (1).jpeg" type="image/jpeg">
-    <title>Agendamento - Barbearia Silva</title>
+    <title>Agendar - Barbearia Silva</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/simplebar@latest/dist/simplebar.css">
     <style>
         :root {
             --primary-dark: #121212;
@@ -18,6 +18,8 @@
             --medium-gray: #8c8c8c;
             --success: #28a745;
             --error: #dc3545;
+            --card-bg: #1e1e1e;
+            --overlay-bg: rgba(0, 0, 0, 0.9);
         }
         
         * {
@@ -33,370 +35,583 @@
             min-height: 100vh;
             display: flex;
             flex-direction: column;
-            background-image: linear-gradient(rgba(18, 18, 18, 0.95), rgba(18, 18, 18, 0.95)), 
-                              url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><rect width="100" height="100" fill="none" stroke="%232a2a2a" stroke-width="1"/></svg>');
-            background-size: 50px;
         }
         
-        /* Header/Nav */
-        .navbar {
+        /* Header */
+        .header {
             background-color: var(--primary-dark);
-            padding: 1.2rem 5%;
+            padding: 1.2rem 1.5rem;
             border-bottom: 1px solid rgba(212, 175, 55, 0.15);
             display: flex;
             justify-content: space-between;
             align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
         }
         
-        .logo-container {
+        .back-btn {
+            background: none;
+            border: none;
+            color: var(--accent-gold);
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+        }
+        
+        .back-btn:hover {
+            background-color: rgba(212, 175, 55, 0.1);
+        }
+        
+        .page-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--light-gray);
+        }
+        
+        .header-logo {
+            height: 40px;
+            filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.87));
+            border-radius: 8px;
+        }
+        
+        /* Progress Steps */
+        .progress-steps {
+            display: flex;
+            justify-content: space-between;
+            padding: 1.5rem;
+            position: relative;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .progress-steps::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: rgba(212, 175, 55, 0.2);
+            transform: translateY(-50%);
+            z-index: 1;
+        }
+        
+        .step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .step-circle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--card-bg);
+            border: 2px solid rgba(212, 175, 55, 0.3);
             display: flex;
             align-items: center;
-            gap: 12px;
-        }
-        
-        .logo-img {
-            height: 42px;
-            filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.87));
-            border-radius: 6px;
-        }
-        
-        .logo-text {
-            font-size: 1.8rem;
+            justify-content: center;
             font-weight: 600;
-            background: linear-gradient(to right, var(--accent-gold), var(--light-gold));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            letter-spacing: 1px;
+            color: var(--medium-gray);
+            margin-bottom: 8px;
+            transition: all 0.3s ease;
         }
         
-        .user-info {
+        .step.active .step-circle {
+            background: var(--accent-gold);
+            color: var(--primary-dark);
+            border-color: var(--accent-gold);
+        }
+        
+        .step.completed .step-circle {
+            background: var(--success);
+            color: white;
+            border-color: var(--success);
+        }
+        
+        .step-label {
+            font-size: 0.9rem;
+            color: var(--medium-gray);
+            text-align: center;
+        }
+        
+        .step.active .step-label {
+            color: var(--light-gray);
+        }
+        
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            padding: 1.5rem;
+            max-width: 800px;
+            margin: 0 auto;
+            width: 100%;
+        }
+        
+        .selection-card {
+            background: linear-gradient(145deg, var(--card-bg), #191919);
+            border-radius: 16px;
+            padding: 1.8rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid rgba(212, 175, 55, 0.1);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .selection-card:hover {
+            border-color: var(--accent-gold);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        }
+        
+        .selection-card.active {
+            border-color: var(--accent-gold);
+            background: linear-gradient(145deg, rgba(212, 175, 55, 0.05), #191919);
+        }
+        
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        
+        .card-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--light-gray);
             display: flex;
             align-items: center;
             gap: 10px;
         }
         
-        .user-name {
-            color: var(--light-gold);
-            font-weight: 500;
+        .card-title i {
+            color: var(--accent-gold);
         }
         
-        .logout-btn {
+        .card-subtitle {
+            color: var(--medium-gray);
+            font-size: 0.95rem;
+        }
+        
+        .selected-option {
             background: rgba(212, 175, 55, 0.1);
-            border: 1px solid rgba(212, 175, 55, 0.3);
-            color: var(--accent-gold);
-            padding: 0.5rem 1rem;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: all 0.3s;
-            font-size: 0.9rem;
-        }
-        
-        .logout-btn:hover {
-            background: rgba(212, 175, 55, 0.2);
-        }
-        
-        /* Main Content */
-        .main-container {
+            border: 1px solid rgba(212, 175, 55, 0.2);
+            border-radius: 8px;
+            padding: 0.8rem 1rem;
+            margin-top: 1rem;
             display: flex;
-            flex: 1;
-            flex-direction: column;
+            justify-content: space-between;
             align-items: center;
-            padding: 2rem 5%;
         }
         
-        .welcome-section {
-            text-align: center;
-            margin-bottom: 2.5rem;
-            max-width: 800px;
-            width: 100%;
-        }
-        
-        .welcome-title {
-            font-size: 2.2rem;
-            font-weight: 600;
-            margin-bottom: 0.5rem;
-            background: linear-gradient(to right, var(--accent-gold), var(--light-gold));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-        
-        .welcome-subtitle {
-            font-size: 1.1rem;
-            color: var(--medium-gray);
-            margin-bottom: 1.5rem;
-        }
-        
-        .booking-container {
-            display: flex;
-            flex-direction: column;
-            gap: 30px;
-            max-width: 1200px;
-            width: 100%;
-        }
-        
-        .booking-form-container {
-            background: linear-gradient(145deg, #1a1a1a, #151515);
-            border-radius: 16px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 
-                        0 0 0 1px rgba(212, 175, 55, 0.1);
-            padding: 2rem;
-            position: relative;
-            overflow: hidden;
-            order: 1;
-        }
-        
-        .calendar-preview {
-            background: linear-gradient(145deg, #1a1a1a, #151515);
-            border-radius: 16px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 
-                        0 0 0 1px rgba(212, 175, 55, 0.1);
-            padding: 2rem;
-            text-align: center;
-            order: 2;
-        }
-        
-        .form-header {
-            margin-bottom: 2rem;
-            position: relative;
-        }
-        
-        .form-title {
-            font-size: 1.6rem;
-            font-weight: 600;
-            margin-bottom: 0.5rem;
-            color: var(--light-gray);
-        }
-        
-        .form-subtitle {
-            color: var(--medium-gray);
-            font-size: 1rem;
-        }
-        
-        .form-group {
-            margin-bottom: 1.8rem;
-            position: relative;
-        }
-        
-        .form-label {
-            display: block;
-            margin-bottom: 0.8rem;
-            font-size: 1rem;
+        .selected-text {
             color: var(--light-gray);
             font-weight: 500;
-            display: flex;
-            align-items: center;
-            gap: 8px;
         }
         
-        .form-label i {
-            color: var(--accent-gold);
-            font-size: 1.1rem;
-        }
-        
-        .form-control {
-            width: 100%;
-            padding: 0.9rem 1.2rem;
-            background-color: rgba(30, 30, 30, 0.7);
-            border: 1px solid rgba(80, 80, 80, 0.3);
-            border-radius: 8px;
-            color: var(--light-gray);
-            font-size: 1rem;
-            transition: all 0.3s ease;
-        }
-        
-        .form-control:focus {
-            outline: none;
-            border-color: var(--accent-gold);
-            box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.2);
-            background-color: rgba(40, 40, 40, 0.5);
-        }
-        
-        .form-control:disabled {
-            background-color: rgba(40, 40, 40, 0.3);
-            color: var(--medium-gray);
-        }
-        
-        .btn-submit {
-            width: 100%;
-            padding: 1.1rem;
-            background: linear-gradient(to right, var(--accent-gold), var(--dark-gold));
+        .change-btn {
+            background: none;
             border: none;
-            border-radius: 8px;
-            color: var(--primary-dark);
-            font-size: 1.1rem;
-            font-weight: 600;
+            color: var(--accent-gold);
+            font-size: 0.9rem;
             cursor: pointer;
+            padding: 0.3rem 0.8rem;
+            border-radius: 5px;
+            transition: background 0.3s ease;
+        }
+        
+        .change-btn:hover {
+            background: rgba(212, 175, 55, 0.1);
+        }
+        
+        /* Bottom Sheet */
+        .bottom-sheet-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--overlay-bg);
+            backdrop-filter: blur(5px);
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
             transition: all 0.3s ease;
-            margin-top: 0.8rem;
-            box-shadow: 0 4px 15px rgba(212, 175, 55, 0.25);
-            text-transform: uppercase;
-            letter-spacing: 1px;
         }
         
-        .btn-submit:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(212, 175, 55, 0.4);
+        .bottom-sheet-overlay.active {
+            opacity: 1;
+            visibility: visible;
         }
         
-        .btn-submit:disabled {
-            background: linear-gradient(to right, #555, #444);
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
+        .bottom-sheet {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--primary-dark);
+            border-radius: 20px 20px 0 0;
+            padding: 1.5rem;
+            transform: translateY(100%);
+            transition: transform 0.4s ease;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            z-index: 1001;
+            box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.5);
         }
         
-        /* Calendar Styles */
-        .calendar-header {
+        .bottom-sheet.active {
+            transform: translateY(0);
+        }
+        
+        .bottom-sheet-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid rgba(212, 175, 55, 0.1);
         }
         
-        .calendar-title {
-            font-size: 1.2rem;
-            font-weight: 500;
+        .bottom-sheet-title {
+            font-size: 1.4rem;
+            font-weight: 600;
             color: var(--light-gray);
         }
         
-        .calendar-nav {
-            display: flex;
-            gap: 10px;
-        }
-        
-        .calendar-nav-btn {
-            background: rgba(212, 175, 55, 0.1);
-            border: 1px solid rgba(212, 175, 55, 0.3);
-            color: var(--accent-gold);
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
+        .bottom-sheet-close {
+            background: none;
+            border: none;
+            color: var(--medium-gray);
+            font-size: 1.5rem;
+            cursor: pointer;
+            width: 40px;
+            height: 40px;
             display: flex;
             align-items: center;
             justify-content: center;
-            cursor: pointer;
-            transition: all 0.3s;
+            border-radius: 50%;
+            transition: all 0.3s ease;
         }
         
-        .calendar-nav-btn:hover {
-            background: rgba(212, 175, 55, 0.2);
-        }
-        
-        .calendar-weekdays {
-            display: grid;
-            grid-template-columns: repeat(7, 1fr);
-            gap: 5px;
-            margin-bottom: 10px;
-        }
-        
-        .weekday {
-            font-size: 0.9rem;
+        .bottom-sheet-close:hover {
+            background: rgba(212, 175, 55, 0.1);
             color: var(--accent-gold);
-            font-weight: 500;
         }
         
-        .calendar-days {
+        .bottom-sheet-content {
+            flex: 1;
+            overflow-y: auto;
+            padding-right: 5px;
+        }
+        
+        /* Options Grid */
+        .options-grid {
             display: grid;
-            grid-template-columns: repeat(7, 1fr);
-            gap: 5px;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
         }
         
-        .calendar-day {
-            padding: 8px;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.3s;
-            font-weight: 500;
-        }
-        
-        .calendar-day:hover {
-            background: rgba(212, 175, 55, 0.1);
-        }
-        
-        .calendar-day.selected {
-            background: var(--accent-gold);
-            color: var(--primary-dark);
-        }
-        
-        .calendar-day.disabled {
-            color: var(--medium-gray);
-            cursor: not-allowed;
-        }
-        
-        .calendar-day.disabled:hover {
-            background: transparent;
-        }
-        
-        .calendar-day.past {
-            color: var(--medium-gray);
-            cursor: not-allowed;
-        }
-        
-        .time-slots {
-            margin-top: 1.5rem;
-        }
-        
-        .time-slots-title {
-            font-size: 1.1rem;
-            margin-bottom: 1rem;
-            color: var(--light-gray);
-            font-weight: 500;
-        }
-        
-        .slots-container {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 8px;
-        }
-        
-        .time-slot {
-            border-radius: 6px;
-            padding: 0.5rem;
+        .option-card {
+            background: var(--card-bg);
+            border: 2px solid rgba(212, 175, 55, 0.1);
+            border-radius: 12px;
+            padding: 1rem;
             text-align: center;
-            font-size: 0.9rem;
-            transition: all 0.3s;
-        }
-        
-        .time-slot.available {
-            background: rgba(40, 40, 40, 0.7);
-            border: 1px solid rgba(80, 80, 80, 0.3);
             cursor: pointer;
+            transition: all 0.3s ease;
         }
         
-        .time-slot.available:hover {
+        .option-card:hover {
             border-color: var(--accent-gold);
-            background: rgba(212, 175, 55, 0.1);
+            transform: translateY(-3px);
         }
         
-        .time-slot.selected {
-            background: var(--accent-gold);
-            color: var(--primary-dark);
+        .option-card.selected {
             border-color: var(--accent-gold);
+            background: rgba(212, 175, 55, 0.05);
+        }
+        
+        .option-icon {
+            font-size: 2rem;
+            color: var(--accent-gold);
+            margin-bottom: 0.5rem;
+        }
+        
+        .option-title {
+            font-weight: 600;
+            color: var(--light-gray);
+            margin-bottom: 0.3rem;
+        }
+        
+        .option-desc {
+            font-size: 0.8rem;
+            color: var(--medium-gray);
+        }
+        
+        /* Services List */
+        .services-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
+        }
+        
+        .service-item {
+            background: var(--card-bg);
+            border: 2px solid rgba(212, 175, 55, 0.1);
+            border-radius: 12px;
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .service-item:hover {
+            border-color: var(--accent-gold);
+        }
+        
+        .service-item.selected {
+            border-color: var(--accent-gold);
+            background: rgba(212, 175, 55, 0.05);
+        }
+        
+        .service-info {
+            flex: 1;
+        }
+        
+        .service-name {
+            font-weight: 600;
+            color: var(--light-gray);
+            margin-bottom: 0.3rem;
+        }
+        
+        .service-duration {
+            font-size: 0.85rem;
+            color: var(--accent-gold);
+        }
+        
+        .service-price {
+            text-align: right;
+        }
+        
+        .original-price {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--light-gray);
+        }
+        
+        .discounted-price {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--success);
+        }
+        
+        .free-badge {
+            background: var(--success);
+            color: white;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            font-size: 0.8rem;
             font-weight: 600;
         }
         
-        .time-slot.unavailable {
-            background: rgba(220, 53, 69, 0.1);
-            color: var(--medium-gray);
-            text-decoration: line-through;
-            cursor: not-allowed;
-            border: 1px solid rgba(220, 53, 69, 0.3);
+        /* Date Carousel */
+        .date-carousel {
+            display: flex;
+            gap: 0.8rem;
+            overflow-x: auto;
+            padding: 0.5rem 0;
+            margin-bottom: 1.5rem;
+            scrollbar-width: none;
         }
         
-        .time-slot.unavailable:hover {
-            border-color: rgba(220, 53, 69, 0.3);
-        }
-        
-        /* Hidden form inputs */
-        .hidden-inputs {
+        .date-carousel::-webkit-scrollbar {
             display: none;
+        }
+        
+        .date-card {
+            flex: 0 0 auto;
+            width: 80px;
+            background: var(--card-bg);
+            border: 2px solid rgba(212, 175, 55, 0.1);
+            border-radius: 12px;
+            padding: 0.8rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .date-card:hover {
+            border-color: var(--accent-gold);
+        }
+        
+        .date-card.selected {
+            border-color: var(--accent-gold);
+            background: rgba(212, 175, 55, 0.05);
+        }
+        
+        .date-weekday {
+            font-size: 0.8rem;
+            color: var(--medium-gray);
+            margin-bottom: 0.3rem;
+        }
+        
+        .date-day {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--light-gray);
+            margin-bottom: 0.3rem;
+        }
+        
+        .date-month {
+            font-size: 0.8rem;
+            color: var(--medium-gray);
+            text-transform: uppercase;
+        }
+        
+        /* Time Slots */
+        .time-slots-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.8rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .time-slot {
+            background: var(--card-bg);
+            border: 2px solid rgba(212, 175, 55, 0.1);
+            border-radius: 8px;
+            padding: 0.8rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .time-slot:hover {
+            border-color: var(--accent-gold);
+        }
+        
+        .time-slot.selected {
+            border-color: var(--accent-gold);
+            background: rgba(212, 175, 55, 0.1);
+            color: var(--accent-gold);
+            font-weight: 600;
+        }
+        
+        .time-slot.disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            text-decoration: line-through;
+        }
+        
+        /* Summary */
+        .summary-section {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-top: 2rem;
+            border: 1px solid rgba(212, 175, 55, 0.1);
+        }
+        
+        .summary-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--light-gray);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .summary-title i {
+            color: var(--accent-gold);
+        }
+        
+        .summary-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.8rem 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        
+        .summary-item:last-child {
+            border-bottom: none;
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: var(--light-gray);
+        }
+        
+        .summary-label {
+            color: var(--medium-gray);
+        }
+        
+        .summary-value {
+            color: var(--light-gray);
+            text-align: right;
+        }
+        
+        .summary-discount {
+            color: var(--success);
+        }
+        
+        /* Buttons */
+        .btn {
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: none;
+            font-size: 1rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(to right, var(--accent-gold), var(--dark-gold));
+            color: var(--primary-dark);
+        }
+        
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(212, 175, 55, 0.4);
+        }
+        
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .btn-secondary {
+            background: transparent;
+            border: 2px solid var(--accent-gold);
+            color: var(--accent-gold);
+            margin-top: 1rem;
+        }
+        
+        .btn-secondary:hover {
+            background: rgba(212, 175, 55, 0.1);
         }
         
         /* Footer */
         .footer {
             background-color: var(--primary-dark);
             border-top: 1px solid rgba(212, 175, 55, 0.1);
-            padding: 1.5rem 5%;
+            padding: 1.5rem;
             text-align: center;
             color: var(--medium-gray);
             font-size: 0.9rem;
@@ -420,189 +635,262 @@
             color: var(--accent-gold);
         }
         
-        /* Responsividade */
-        @media (min-width: 992px) {
-            .booking-container {
-                flex-direction: row;
+        /* Loading */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(212, 175, 55, 0.3);
+            border-radius: 50%;
+            border-top-color: var(--accent-gold);
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Responsive */
+        @media (min-width: 768px) {
+            .options-grid {
+                grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
             }
             
-            .booking-form-container {
-                order: 2;
-                flex: 1;
+            .time-slots-grid {
+                grid-template-columns: repeat(4, 1fr);
             }
             
-            .calendar-preview {
-                order: 1;
-                width: 350px;
+            .bottom-sheet {
+                max-width: 600px;
+                left: 50%;
+                transform: translateX(-50%) translateY(100%);
+                border-radius: 20px;
             }
             
-            .slots-container {
+            .bottom-sheet.active {
+                transform: translateX(-50%) translateY(0);
+            }
+        }
+        
+        @media (max-width: 767px) {
+            .time-slots-grid {
                 grid-template-columns: repeat(3, 1fr);
             }
-        }
-        
-        @media (max-width: 768px) {
-            .navbar {
-                padding: 1rem 5%;
+            
+            .header {
+                padding: 1rem;
             }
             
-            .logo-text {
-                font-size: 1.5rem;
+            .main-content {
+                padding: 1rem;
             }
             
-            .welcome-title {
-                font-size: 1.8rem;
-            }
-            
-            .booking-form-container, .calendar-preview {
+            .selection-card {
                 padding: 1.5rem;
             }
-        }
-        
-        /* Animações */
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        
-        .fade-in {
-            animation: fadeIn 0.5s ease forwards;
-        }
-        
-        .success-message {
-            background: var(--success);
-            color: white;
-            padding: 1rem;
-            border-radius: 8px;
-            margin-top: 1rem;
-            text-align: center;
-            display: none;
         }
     </style>
 </head>
 <body>
-    <!-- Header/Navbar -->
-    <nav class="navbar">
-        <div class="logo-container">
-            <img src="assets/image0 (1).jpeg" alt="Barbearia Silva Logo" class="logo-img">
-            <div class="logo-text">Barbearia Silva</div>
+    <!-- Header -->
+    <header class="header">
+        <button class="back-btn" onclick="window.location.href='cliente-home.html'">
+            <i class="fas fa-arrow-left"></i>
+        </button>
+        <div class="page-title">Agendar Serviço</div>
+        <img src="assets/image0 (1).jpeg" alt="Barbearia Silva Logo" class="header-logo">
+    </header>
+    
+    <!-- Progress Steps -->
+    <div class="progress-steps">
+        <div class="step active" id="step1">
+            <div class="step-circle">1</div>
+            <div class="step-label">Barbeiro</div>
         </div>
-        
-        <div class="user-info">
-            <span class="user-name" id="nomeUsuario">Olá, Usuário</span>
-            <button class="logout-btn" onclick="logout()">
-                <i class="fas fa-sign-out-alt"></i> Sair
-            </button>
+        <div class="step" id="step2">
+            <div class="step-circle">2</div>
+            <div class="step-label">Serviços</div>
         </div>
-    </nav>
-
-    <!-- Main Content -->
-    <div class="main-container">
-        <div class="welcome-section">
-            <h1 class="welcome-title">Agende seu horário</h1>
-            <p class="welcome-subtitle">Escolha seu barbeiro, serviço e horário preferido para garantir o melhor atendimento</p>
+        <div class="step" id="step3">
+            <div class="step-circle">3</div>
+            <div class="step-label">Data & Hora</div>
         </div>
-        
-        <div class="booking-container">
-            <div class="booking-form-container fade-in">
-                <div class="form-header">
-                    <h2 class="form-title"><i class="fas fa-calendar-alt"></i> Novo Agendamento</h2>
-                    <p class="form-subtitle">Preencha os detalhes do seu agendamento</p>
-                </div>
-                
-                <form id="agendamentoForm">
-                    <div class="form-group">
-                        <label for="barbeiro" class="form-label">
-                            <i class="fas fa-user"></i> Barbeiro
-                        </label>
-                        <select class="form-control" id="barbeiro" required>
-                            <option value="">Selecione seu barbeiro</option>
-                        </select>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="servico" class="form-label">
-                            <i class="fas fa-cut"></i> Serviço
-                        </label>
-                        <select id="servico" class="form-control" required>
-                            <option value="">Escolha o serviço</option>
-                        </select>
-                    </div>
-                    
-                    <!-- Hidden inputs for data and hora -->
-                    <div class="hidden-inputs">
-                        <input type="date" id="data" required>
-                        <input type="text" id="hora" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label class="form-label">
-                            <i class="fas fa-calendar-day"></i> Data selecionada
-                        </label>
-                        <div id="selectedDateDisplay" class="form-control" style="background-color: rgba(40, 40, 40, 0.5);">
-                            Nenhuma data selecionada
-                        </div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label class="form-label">
-                            <i class="fas fa-clock"></i> Horário selecionado
-                        </label>
-                        <div id="selectedTimeDisplay" class="form-control" style="background-color: rgba(40, 40, 40, 0.5);">
-                            Nenhum horário selecionado
-                        </div>
-                    </div>
-                    
-                    <button type="submit" class="btn-submit" id="submitBtn" disabled>
-                        <i class="fas fa-calendar-check"></i> Confirmar Agendamento
-                    </button>
-                    
-                    <div class="success-message" id="successMessage">
-                        <i class="fas fa-check-circle"></i> Agendamento realizado com sucesso!
-                    </div>
-                </form>
-            </div>
-            
-            <div class="calendar-preview fade-in">
-                <div class="calendar-header">
-                    <div class="calendar-nav">
-                        <div class="calendar-nav-btn" id="prevMonth">
-                            <i class="fas fa-chevron-left"></i>
-                        </div>
-                        <div class="calendar-nav-btn" id="nextMonth">
-                            <i class="fas fa-chevron-right"></i>
-                        </div>
-                    </div>
-                    <h3 class="calendar-title" id="currentMonth">Junho 2023</h3>
-                </div>
-                
-                <div class="calendar-weekdays">
-                    <div class="weekday">Dom</div>
-                    <div class="weekday">Seg</div>
-                    <div class="weekday">Ter</div>
-                    <div class="weekday">Qua</div>
-                    <div class="weekday">Qui</div>
-                    <div class="weekday">Sex</div>
-                    <div class="weekday">Sáb</div>
-                </div>
-                
-                <div class="calendar-days" id="calendarDays">
-                    <!-- Days will be populated by JavaScript -->
-                </div>
-                
-                <div class="time-slots" id="timeSlotsSection" style="display: none;">
-                    <h4 class="time-slots-title">Horários Disponíveis</h4>
-                    <div class="slots-container" id="timeSlots">
-                        <!-- Time slots will be populated by JavaScript -->
-                    </div>
-                </div>
-            </div>
+        <div class="step" id="step4">
+            <div class="step-circle">4</div>
+            <div class="step-label">Confirmar</div>
         </div>
     </div>
-
+    
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Step 1: Selecionar Barbeiro -->
+        <div class="selection-card active" id="barbeiroCard">
+            <div class="card-header">
+                <div>
+                    <h2 class="card-title"><i class="fas fa-user"></i> Barbeiro</h2>
+                    <p class="card-subtitle">Escolha um barbeiro ou selecione "Sem preferência"</p>
+                </div>
+                <i class="fas fa-chevron-right"></i>
+            </div>
+            <div id="barbeiroSelected" class="selected-option" style="display: none;">
+                <div class="selected-text">Sem preferência</div>
+                <button class="change-btn">Alterar</button>
+            </div>
+        </div>
+        
+        <!-- Step 2: Selecionar Serviços -->
+        <div class="selection-card" id="servicosCard">
+            <div class="card-header">
+                <div>
+                    <h2 class="card-title"><i class="fas fa-cut"></i> Serviços</h2>
+                    <p class="card-subtitle">Selecione um ou mais serviços</p>
+                </div>
+                <i class="fas fa-chevron-right"></i>
+            </div>
+            <div id="servicosSelected" class="selected-option" style="display: none;">
+                <div class="selected-text">Nenhum serviço selecionado</div>
+                <button class="change-btn">Alterar</button>
+            </div>
+        </div>
+        
+        <!-- Step 3: Selecionar Data e Hora -->
+        <div class="selection-card" id="dataHoraCard">
+            <div class="card-header">
+                <div>
+                    <h2 class="card-title"><i class="fas fa-calendar-alt"></i> Data & Hora</h2>
+                    <p class="card-subtitle">Escolha quando deseja ser atendido</p>
+                </div>
+                <i class="fas fa-chevron-right"></i>
+            </div>
+            <div id="dataHoraSelected" class="selected-option" style="display: none;">
+                <div class="selected-text">Nenhuma data e hora selecionadas</div>
+                <button class="change-btn">Alterar</button>
+            </div>
+        </div>
+        
+        <!-- Summary Section -->
+        <div class="summary-section">
+            <h3 class="summary-title"><i class="fas fa-receipt"></i> Resumo</h3>
+            
+            <div class="summary-item">
+                <span class="summary-label">Barbeiro:</span>
+                <span class="summary-value" id="summaryBarbeiro">Não selecionado</span>
+            </div>
+            
+            <div class="summary-item">
+                <span class="summary-label">Serviços:</span>
+                <span class="summary-value" id="summaryServicos">Nenhum</span>
+            </div>
+            
+            <div class="summary-item">
+                <span class="summary-label">Data:</span>
+                <span class="summary-value" id="summaryData">--/--/----</span>
+            </div>
+            
+            <div class="summary-item">
+                <span class="summary-label">Hora:</span>
+                <span class="summary-value" id="summaryHora">--:--</span>
+            </div>
+            
+            <div class="summary-item">
+                <span class="summary-label">Subtotal:</span>
+                <span class="summary-value" id="summarySubtotal">R$ 0,00</span>
+            </div>
+            
+            <div class="summary-item" id="discountItem" style="display: none;">
+                <span class="summary-label">Desconto Assinatura:</span>
+                <span class="summary-value summary-discount" id="summaryDiscount">-R$ 0,00</span>
+            </div>
+            
+            <div class="summary-item">
+                <span class="summary-label">Total:</span>
+                <span class="summary-value" id="summaryTotal">R$ 0,00</span>
+            </div>
+        </div>
+        
+        <!-- Action Buttons -->
+        <button class="btn btn-primary" id="confirmBtn" disabled>
+            <i class="fas fa-calendar-check"></i> Confirmar Agendamento
+        </button>
+        
+        <button class="btn btn-secondary" onclick="window.location.href='cliente-home.html'">
+            <i class="fas fa-times"></i> Cancelar
+        </button>
+    </main>
+    
+    <!-- Bottom Sheet - Barbeiros -->
+    <div class="bottom-sheet-overlay" id="barbeiroOverlay"></div>
+    <div class="bottom-sheet" id="barbeiroSheet">
+        <div class="bottom-sheet-header">
+            <h2 class="bottom-sheet-title">Selecione um Barbeiro</h2>
+            <button class="bottom-sheet-close" id="closeBarbeiroSheet">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="bottom-sheet-content" id="barbeiroContent">
+            <!-- Barbeiros serão carregados aqui -->
+            <div class="loading" style="margin: 2rem auto;"></div>
+        </div>
+        <button class="btn btn-primary" id="confirmBarbeiroBtn" disabled>
+            Continuar
+        </button>
+    </div>
+    
+    <!-- Bottom Sheet - Serviços -->
+    <div class="bottom-sheet-overlay" id="servicosOverlay"></div>
+    <div class="bottom-sheet" id="servicosSheet">
+        <div class="bottom-sheet-header">
+            <h2 class="bottom-sheet-title">Selecione os Serviços</h2>
+            <button class="bottom-sheet-close" id="closeServicosSheet">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="bottom-sheet-content" id="servicosContent">
+            <!-- Serviços serão carregados aqui -->
+            <div class="loading" style="margin: 2rem auto;"></div>
+        </div>
+        <button class="btn btn-primary" id="confirmServicosBtn" disabled>
+            Continuar (<span id="selectedCount">0</span> selecionados)
+        </button>
+    </div>
+    
+    <!-- Bottom Sheet - Data e Hora -->
+    <div class="bottom-sheet-overlay" id="dataHoraOverlay"></div>
+    <div class="bottom-sheet" id="dataHoraSheet">
+        <div class="bottom-sheet-header">
+            <h2 class="bottom-sheet-title">Selecione Data e Hora</h2>
+            <button class="bottom-sheet-close" id="closeDataHoraSheet">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="bottom-sheet-content">
+            <!-- Date Carousel -->
+            <div class="date-carousel" id="dateCarousel">
+                <!-- Datas serão geradas dinamicamente -->
+            </div>
+            
+            <!-- Time Slots -->
+            <h3 style="color: var(--light-gray); margin-bottom: 1rem; font-size: 1.1rem;">
+                Horários disponíveis para <span id="selectedDateText">hoje</span>:
+            </h3>
+            <div class="time-slots-grid" id="timeSlotsGrid">
+                <!-- Horários serão gerados dinamicamente -->
+            </div>
+            
+            <div id="noSlotsMessage" style="text-align: center; padding: 2rem; color: var(--medium-gray); display: none;">
+                <i class="fas fa-calendar-times" style="font-size: 3rem; margin-bottom: 1rem;"></i>
+                <p>Não há horários disponíveis para esta data.</p>
+                <p style="font-size: 0.9rem;">Selecione outra data ou tente outro barbeiro.</p>
+            </div>
+        </div>
+        <button class="btn btn-primary" id="confirmDataHoraBtn" disabled>
+            Confirmar Data e Hora
+        </button>
+    </div>
+    
     <!-- Footer -->
     <footer class="footer">
-        <p>&copy; 2026 LBarber - Sistema de Agendamento. Todos os direitos reservados.</p>
+        <p>&copy; 2023 Barbearia Silva - Sistema de Agendamento. Todos os direitos reservados.</p>
         <div class="social-links">
             <a href="#" class="social-link"><i class="fab fa-facebook-f"></i></a>
             <a href="#" class="social-link"><i class="fab fa-instagram"></i></a>
@@ -610,370 +898,683 @@
         </div>
     </footer>
 
+    <!-- JavaScript -->
     <script>
+        // Configurações
         const API_BASE_URL = window.location.hostname === 'localhost' 
             ? 'http://localhost:3000' 
             : 'https://barbeariasilva.onrender.com';
-        // Obter dados do usuário
-        const token = localStorage.getItem('token');
-        if (!token) {
-            window.location.href = 'login.html';
-        }
         
-        const payload = JSON.parse(atob(token.split('.')[1]));
-        const nomeUsuario = localStorage.getItem('nome') || 'Cliente';
-        document.getElementById('nomeUsuario').textContent = `Olá, ${nomeUsuario}`;
+        const HORARIO_FUNCIONAMENTO = {
+            seg_a_sex: { inicio: '08:30', fim: '19:00' },
+            sabado: { inicio: '08:30', fim: '18:30' },
+            domingo: { inicio: null, fim: null }
+        };
+        
+        // Estado da aplicação
+        let estado = {
+            token: localStorage.getItem('token'),
+            usuario: null,
+            assinatura: null,
+            barbeiros: [],
+            servicos: [],
+            selecionados: {
+                barbeiro: null, // null = sem preferência
+                servicos: [], // Array de IDs de serviços
+                data: null,
+                horaInicio: null,
+                horaFim: null
+            },
+            horariosDisponiveis: [],
+            dataSelecionada: null
+        };
         
         // Elementos DOM
-        const form = document.getElementById('agendamentoForm');
-        const selectBarbeiro = document.getElementById('barbeiro');
-        const servicoSelect = document.getElementById('servico');
-        const inputData = document.getElementById('data');
-        const inputHora = document.getElementById('hora');
-        const submitBtn = document.getElementById('submitBtn');
-        const successMessage = document.getElementById('successMessage');
-        const selectedDateDisplay = document.getElementById('selectedDateDisplay');
-        const selectedTimeDisplay = document.getElementById('selectedTimeDisplay');
-        const timeSlotsSection = document.getElementById('timeSlotsSection');
-        
-        // Variáveis globais
-        let selectedBarbeiroId = null;
-        let selectedDate = null;
-        let selectedTime = null;
-        
-        // Função para gerar todos os horários possíveis (de meia em meia hora)
-        function generateAllTimeSlots() {
-            const slots = [];
-            for (let h = 8; h < 18; h++) {
-                slots.push(`${String(h).padStart(2, '0')}:00:00`); // Formato HH:MM:SS
-                slots.push(`${String(h).padStart(2, '0')}:30:00`); // Formato HH:MM:SS
-            }
-            return slots;
-        }
-
-        // Função para carregar barbeiros
-        const loadBarbeiros = async () => {
-            try {
-                const response = await fetch(`${API_BASE_URL}/barbeiros`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                if (!response.ok) throw new Error('Falha ao carregar barbeiros');
-                const barbeiros = await response.json();
-                
-                barbeiros.forEach(barbeiro => {
-                    const option = document.createElement('option');
-                    option.value = barbeiro.id;
-                    option.textContent = barbeiro.nome;
-                    selectBarbeiro.appendChild(option);
-                });
-            } catch (error) {
-                console.error('Erro ao carregar barbeiros:', error);
-            }
+        const elementos = {
+            // Steps
+            step1: document.getElementById('step1'),
+            step2: document.getElementById('step2'),
+            step3: document.getElementById('step3'),
+            step4: document.getElementById('step4'),
+            
+            // Cards
+            barbeiroCard: document.getElementById('barbeiroCard'),
+            servicosCard: document.getElementById('servicosCard'),
+            dataHoraCard: document.getElementById('dataHoraCard'),
+            
+            // Selected options
+            barbeiroSelected: document.getElementById('barbeiroSelected'),
+            servicosSelected: document.getElementById('servicosSelected'),
+            dataHoraSelected: document.getElementById('dataHoraSelected'),
+            
+            // Summary
+            summaryBarbeiro: document.getElementById('summaryBarbeiro'),
+            summaryServicos: document.getElementById('summaryServicos'),
+            summaryData: document.getElementById('summaryData'),
+            summaryHora: document.getElementById('summaryHora'),
+            summarySubtotal: document.getElementById('summarySubtotal'),
+            summaryDiscount: document.getElementById('summaryDiscount'),
+            summaryTotal: document.getElementById('summaryTotal'),
+            discountItem: document.getElementById('discountItem'),
+            
+            // Bottom Sheets
+            barbeiroSheet: document.getElementById('barbeiroSheet'),
+            servicosSheet: document.getElementById('servicosSheet'),
+            dataHoraSheet: document.getElementById('dataHoraSheet'),
+            
+            // Overlays
+            barbeiroOverlay: document.getElementById('barbeiroOverlay'),
+            servicosOverlay: document.getElementById('servicosOverlay'),
+            dataHoraOverlay: document.getElementById('dataHoraOverlay'),
+            
+            // Content areas
+            barbeiroContent: document.getElementById('barbeiroContent'),
+            servicosContent: document.getElementById('servicosContent'),
+            dateCarousel: document.getElementById('dateCarousel'),
+            timeSlotsGrid: document.getElementById('timeSlotsGrid'),
+            selectedDateText: document.getElementById('selectedDateText'),
+            noSlotsMessage: document.getElementById('noSlotsMessage'),
+            
+            // Buttons
+            confirmBtn: document.getElementById('confirmBtn'),
+            confirmBarbeiroBtn: document.getElementById('confirmBarbeiroBtn'),
+            confirmServicosBtn: document.getElementById('confirmServicosBtn'),
+            confirmDataHoraBtn: document.getElementById('confirmDataHoraBtn'),
+            selectedCount: document.getElementById('selectedCount')
         };
         
-        // Função para carregar serviços
-        const loadServicos = async () => {
-            try {
-                const response = await fetch(`${API_BASE_URL}/servicos`);
-                if (!response.ok) throw new Error('Falha ao carregar serviços');
-                const servicos = await response.json();
-                
-                servicos.forEach(servico => {
-                    const option = document.createElement('option');
-                    option.value = servico.id;
-                    option.textContent = servico.servico;
-                    servicoSelect.appendChild(option);
-                });
-            } catch (error) {
-                console.error('Erro ao carregar serviços:', error);
+        // Inicialização
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Verificar autenticação
+            if (!estado.token) {
+                window.location.href = 'login.html';
+                return;
             }
-        };
-        
-        // Função para carregar horários disponíveis
-        const loadHorarios = async (barbeiro_id, data_agendada) => {
-            try {
-                const response = await fetch(`${API_BASE_URL}/agendamentos/barbeiro/${barbeiro_id}?data_agendada=${data_agendada}`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                
-                if (!response.ok) throw new Error('Falha ao carregar horários');
-                
-                const data = await response.json();
-                const horariosIndisponiveis = data.horariosIndisponiveis || [];
-                
-                // Gerar todos os slots possíveis
-                const allSlots = generateAllTimeSlots();
-                
-                // Atualizar os slots de tempo no calendário
-                updateTimeSlots(allSlots, horariosIndisponiveis);
-                timeSlotsSection.style.display = 'block';
-            } catch (error) {
-                console.error('Erro ao carregar horários:', error);
-                updateTimeSlots([], []);
-            }
-        };
-
-        // Atualizar slots de tempo (versão corrigida)
-        function updateTimeSlots(allSlots, horariosIndisponiveis) {
-            const timeSlotsContainer = document.getElementById('timeSlots');
-            timeSlotsContainer.innerHTML = '';
             
-            // Ordenar os horários
-            allSlots.sort((a, b) => {
-                const timeA = a.split(':').map(Number);
-                const timeB = b.split(':').map(Number);
-                return timeA[0] - timeB[0] || timeA[1] - timeB[1] || timeA[2] - timeB[2];
-            });
+            // Carregar dados do usuário
+            await carregarDadosUsuario();
             
-            allSlots.forEach(time => {
-                const slot = document.createElement('div');
-                
-                // Converter para formato de exibição (HH:MM)
-                const displayTime = time.substring(0, 5);
-                
-                // Verificar disponibilidade
-                const isAvailable = !horariosIndisponiveis.includes(time);
-                
-                if (isAvailable) {
-                    slot.className = 'time-slot available';
-                    slot.textContent = displayTime;
-                    
-                    slot.addEventListener('click', () => {
-                        // Remover seleção anterior
-                        document.querySelectorAll('.time-slot.selected').forEach(el => {
-                            el.classList.remove('selected');
-                        });
-                        
-                        // Selecionar novo slot
-                        slot.classList.add('selected');
-                        selectedTime = time; // Guardar valor completo (HH:MM:SS)
-                        inputHora.value = time;
-                        selectedTimeDisplay.textContent = displayTime;
-                        selectedTimeDisplay.style.backgroundColor = 'rgba(212, 175, 55, 0.1)';
-                        checkFormCompletion();
-                    });
-                } else {
-                    slot.className = 'time-slot unavailable';
-                    slot.textContent = displayTime;
-                    slot.title = "Horário indisponível";
-                }
-                
-                timeSlotsContainer.appendChild(slot);
-            });
-        }
-        
-        // Verificar se o formulário está completo
-        function checkFormCompletion() {
-            const isComplete = selectedBarbeiroId && servicoSelect.value && selectedDate && selectedTime;
-            submitBtn.disabled = !isComplete;
-        }
-        
-        // Event Listeners
-        selectBarbeiro.addEventListener('change', () => {
-            selectedBarbeiroId = selectBarbeiro.value;
-            timeSlotsSection.style.display = 'none';
-            selectedDate = null;
-            selectedTime = null;
-            inputData.value = '';
-            inputHora.value = '';
-            selectedDateDisplay.textContent = 'Nenhuma data selecionada';
-            selectedTimeDisplay.textContent = 'Nenhum horário selecionado';
-            selectedDateDisplay.style.backgroundColor = 'rgba(40, 40, 40, 0.5)';
-            selectedTimeDisplay.style.backgroundColor = 'rgba(40, 40, 40, 0.5)';
+            // Configurar event listeners
+            configurarEventListeners();
             
-            // Resetar seleção no calendário
-            document.querySelectorAll('.calendar-day.selected').forEach(el => {
-                el.classList.remove('selected');
-            });
+            // Carregar dados iniciais
+            await carregarDadosIniciais();
             
-            checkFormCompletion();
+            // Atualizar UI
+            atualizarUI();
         });
         
-        servicoSelect.addEventListener('change', checkFormCompletion);
-        
-        // Form submission
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const barbeiro_id = selectedBarbeiroId;
-            const data_agendada = inputData.value;
-            const hora_agendada = selectedTime;
-            const servico_id = servicoSelect.value;
-            
-            // Mostrar loading
-            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Agendando...';
-            submitBtn.disabled = true;
-            
+        async function carregarDadosUsuario() {
             try {
-                const response = await fetch(`${API_BASE_URL}/agendar`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    },
-                    body: JSON.stringify({ 
-                        usuario_id: payload.id, 
-                        barbeiro_id, 
-                        servico_id, 
-                        data_agendada, 
-                        hora_agendada 
-                    })
+                const response = await fetch(`${API_BASE_URL}/usuarios/me`, {
+                    headers: { 'Authorization': `Bearer ${estado.token}` }
                 });
                 
                 if (response.ok) {
-                    // Mostrar mensagem de sucesso
-                    successMessage.style.display = 'block';
-                    submitBtn.innerHTML = '<i class="fas fa-calendar-check"></i> Agendado com sucesso!';
+                    const data = await response.json();
+                    estado.usuario = data.usuario;
                     
-                    // Resetar formulário após 2 segundos
-                    setTimeout(() => {
-                        form.reset();
-                        selectedBarbeiroId = null;
-                        selectedDate = null;
-                        selectedTime = null;
-                        timeSlotsSection.style.display = 'none';
-                        selectedDateDisplay.textContent = 'Nenhuma data selecionada';
-                        selectedTimeDisplay.textContent = 'Nenhum horário selecionado';
-                        selectedDateDisplay.style.backgroundColor = 'rgba(40, 40, 40, 0.5)';
-                        selectedTimeDisplay.style.backgroundColor = 'rgba(40, 40, 40, 0.5)';
-                        submitBtn.disabled = true;
-                        successMessage.style.display = 'none';
-                        submitBtn.innerHTML = '<i class="fas fa-calendar-check"></i> Confirmar Agendamento';
-                    }, 3000);
-                } else {
-                    const error = await response.json();
-                    alert(`Erro: ${error.message || 'Tente novamente mais tarde.'}`);
-                    submitBtn.innerHTML = '<i class="fas fa-calendar-check"></i> Confirmar Agendamento';
-                    submitBtn.disabled = false;
+                    // Carregar assinatura se houver
+                    if (estado.usuario.assinatura_id) {
+                        await carregarAssinatura(estado.usuario.assinatura_id);
+                    }
                 }
             } catch (error) {
-                alert('Ocorreu um erro ao tentar realizar o agendamento.');
-                submitBtn.innerHTML = '<i class="fas fa-calendar-check"></i> Confirmar Agendamento';
-                submitBtn.disabled = false;
+                console.error('Erro ao carregar dados do usuário:', error);
             }
-        });
-        
-        // Função de logout
-        function logout() {
-            localStorage.removeItem('token');
-            localStorage.removeItem('nome');
-            window.location.href = 'login.html';
         }
         
-        // Calendário
-        function generateCalendar(year, month) {
-            const calendarDays = document.getElementById('calendarDays');
-            calendarDays.innerHTML = '';
-            
-            const firstDay = new Date(year, month, 1).getDay();
-            const daysInMonth = new Date(year, month + 1, 0).getDate();
-            const today = new Date();
-            
-            // Preencher dias vazios no início
-            for (let i = 0; i < firstDay; i++) {
-                const emptyDay = document.createElement('div');
-                emptyDay.className = 'calendar-day disabled';
-                emptyDay.textContent = '';
-                calendarDays.appendChild(emptyDay);
+        async function carregarAssinatura(assinaturaId) {
+            try {
+                const response = await fetch(`${API_BASE_URL}/assinatura/${assinaturaId}`, {
+                    headers: { 'Authorization': `Bearer ${estado.token}` }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    estado.assinatura = data.assinatura;
+                }
+            } catch (error) {
+                console.error('Erro ao carregar assinatura:', error);
             }
+        }
+        
+        async function carregarDadosIniciais() {
+            await Promise.all([
+                carregarBarbeiros(),
+                carregarServicos()
+            ]);
+        }
+        
+        async function carregarBarbeiros() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/barbeiros`, {
+                    headers: { 'Authorization': `Bearer ${estado.token}` }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    estado.barbeiros = data;
+                    renderizarBarbeiros();
+                }
+            } catch (error) {
+                console.error('Erro ao carregar barbeiros:', error);
+            }
+        }
+        
+        async function carregarServicos() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/servicos`, {
+                    headers: { 'Authorization': `Bearer ${estado.token}` }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    estado.servicos = data;
+                    renderizarServicos();
+                }
+            } catch (error) {
+                console.error('Erro ao carregar serviços:', error);
+            }
+        }
+        
+        function renderizarBarbeiros() {
+            elementos.barbeiroContent.innerHTML = '';
             
-            // Preencher os dias do mês
-            for (let day = 1; day <= daysInMonth; day++) {
-                const dayElement = document.createElement('div');
-                dayElement.className = 'calendar-day';
-                dayElement.textContent = day;
+            // Opção "Sem preferência"
+            const semPreferenciaCard = document.createElement('div');
+            semPreferenciaCard.className = `option-card ${estado.selecionados.barbeiro === null ? 'selected' : ''}`;
+            semPreferenciaCard.innerHTML = `
+                <div class="option-icon"><i class="fas fa-users"></i></div>
+                <div class="option-title">Sem preferência</div>
+                <div class="option-desc">Qualquer barbeiro disponível</div>
+            `;
+            semPreferenciaCard.onclick = () => selecionarBarbeiro(null);
+            elementos.barbeiroContent.appendChild(semPreferenciaCard);
+            
+            // Barbeiros
+            estado.barbeiros.forEach(barbeiro => {
+                const card = document.createElement('div');
+                card.className = `option-card ${estado.selecionados.barbeiro === barbeiro.id ? 'selected' : ''}`;
+                card.innerHTML = `
+                    <div class="option-icon"><i class="fas fa-user"></i></div>
+                    <div class="option-title">${barbeiro.nome}</div>
+                    <div class="option-desc">${barbeiro.especialidade || 'Barbeiro'}</div>
+                `;
+                card.onclick = () => selecionarBarbeiro(barbeiro.id);
+                elementos.barbeiroContent.appendChild(card);
+            });
+            
+            elementos.confirmBarbeiroBtn.disabled = estado.selecionados.barbeiro === undefined;
+        }
+        
+        function renderizarServicos() {
+            elementos.servicosContent.innerHTML = '';
+            
+            estado.servicos.forEach(servico => {
+                const item = document.createElement('div');
+                item.className = `service-item ${estado.selecionados.servicos.includes(servico.id) ? 'selected' : ''}`;
                 
-                const currentDate = new Date(year, month, day);
+                // Verificar se o serviço está coberto pela assinatura
+                const precoFinal = calcularPrecoServico(servico);
+                const estaCoberto = estado.assinatura && servico.assinatura_ids && 
+                                   servico.assinatura_ids.includes(estado.assinatura.id);
                 
-                // Verificar se é hoje
-                if (day === today.getDate() && month === today.getMonth() && year === today.getFullYear()) {
-                    dayElement.style.border = '1px solid var(--accent-gold)';
-                }
-                
-                // Marcar dias passados como indisponíveis
-                if (currentDate < today && !(day === today.getDate() && month === today.getMonth() && year === today.getFullYear())) {
-                    dayElement.classList.add('past');
-                }
-                
-                // Adicionar evento de clique apenas para dias futuros
-                if (currentDate >= today) {
-                    dayElement.addEventListener('click', () => {
-                        // Só permite selecionar data se barbeiro e serviço estiverem selecionados
-                        if (!selectedBarbeiroId || !servicoSelect.value) {
-                            alert('Por favor, selecione primeiro um barbeiro e um serviço');
-                            return;
+                item.innerHTML = `
+                    <div class="service-info">
+                        <div class="service-name">${servico.nome_servico}</div>
+                        <div class="service-duration">${servico.duracao_servico} min</div>
+                    </div>
+                    <div class="service-price">
+                        ${estaCoberto 
+                            ? '<div class="free-badge">INCLUSO</div>' 
+                            : `<div class="original-price">R$ ${servico.valor_servico.toFixed(2)}</div>`
                         }
-                        
-                        // Remover seleção anterior
-                        document.querySelectorAll('.calendar-day.selected').forEach(el => {
-                            el.classList.remove('selected');
-                        });
-                        
-                        // Selecionar novo dia
-                        dayElement.classList.add('selected');
-                        
-                        // Atualizar input de data
-                        selectedDate = currentDate.toISOString().split('T')[0];
-                        inputData.value = selectedDate;
-                        
-                        // Formatando a data para exibição
-                        const options = { weekday: 'long', day: 'numeric', month: 'long' };
-                        const formattedDate = currentDate.toLocaleDateString('pt-BR', options);
-                        selectedDateDisplay.textContent = formattedDate.charAt(0).toUpperCase() + formattedDate.slice(1);
-                        selectedDateDisplay.style.backgroundColor = 'rgba(212, 175, 55, 0.1)';
-                        
-                        // Resetar horário selecionado
-                        selectedTime = null;
-                        inputHora.value = '';
-                        selectedTimeDisplay.textContent = 'Nenhum horário selecionado';
-                        selectedTimeDisplay.style.backgroundColor = 'rgba(40, 40, 40, 0.5)';
-                        
-                        // Carregar horários disponíveis
-                        loadHorarios(selectedBarbeiroId, selectedDate);
-                        
-                        checkFormCompletion();
-                    });
-                }
+                    </div>
+                `;
                 
-                calendarDays.appendChild(dayElement);
-            }
+                item.onclick = () => toggleServico(servico.id);
+                elementos.servicosContent.appendChild(item);
+            });
             
-            // Atualizar título do calendário
-            const monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 
-                               'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
-            document.getElementById('currentMonth').textContent = `${monthNames[month]} ${year}`;
+            atualizarContadorServicos();
         }
         
-        // Inicializar calendário
-        const now = new Date();
-        let currentYear = now.getFullYear();
-        let currentMonth = now.getMonth();
-        
-        generateCalendar(currentYear, currentMonth);
-        
-        // Navegação do calendário
-        document.getElementById('prevMonth').addEventListener('click', () => {
-            currentMonth--;
-            if (currentMonth < 0) {
-                currentMonth = 11;
-                currentYear--;
+        function calcularPrecoServico(servico) {
+            if (!estado.assinatura || !servico.assinatura_ids) {
+                return servico.valor_servico;
             }
-            generateCalendar(currentYear, currentMonth);
-        });
-        
-        document.getElementById('nextMonth').addEventListener('click', () => {
-            currentMonth++;
-            if (currentMonth > 11) {
-                currentMonth = 0;
-                currentYear++;
+            
+            // Verificar se a assinatura cobre este serviço
+            if (servico.assinatura_ids.includes(estado.assinatura.id)) {
+                return 0; // Serviço incluso na assinatura
             }
-            generateCalendar(currentYear, currentMonth);
-        });
+            
+            return servico.valor_servico;
+        }
         
-        // Carregar dados iniciais
-        document.addEventListener('DOMContentLoaded', () => {
-            loadBarbeiros();
-            loadServicos();
-        });
+        function toggleServico(servicoId) {
+            const index = estado.selecionados.servicos.indexOf(servicoId);
+            
+            if (index === -1) {
+                estado.selecionados.servicos.push(servicoId);
+            } else {
+                estado.selecionados.servicos.splice(index, 1);
+            }
+            
+            renderizarServicos();
+            elementos.confirmServicosBtn.disabled = estado.selecionados.servicos.length === 0;
+        }
+        
+        function atualizarContadorServicos() {
+            elementos.selectedCount.textContent = estado.selecionados.servicos.length;
+        }
+        
+        function selecionarBarbeiro(barbeiroId) {
+            estado.selecionados.barbeiro = barbeiroId;
+            renderizarBarbeiros();
+            elementos.confirmBarbeiroBtn.disabled = false;
+        }
+        
+        function configurarEventListeners() {
+            // Abrir bottom sheets
+            elementos.barbeiroCard.onclick = () => abrirBottomSheet('barbeiro');
+            elementos.servicosCard.onclick = () => {
+                if (estado.selecionados.barbeiro !== undefined) {
+                    abrirBottomSheet('servicos');
+                } else {
+                    alert('Por favor, selecione um barbeiro primeiro.');
+                }
+            };
+            elementos.dataHoraCard.onclick = () => {
+                if (estado.selecionados.servicos.length > 0) {
+                    abrirBottomSheet('dataHora');
+                    gerarDatasCarrossel();
+                } else {
+                    alert('Por favor, selecione pelo menos um serviço.');
+                }
+            };
+            
+            // Fechar bottom sheets
+            elementos.barbeiroOverlay.onclick = () => fecharBottomSheet('barbeiro');
+            elementos.servicosOverlay.onclick = () => fecharBottomSheet('servicos');
+            elementos.dataHoraOverlay.onclick = () => fecharBottomSheet('dataHora');
+            
+            document.getElementById('closeBarbeiroSheet').onclick = () => fecharBottomSheet('barbeiro');
+            document.getElementById('closeServicosSheet').onclick = () => fecharBottomSheet('servicos');
+            document.getElementById('closeDataHoraSheet').onclick = () => fecharBottomSheet('dataHora');
+            
+            // Botões de confirmar nos bottom sheets
+            elementos.confirmBarbeiroBtn.onclick = () => {
+                confirmarBarbeiro();
+                fecharBottomSheet('barbeiro');
+            };
+            
+            elementos.confirmServicosBtn.onclick = () => {
+                confirmarServicos();
+                fecharBottomSheet('servicos');
+            };
+            
+            elementos.confirmDataHoraBtn.onclick = () => {
+                confirmarDataHora();
+                fecharBottomSheet('dataHora');
+            };
+            
+            // Botão de confirmar agendamento final
+            elementos.confirmBtn.onclick = confirmarAgendamento;
+            
+            // Botões "Alterar" nos cards
+            elementos.barbeiroSelected.querySelector('.change-btn').onclick = () => abrirBottomSheet('barbeiro');
+            elementos.servicosSelected.querySelector('.change-btn').onclick = () => abrirBottomSheet('servicos');
+            elementos.dataHoraSelected.querySelector('.change-btn').onclick = () => abrirBottomSheet('dataHora');
+        }
+        
+        function abrirBottomSheet(tipo) {
+            const sheet = elementos[`${tipo}Sheet`];
+            const overlay = elementos[`${tipo}Overlay`];
+            
+            sheet.classList.add('active');
+            overlay.classList.add('active');
+            document.body.style.overflow = 'hidden';
+            
+            // Se for dataHora, carregar horários para a data selecionada
+            if (tipo === 'dataHora' && estado.dataSelecionada) {
+                carregarHorariosDisponiveis(estado.dataSelecionada);
+            }
+        }
+        
+        function fecharBottomSheet(tipo) {
+            const sheet = elementos[`${tipo}Sheet`];
+            const overlay = elementos[`${tipo}Overlay`];
+            
+            sheet.classList.remove('active');
+            overlay.classList.remove('active');
+            document.body.style.overflow = 'auto';
+        }
+        
+        function confirmarBarbeiro() {
+            // Atualizar UI do card
+            const barbeiroNome = estado.selecionados.barbeiro === null 
+                ? 'Sem preferência' 
+                : estado.barbeiros.find(b => b.id === estado.selecionados.barbeiro)?.nome || 'Barbeiro';
+            
+            elementos.barbeiroSelected.querySelector('.selected-text').textContent = barbeiroNome;
+            elementos.barbeiroSelected.style.display = 'flex';
+            
+            // Atualizar summary
+            elementos.summaryBarbeiro.textContent = barbeiroNome;
+            
+            // Ativar próximo step
+            elementos.servicosCard.classList.add('active');
+            elementos.step2.classList.add('active');
+            
+            atualizarUI();
+        }
+        
+        function confirmarServicos() {
+            // Obter nomes dos serviços selecionados
+            const servicosSelecionados = estado.servicos
+                .filter(s => estado.selecionados.servicos.includes(s.id))
+                .map(s => s.nome_servico);
+            
+            elementos.servicosSelected.querySelector('.selected-text').textContent = 
+                servicosSelecionados.join(', ') || 'Nenhum serviço selecionado';
+            elementos.servicosSelected.style.display = 'flex';
+            
+            // Atualizar summary
+            elementos.summaryServicos.textContent = servicosSelecionados.join(', ') || 'Nenhum';
+            
+            // Ativar próximo step
+            elementos.dataHoraCard.classList.add('active');
+            elementos.step3.classList.add('active');
+            
+            atualizarUI();
+        }
+        
+        function confirmarDataHora() {
+            if (!estado.selecionados.data || !estado.selecionados.horaInicio) {
+                alert('Por favor, selecione uma data e horário.');
+                return;
+            }
+            
+            // Formatar data e hora para exibição
+            const dataObj = new Date(estado.selecionados.data);
+            const dataFormatada = dataObj.toLocaleDateString('pt-BR');
+            const horaFormatada = `${estado.selecionados.horaInicio} - ${estado.selecionados.horaFim}`;
+            
+            elementos.dataHoraSelected.querySelector('.selected-text').textContent = 
+                `${dataFormatada} às ${estado.selecionados.horaInicio}`;
+            elementos.dataHoraSelected.style.display = 'flex';
+            
+            // Atualizar summary
+            elementos.summaryData.textContent = dataFormatada;
+            elementos.summaryHora.textContent = horaFormatada;
+            
+            // Ativar último step
+            elementos.step4.classList.add('active');
+            
+            atualizarUI();
+        }
+        
+        function gerarDatasCarrossel() {
+            elementos.dateCarousel.innerHTML = '';
+            
+            const hoje = new Date();
+            
+            // Gerar próximos 7 dias
+            for (let i = 0; i < 7; i++) {
+                const data = new Date(hoje);
+                data.setDate(hoje.getDate() + i);
+                
+                const diaSemana = data.toLocaleDateString('pt-BR', { weekday: 'short' });
+                const dia = data.getDate();
+                const mes = data.toLocaleDateString('pt-BR', { month: 'short' });
+                const dataISO = data.toISOString().split('T')[0];
+                
+                const dateCard = document.createElement('div');
+                dateCard.className = `date-card ${estado.dataSelecionada === dataISO ? 'selected' : ''}`;
+                dateCard.innerHTML = `
+                    <div class="date-weekday">${diaSemana}</div>
+                    <div class="date-day">${dia}</div>
+                    <div class="date-month">${mes}</div>
+                `;
+                
+                dateCard.onclick = () => selecionarData(dataISO, dateCard);
+                elementos.dateCarousel.appendChild(dateCard);
+            }
+            
+            // Selecionar primeira data por padrão
+            if (!estado.dataSelecionada) {
+                const primeiraData = new Date(hoje);
+                primeiraData.setDate(hoje.getDate());
+                const dataISO = primeiraData.toISOString().split('T')[0];
+                
+                const primeiroCard = elementos.dateCarousel.querySelector('.date-card');
+                if (primeiroCard) {
+                    selecionarData(dataISO, primeiroCard);
+                }
+            }
+        }
+        
+        async function selecionarData(dataISO, cardElement) {
+            // Remover seleção anterior
+            elementos.dateCarousel.querySelectorAll('.date-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            
+            // Adicionar seleção atual
+            cardElement.classList.add('selected');
+            estado.dataSelecionada = dataISO;
+            estado.selecionados.data = dataISO;
+            
+            // Atualizar texto da data selecionada
+            const dataObj = new Date(dataISO);
+            elementos.selectedDateText.textContent = dataObj.toLocaleDateString('pt-BR', {
+                weekday: 'long',
+                day: 'numeric',
+                month: 'long'
+            });
+            
+            // Carregar horários disponíveis para esta data
+            await carregarHorariosDisponiveis(dataISO);
+            
+            // Habilitar botão de confirmar se já tiver horário selecionado
+            elementos.confirmDataHoraBtn.disabled = !estado.selecionados.horaInicio;
+        }
+        
+        async function carregarHorariosDisponiveis(dataISO) {
+            try {
+                elementos.timeSlotsGrid.innerHTML = '<div class="loading" style="margin: 2rem auto;"></div>';
+                elementos.noSlotsMessage.style.display = 'none';
+                
+                // Calcular duração total dos serviços selecionados
+                const duracaoTotal = estado.servicos
+                    .filter(s => estado.selecionados.servicos.includes(s.id))
+                    .reduce((total, servico) => total + servico.duracao_servico, 0);
+                
+                // Construir URL da API
+                let url = `${API_BASE_URL}/agendamentos/horarios-disponiveis?data=${dataISO}&duracao=${duracaoTotal}`;
+                
+                if (estado.selecionados.barbeiro !== null) {
+                    url += `&barbeiro_id=${estado.selecionados.barbeiro}`;
+                }
+                
+                const response = await fetch(url, {
+                    headers: { 'Authorization': `Bearer ${estado.token}` }
+                });
+                
+                if (response.ok) {
+                    const horarios = await response.json();
+                    estado.horariosDisponiveis = horarios;
+                    renderizarHorarios(horarios, duracaoTotal);
+                }
+            } catch (error) {
+                console.error('Erro ao carregar horários:', error);
+                elementos.timeSlotsGrid.innerHTML = '';
+                elementos.noSlotsMessage.style.display = 'block';
+            }
+        }
+        
+        function renderizarHorarios(horarios, duracaoTotal) {
+            elementos.timeSlotsGrid.innerHTML = '';
+            
+            if (!horarios || horarios.length === 0) {
+                elementos.noSlotsMessage.style.display = 'block';
+                return;
+            }
+            
+            elementos.noSlotsMessage.style.display = 'none';
+            
+            horarios.forEach(horario => {
+                const timeSlot = document.createElement('div');
+                timeSlot.className = `time-slot ${
+                    estado.selecionados.horaInicio === horario.inicio ? 'selected' : ''
+                }`;
+                timeSlot.textContent = horario.inicio;
+                
+                timeSlot.onclick = () => selecionarHorario(horario, timeSlot, duracaoTotal);
+                elementos.timeSlotsGrid.appendChild(timeSlot);
+            });
+        }
+        
+        function selecionarHorario(horario, slotElement, duracaoTotal) {
+            // Remover seleção anterior
+            elementos.timeSlotsGrid.querySelectorAll('.time-slot').forEach(slot => {
+                slot.classList.remove('selected');
+            });
+            
+            // Adicionar seleção atual
+            slotElement.classList.add('selected');
+            
+            // Calcular hora de término
+            const [hora, minutos] = horario.inicio.split(':').map(Number);
+            const dataInicio = new Date();
+            dataInicio.setHours(hora, minutos, 0, 0);
+            
+            const dataFim = new Date(dataInicio.getTime() + duracaoTotal * 60000);
+            const horaFim = `${String(dataFim.getHours()).padStart(2, '0')}:${String(dataFim.getMinutes()).padStart(2, '0')}`;
+            
+            // Salvar no estado
+            estado.selecionados.horaInicio = horario.inicio;
+            estado.selecionados.horaFim = horaFim;
+            
+            // Habilitar botão de confirmar
+            elementos.confirmDataHoraBtn.disabled = false;
+        }
+        
+        function atualizarUI() {
+            // Atualizar resumo financeiro
+            atualizarResumoFinanceiro();
+            
+            // Verificar se pode habilitar botão de confirmar
+            const podeConfirmar = estado.selecionados.barbeiro !== undefined &&
+                                estado.selecionados.servicos.length > 0 &&
+                                estado.selecionados.data &&
+                                estado.selecionados.horaInicio;
+            
+            elementos.confirmBtn.disabled = !podeConfirmar;
+        }
+        
+        function atualizarResumoFinanceiro() {
+            // Calcular subtotal
+            let subtotal = 0;
+            let descontoTotal = 0;
+            
+            estado.selecionados.servicos.forEach(servicoId => {
+                const servico = estado.servicos.find(s => s.id === servicoId);
+                if (servico) {
+                    const precoServico = servico.valor_servico;
+                    const precoFinal = calcularPrecoServico(servico);
+                    
+                    subtotal += precoServico;
+                    descontoTotal += (precoServico - precoFinal);
+                }
+            });
+            
+            // Atualizar elementos
+            elementos.summarySubtotal.textContent = `R$ ${subtotal.toFixed(2)}`;
+            elementos.summaryTotal.textContent = `R$ ${(subtotal - descontoTotal).toFixed(2)}`;
+            
+            // Mostrar/ocultar desconto
+            if (descontoTotal > 0) {
+                elementos.summaryDiscount.textContent = `-R$ ${descontoTotal.toFixed(2)}`;
+                elementos.discountItem.style.display = 'flex';
+            } else {
+                elementos.discountItem.style.display = 'none';
+            }
+        }
+        
+        async function confirmarAgendamento() {
+            // Validar dados
+            if (!estado.selecionados.data || !estado.selecionados.horaInicio || !estado.selecionados.horaFim) {
+                alert('Por favor, selecione uma data e horário válidos.');
+                return;
+            }
+            
+            if (estado.selecionados.servicos.length === 0) {
+                alert('Por favor, selecione pelo menos um serviço.');
+                return;
+            }
+            
+            // Mostrar confirmação
+            const confirmacao = confirm(
+                `Confirmar agendamento?\n\n` +
+                `Barbeiro: ${estado.selecionados.barbeiro === null ? 'Sem preferência' : estado.barbeiros.find(b => b.id === estado.selecionados.barbeiro)?.nome}\n` +
+                `Serviços: ${estado.servicos.filter(s => estado.selecionados.servicos.includes(s.id)).map(s => s.nome_servico).join(', ')}\n` +
+                `Data: ${new Date(estado.selecionados.data).toLocaleDateString('pt-BR')}\n` +
+                `Hora: ${estado.selecionados.horaInicio} - ${estado.selecionados.horaFim}\n\n` +
+                `Clique em OK para confirmar.`
+            );
+            
+            if (!confirmacao) return;
+            
+            // Para múltiplos serviços, criar um agendamento para cada
+            // (ou um único agendamento com múltiplos serviços, dependendo da sua lógica de negócio)
+            for (const servicoId of estado.selecionados.servicos) {
+                try {
+                    const response = await fetch(`${API_BASE_URL}/agendamentos`, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${estado.token}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            barbeiro_id: estado.selecionados.barbeiro,
+                            servico_id: servicoId,
+                            data_agendada: estado.selecionados.data,
+                            hora_inicio: estado.selecionados.horaInicio,
+                            hora_fim: estado.selecionados.horaFim
+                        })
+                    });
+                    
+                    if (!response.ok) {
+                        const error = await response.json();
+                        throw new Error(error.message || 'Erro ao criar agendamento');
+                    }
+                    
+                } catch (error) {
+                    console.error('Erro ao criar agendamento:', error);
+                    alert(`Erro ao agendar serviço: ${error.message}`);
+                    return;
+                }
+            }
+            
+            // Sucesso
+            alert('Agendamento realizado com sucesso!');
+            window.location.href = 'cliente-home.html';
+        }
+        
+        // Helper functions
+        function parseJwt(token) {
+            const base64Url = token.split('.')[1];
+            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+            return JSON.parse(atob(base64));
+        }
+        
+        function showNotification(message, type = 'success') {
+            // Implemente notificações Toastify se quiser
+            alert(message);
+        }
     </script>
 </body>
 </html>

@@ -11,10 +11,9 @@ class Service {
     }
 
     const query = `
-      SELECT id, servico, preco, duracao, descricao, ativo
+      SELECT id, nome_servico, duracao_servico, valor_servico, descricao
       FROM servicos
-      WHERE ativo = true
-      ORDER BY servico ASC
+      ORDER BY nome_servico ASC
     `;
     const result = await pool.query(query);
     
@@ -26,7 +25,7 @@ class Service {
 
   static async getServiceById(id) {
     const query = `
-      SELECT id, servico, preco, duracao, descricao, ativo
+      SELECT id, nome_servico, duracao_servico, valor_servico, descricao
       FROM servicos
       WHERE id = $1
       LIMIT 1

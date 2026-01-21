@@ -67,7 +67,7 @@ class UsuarioService {
             // 1. Primeiro deletar agendamentos do usuário
             const deleteAgendamentosQuery = `
                 DELETE FROM agendamentos 
-                WHERE cliente_id = $1
+                WHERE usuario_id = $1
             `;
             await pool.query(deleteAgendamentosQuery, [id]);
             

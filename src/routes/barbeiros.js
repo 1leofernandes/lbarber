@@ -1,13 +1,21 @@
 // Rotas de barbeiros
 const express = require('express');
 const router = express.Router();
-const BarberController = require('../controllers/barberController');
-const { authenticateToken, authorizeRole } = require('../middlewares/auth');
+const barbeiroController = require('../controllers/barbeiroController');
+const { authenticateToken } = require('../middlewares/auth');
 
-// GET /barbeiros - Listar barbeiros
-router.get('/', BarberController.getAllBarbeiros);
+// Todas as rotas exigem autenticação
+router.use(authenticateToken);
+
+// GET /barbeiros - Buscar todos os barbeiros
+router.get('/', barbeiroController.getAll);
+
+// GET /barbeiros/:id - Buscar barbeiro por ID
+router.get('/:id', barbeiroController.getById);
+
+module.exports = router;
 
 // DELETE /barbeiros/:id - Deletar barbeiro (apenas admin)
-router.delete('/:id', authenticateToken, authorizeRole('admin'), BarberController.deleteBarbeiro);
+router.delete('/:id', authenticateToken, authorizeRole('admin'), barbeiroController.deleteBarbeiro);
 
 module.exports = router;

@@ -1,4 +1,4 @@
-// Controller de barbeiros
+// src/controllers/barbeiroController.js
 const User = require('../models/User');
 const { validateRequired, validators } = require('../utils/validation');
 const logger = require('../utils/logger');
@@ -19,32 +19,32 @@ class BarbeiroController {
     }
   }
 
-   async getById(req, res) {
-        try {
-            const { id } = req.params;
-            const barbeiro = await barbeiroService.getBarbeiroById(id);
-            
-            if (!barbeiro) {
-                return res.status(404).json({
-                    success: false,
-                    message: 'Barbeiro não encontrado'
-                });
-            }
-            
-            res.json({
-                success: true,
-                barbeiro
-            });
-        } catch (error) {
-            console.error('Erro ao buscar barbeiro:', error);
-            res.status(500).json({
+  async getById(req, res) {
+    try {
+        const { id } = req.params;
+        const barbeiro = await barbeiroService.getBarbeiroById(id);
+        
+        if (!barbeiro) {
+            return res.status(404).json({
                 success: false,
-                message: 'Erro interno do servidor'
+                message: 'Barbeiro não encontrado'
             });
         }
+        
+        res.json({
+            success: true,
+            barbeiro
+        });
+    } catch (error) {
+        console.error('Erro ao buscar barbeiro:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Erro interno do servidor'
+        });
     }
+  }
 
-  static async deleteBarbeiro(req, res, next) {
+  async deleteBarbeiro(req, res) {
     try {
       const { id } = req.params;
 
@@ -70,9 +70,14 @@ class BarbeiroController {
         message: 'Barbeiro deletado com sucesso'
       });
     } catch (err) {
-      next(err);
+      console.error('Erro ao deletar barbeiro:', err);
+      res.status(500).json({
+        success: false,
+        message: 'Erro interno do servidor'
+      });
     }
   }
 }
 
-module.exports = BarbeiroController;
+// Exporte uma INSTÂNCIA da classe, não a classe em si
+module.exports = new BarbeiroController();

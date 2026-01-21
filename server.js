@@ -109,6 +109,7 @@ app.use('/agendamentos', limiter, agendamentoRoutes);
 app.use('/servicos', limiter, servicoRoutes);
 app.use('/barbeiros', limiter, barbeiroRoutes);
 app.use('/pagamentos', limiter, paymentRoutes);
+app.use('/assinaturas', limiter, assinaturaRoutes);
 
 // ==================== 404 HANDLER ====================
 

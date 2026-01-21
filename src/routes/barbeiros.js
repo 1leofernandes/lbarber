@@ -13,8 +13,6 @@ router.get('/', barbeiroController.getAll);
 // GET /barbeiros/:id - Buscar barbeiro por ID
 router.get('/:id', barbeiroController.getById);
 
-module.exports = router;
-
 // DELETE /barbeiros/:id - Deletar barbeiro (apenas admin)
 router.delete('/:id', authenticateToken, authorizeRole('admin'), barbeiroController.deleteBarbeiro);
 

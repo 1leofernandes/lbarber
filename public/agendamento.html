@@ -1110,6 +1110,7 @@
         
         function renderizarServicos() {
             elementos.servicosContent.innerHTML = '';
+            const valorNumerico = parseFloat(servico.valor_servico) || 0;
             
             estado.servicos.forEach(servico => {
                 const item = document.createElement('div');
@@ -1128,7 +1129,7 @@
                     <div class="service-price">
                         ${estaCoberto 
                             ? '<div class="free-badge">INCLUSO</div>' 
-                            : `<div class="original-price">R$ ${servico.valor_servico.toFixed(2)}</div>`
+                            : `<div class="original-price">R$ ${valorNumerico.toFixed(2)}</div>`
                         }
                     </div>
                 `;

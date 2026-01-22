@@ -7,7 +7,7 @@ class UsuarioService {
     async getUsuarioById(id) {
         try {
             const query = `
-                SELECT id, nome, email, telefone, role, created_at, updated_at
+                SELECT id, nome, email, telefone, role, assinatura_id created_at, updated_at
                 FROM usuarios 
                 WHERE id = $1
             `;

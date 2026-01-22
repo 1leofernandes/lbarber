@@ -6,8 +6,9 @@ class ServicoService {
     async getAllServicos() {
         try {
             const query = `
-                SELECT id, nome_servico, duracao_servico, valor_servico, 
-                       descricao, assinatura_ids, created_at
+                SELECT id, nome_servico, duracao_servico, 
+                    CAST(valor_servico AS FLOAT) as valor_servico,
+                    descricao, assinatura_ids, created_at
                 FROM servicos 
                 ORDER BY nome_servico ASC
             `;
@@ -23,7 +24,8 @@ class ServicoService {
     async getServicoById(id) {
         try {
             const query = `
-                SELECT id, nome_servico, duracao_servico, valor_servico, 
+                SELECT id, nome_servico, duracao_servico, 
+                CAST(valor_servico AS FLOAT) as valor_servico,
                        descricao, assinatura_ids, created_at
                 FROM servicos 
                 WHERE id = $1
@@ -42,7 +44,8 @@ class ServicoService {
             if (!ids || ids.length === 0) return [];
             
             const query = `
-                SELECT id, nome_servico, duracao_servico, valor_servico, 
+                SELECT id, nome_servico, duracao_servico, 
+                CAST(valor_servico AS FLOAT) as valor_servico,
                        descricao, assinatura_ids, created_at
                 FROM servicos 
                 WHERE id = ANY($1::int[])

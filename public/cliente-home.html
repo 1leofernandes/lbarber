@@ -795,6 +795,112 @@
         .btn-outline .fa-trash {
             color: var(--error);
         }
+        /* Estilos para a lista de agendamentos */
+        .agendamento-item {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+            cursor: pointer;
+            border-left: 4px solid #007bff;
+        }
+
+        .agendamento-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .agendamento-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .agendamento-id {
+            font-weight: 600;
+            color: #333;
+            font-size: 16px;
+        }
+
+        .agendamento-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+        }
+
+        .detail-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #666;
+        }
+
+        .detail-item i {
+            width: 20px;
+            color: #007bff;
+        }
+
+        /* Status badges */
+        .badge {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-pending {
+            background-color: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+
+        .status-active {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status-completed {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        .status-cancelled {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        /* Estados vazios */
+        .no-data, .loading, .error-message {
+            text-align: center;
+            padding: 40px 20px;
+            color: #666;
+        }
+
+        .no-data i, .error-message i {
+            font-size: 48px;
+            margin-bottom: 15px;
+            color: #ccc;
+        }
+
+        .error-message i {
+            color: #dc3545;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
     </style>
 </head>
 <body>
@@ -1033,24 +1139,24 @@
                 <div class="servicos-populares">
                     <div class="servico-item">
                         <div>
-                            <h4>Corte Social</h4>
+                            <h4>Corte</h4>
                             <p>Estilo clássico e moderno</p>
                         </div>
-                        <span>R$ 45,00</span>
+                        <span>R$ 35,00</span>
                     </div>
                     <div class="servico-item">
                         <div>
                             <h4>Barba Completa</h4>
                             <p>Tratamento e modelagem</p>
                         </div>
-                        <span>R$ 35,00</span>
+                        <span>R$ 30,00</span>
                     </div>
                     <div class="servico-item">
                         <div>
-                            <h4>Corte + Barba</h4>
-                            <p>Pacote completo</p>
+                            <h4>Corte + Sobrancelha</h4>
+                            <p>Corte de cabelo e modelagem da sobrancelha</p>
                         </div>
-                        <span>R$ 70,00</span>
+                        <span>R$ 40,00</span>
                     </div>
                 </div>
             </div>
@@ -1437,11 +1543,60 @@
         }
         
         // Carregar agendamentos
-        function loadAgendamentos() {
-            if (agendamentos.length === 0) {
-                return;
+        async function loadAgendamentos() {
+            try {
+                // Mostrar loading
+                agendamentosList.innerHTML = '<div class="loading">Carregando agendamentos...</div>';
+                
+                // Buscar agendamentos do usuário logado
+                const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+                
+                if (!token) {
+                    agendamentosList.innerHTML = '<div class="no-data">Faça login para ver seus agendamentos</div>';
+                    return;
+                }
+                
+                const response = await fetch(`${API_BASE_URL}/agendamentos/meus`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Erro ao carregar agendamentos');
+                }
+                
+                const result = await response.json();
+                
+                // Verificar se há agendamentos
+                if (!result.data || result.data.length === 0) {
+                    agendamentosList.innerHTML = `
+                        <div class="no-data">
+                            <i class="fas fa-calendar-times"></i>
+                            <p>Nenhum agendamento encontrado</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                // Renderizar agendamentos
+                renderizarAgendamentos(result.data);
+                
+            } catch (error) {
+                console.error('Erro ao carregar agendamentos:', error);
+                agendamentosList.innerHTML = `
+                    <div class="error-message">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <p>Erro ao carregar agendamentos. Tente novamente.</p>
+                    </div>
+                `;
             }
-            
+        }
+
+        // Renderizar agendamentos na lista
+        function renderizarAgendamentos(agendamentos) {
             // Limpar lista
             agendamentosList.innerHTML = '';
             
@@ -1450,30 +1605,71 @@
                 const agendamentoItem = document.createElement('div');
                 agendamentoItem.className = 'agendamento-item fade-in';
                 
-                const dataFormatada = formatarData(agendamento.data);
+                // Formatar data (ajuste conforme a estrutura da API)
+                const dataObj = new Date(agendamento.data_agendamento || agendamento.data);
+                const dataFormatada = formatarData(dataObj);
+                const horaFormatada = agendamento.hora_agendamento || agendamento.hora;
+                
+                // Mapear status para português
+                const statusMap = {
+                    'pending': 'Pendente',
+                    'confirmed': 'Confirmado',
+                    'completed': 'Concluído',
+                    'cancelled': 'Cancelado'
+                };
+                
+                const statusTexto = statusMap[agendamento.status] || agendamento.status;
+                
+                // Mapear classes CSS para status
+                const statusClassMap = {
+                    'pending': 'status-pending',
+                    'confirmed': 'status-active',
+                    'completed': 'status-completed',
+                    'cancelled': 'status-cancelled'
+                };
+                
+                const statusClass = statusClassMap[agendamento.status] || 'status-inactive';
                 
                 agendamentoItem.innerHTML = `
                     <div class="agendamento-info">
-                        <div class="agendamento-barbeiro">${agendamento.barbeiro}</div>
-                        <div class="agendamento-details">
-                            <span>
-                                <i class="fas fa-cut"></i>
-                                ${agendamento.servico}
-                            </span>
-                            <span>
-                                <i class="far fa-calendar"></i>
-                                ${dataFormatada}
-                            </span>
-                            <span>
-                                <i class="far fa-clock"></i>
-                                ${agendamento.hora}
+                        <div class="agendamento-header">
+                            <div class="agendamento-id">Agendamento #${agendamento.id}</div>
+                            <span class="badge ${statusClass}">
+                                ${statusTexto}
                             </span>
                         </div>
+                        
+                        <div class="agendamento-details">
+                            <div class="detail-item">
+                                <i class="fas fa-user"></i>
+                                <span>${agendamento.barbeiro_nome || agendamento.barbeiro}</span>
+                            </div>
+                            <div class="detail-item">
+                                <i class="fas fa-cut"></i>
+                                <span>${agendamento.servico_nome || agendamento.servico}</span>
+                            </div>
+                            <div class="detail-item">
+                                <i class="far fa-calendar"></i>
+                                <span>${dataFormatada}</span>
+                            </div>
+                            <div class="detail-item">
+                                <i class="far fa-clock"></i>
+                                <span>${horaFormatada}</span>
+                            </div>
+                            ${agendamento.valor_total ? `
+                            <div class="detail-item">
+                                <i class="fas fa-tag"></i>
+                                <span>R$ ${parseFloat(agendamento.valor_total).toFixed(2)}</span>
+                            </div>
+                            ` : ''}
+                        </div>
                     </div>
-                    <span class="badge ${agendamento.status === 'confirmado' ? 'status-active' : 'status-inactive'}">
-                        ${agendamento.status === 'confirmado' ? 'Confirmado' : 'Pendente'}
-                    </span>
                 `;
+                
+                // Adicionar evento de clique para detalhes
+                agendamentoItem.addEventListener('click', () => {
+                    verDetalhesAgendamento(agendamento.id);
+                });
                 
                 agendamentosList.appendChild(agendamentoItem);
             });

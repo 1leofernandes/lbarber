@@ -1548,8 +1548,7 @@
                 // Mostrar loading
                 agendamentosList.innerHTML = '<div class="loading">Carregando agendamentos...</div>';
                 
-                // Buscar agendamentos do usuário logado
-                const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+                const token = localStorage.getItem('token');
                 
                 if (!token) {
                     agendamentosList.innerHTML = '<div class="no-data">Faça login para ver seus agendamentos</div>';
@@ -1570,8 +1569,13 @@
                 
                 const result = await response.json();
                 
-                // Verificar se há agendamentos
-                if (!result.data || result.data.length === 0) {
+                // DEBUG: Verificar estrutura da resposta
+                console.log('Resposta da API:', result);
+                console.log('Sucesso:', result.success);
+                console.log('Agendamentos:', result.agendamentos);
+                
+                // AQUI ESTÁ O PROBLEMA: a API retorna 'agendamentos', não 'data'
+                if (!result.success || !result.agendamentos || result.agendamentos.length === 0) {
                     agendamentosList.innerHTML = `
                         <div class="no-data">
                             <i class="fas fa-calendar-times"></i>
@@ -1581,8 +1585,8 @@
                     return;
                 }
                 
-                // Renderizar agendamentos
-                renderizarAgendamentos(result.data);
+                // Renderizar agendamentos passando o array correto
+                renderizarAgendamentos(result.agendamentos);
                 
             } catch (error) {
                 console.error('Erro ao carregar agendamentos:', error);
@@ -1590,42 +1594,62 @@
                     <div class="error-message">
                         <i class="fas fa-exclamation-circle"></i>
                         <p>Erro ao carregar agendamentos. Tente novamente.</p>
+                        <button onclick="loadAgendamentos()" class="btn-retry">Tentar novamente</button>
                     </div>
                 `;
             }
         }
 
         // Renderizar agendamentos na lista
-        function renderizarAgendamentos(agendamentos) {
+        function renderizarAgendamentos(agendamentosArray) {
             // Limpar lista
             agendamentosList.innerHTML = '';
             
+            // Verificar se há agendamentos
+            if (!agendamentosArray || agendamentosArray.length === 0) {
+                agendamentosList.innerHTML = `
+                    <div class="no-data">
+                        <i class="fas fa-calendar-times"></i>
+                        <p>Nenhum agendamento encontrado</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Adicionar contador
+            const counter = document.createElement('div');
+            counter.className = 'agendamentos-counter';
+            counter.innerHTML = `<p>${agendamentosArray.length} agendamento(s) encontrado(s)</p>`;
+            agendamentosList.appendChild(counter);
+            
             // Adicionar agendamentos
-            agendamentos.forEach(agendamento => {
+            agendamentosArray.forEach(agendamento => {
                 const agendamentoItem = document.createElement('div');
                 agendamentoItem.className = 'agendamento-item fade-in';
                 
-                // Formatar data (ajuste conforme a estrutura da API)
-                const dataObj = new Date(agendamento.data_agendamento || agendamento.data);
+                // Formatar data - use data_agendada da API
+                const dataObj = new Date(agendamento.data_agendada);
                 const dataFormatada = formatarData(dataObj);
-                const horaFormatada = agendamento.hora_agendamento || agendamento.hora;
                 
-                // Mapear status para português
+                // Formatar hora - use hora_inicio da API
+                const horaFormatada = formatarHora(agendamento.hora_inicio);
+                
+                // Mapear status - ajuste conforme sua API
                 const statusMap = {
-                    'pending': 'Pendente',
-                    'confirmed': 'Confirmado',
-                    'completed': 'Concluído',
-                    'cancelled': 'Cancelado'
+                    'confirmado': 'Confirmado',
+                    'pendente': 'Pendente',
+                    'cancelado': 'Cancelado',
+                    'concluido': 'Concluído'
                 };
                 
                 const statusTexto = statusMap[agendamento.status] || agendamento.status;
                 
                 // Mapear classes CSS para status
                 const statusClassMap = {
-                    'pending': 'status-pending',
-                    'confirmed': 'status-active',
-                    'completed': 'status-completed',
-                    'cancelled': 'status-cancelled'
+                    'confirmado': 'status-active',
+                    'pendente': 'status-pending',
+                    'concluido': 'status-completed',
+                    'cancelado': 'status-cancelled'
                 };
                 
                 const statusClass = statusClassMap[agendamento.status] || 'status-inactive';
@@ -1642,11 +1666,11 @@
                         <div class="agendamento-details">
                             <div class="detail-item">
                                 <i class="fas fa-user"></i>
-                                <span>${agendamento.barbeiro_nome || agendamento.barbeiro}</span>
+                                <span>${agendamento.barbeiro_nome || 'Barbeiro não informado'}</span>
                             </div>
                             <div class="detail-item">
                                 <i class="fas fa-cut"></i>
-                                <span>${agendamento.servico_nome || agendamento.servico}</span>
+                                <span>${agendamento.nome_servico || 'Serviço não informado'}</span>
                             </div>
                             <div class="detail-item">
                                 <i class="far fa-calendar"></i>
@@ -1656,33 +1680,39 @@
                                 <i class="far fa-clock"></i>
                                 <span>${horaFormatada}</span>
                             </div>
-                            ${agendamento.valor_total ? `
                             <div class="detail-item">
                                 <i class="fas fa-tag"></i>
-                                <span>R$ ${parseFloat(agendamento.valor_total).toFixed(2)}</span>
+                                <span>R$ ${parseFloat(agendamento.valor_servico || 0).toFixed(2)}</span>
                             </div>
-                            ` : ''}
+                        </div>
+                        
+                        <div class="agendamento-actions">
+                            <button class="btn-action" onclick="cancelarAgendamento(${agendamento.id})" 
+                                    ${agendamento.status !== 'confirmado' ? 'disabled' : ''}>
+                                <i class="fas fa-times"></i> Cancelar
+                            </button>
+                            <button class="btn-action btn-primary" onclick="verDetalhesAgendamento(${agendamento.id})">
+                                <i class="fas fa-eye"></i> Detalhes
+                            </button>
                         </div>
                     </div>
                 `;
                 
-                // Adicionar evento de clique para detalhes
-                agendamentoItem.addEventListener('click', () => {
-                    verDetalhesAgendamento(agendamento.id);
-                });
-                
                 agendamentosList.appendChild(agendamentoItem);
             });
         }
-        
-        // Formatar data
-        function formatarData(dataString) {
-            const data = new Date(dataString);
-            return data.toLocaleDateString('pt-BR', {
-                weekday: 'long',
-                day: 'numeric',
-                month: 'long'
-            });
+
+        // Função auxiliar para formatar hora
+        function formatarHora(horaString) {
+            if (!horaString) return 'Hora não informada';
+            
+            // Se a hora já está no formato HH:MM:SS, extrair apenas HH:MM
+            if (horaString.includes(':')) {
+                const partes = horaString.split(':');
+                return `${partes[0]}:${partes[1]}`;
+            }
+            
+            return horaString;
         }
         
         // Configurar eventos

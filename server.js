@@ -22,6 +22,8 @@ const assinaturaRoutes = require('./src/routes/assinatura');
 // Importar middlewares
 const errorHandler = require('./src/middlewares/errorHandler');
 const logger = require('./src/utils/logger');
+const adminMiddleware = require('./middlewares/adminMiddleware');
+const authMiddleware = require('./middlewares/auth');
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -110,6 +112,10 @@ app.use('/servicos', limiter, servicoRoutes);
 app.use('/barbeiros', limiter, barbeiroRoutes);
 app.use('/pagamentos', limiter, paymentRoutes);
 app.use('/assinaturas', limiter, assinaturaRoutes);
+
+// Rotas de admin (requer autenticação e privilégios de admin)
+app.use('/admin', authMiddleware.authenticateToken, adminMiddleware.verifyAdmin, require('./src/routes/admin'));
+
 
 // ==================== 404 HANDLER ====================
 

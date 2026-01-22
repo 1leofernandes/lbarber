@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/simplebar@latest/dist/simplebar.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
     <style>
         :root {
             --primary-dark: #121212;
@@ -899,6 +900,7 @@
     </footer>
 
     <!-- JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
     <script>
         // Configurações
         const API_BASE_URL = window.location.hostname === 'localhost' 
@@ -1518,33 +1520,32 @@
         }
         
         async function confirmarAgendamento() {
-            // Validar dados
+            // Validações
             if (!estado.selecionados.data || !estado.selecionados.horaInicio || !estado.selecionados.horaFim) {
-                alert('Por favor, selecione uma data e horário válidos.');
+                toast('Selecione uma data e horário válidos.', 'warning');
                 return;
             }
-            
+
             if (estado.selecionados.servicos.length === 0) {
-                alert('Por favor, selecione pelo menos um serviço.');
+                toast('Selecione pelo menos um serviço.', 'warning');
                 return;
             }
-            
-            // Mostrar confirmação
-            const confirmacao = confirm(
-                `Confirmar agendamento?\n\n` +
-                `Barbeiro: ${estado.selecionados.barbeiro === null ? 'Sem preferência' : estado.barbeiros.find(b => b.id === estado.selecionados.barbeiro)?.nome}\n` +
-                `Serviços: ${estado.servicos.filter(s => estado.selecionados.servicos.includes(s.id)).map(s => s.nome_servico).join(', ')}\n` +
-                `Data: ${new Date(estado.selecionados.data).toLocaleDateString('pt-BR')}\n` +
-                `Hora: ${estado.selecionados.horaInicio} - ${estado.selecionados.horaFim}\n\n` +
-                `Clique em OK para confirmar.`
-            );
-            
-            if (!confirmacao) return;
-            
-            // Para múltiplos serviços, criar um agendamento para cada
-            // (ou um único agendamento com múltiplos serviços, dependendo da sua lógica de negócio)
-            for (const servicoId of estado.selecionados.servicos) {
-                try {
+
+            // Toast de carregamento
+            const loadingToast = Toastify({
+                text: 'Confirmando agendamento...',
+                duration: -1,
+                gravity: 'top',
+                position: 'right',
+                style: {
+                    background: 'linear-gradient(135deg, #0f172a, #1e293b)',
+                    borderRadius: '10px'
+                }
+            });
+            loadingToast.showToast();
+
+            try {
+                for (const servicoId of estado.selecionados.servicos) {
                     const response = await fetch(`${API_BASE_URL}/agendamentos`, {
                         method: 'POST',
                         headers: {
@@ -1559,23 +1560,29 @@
                             hora_fim: estado.selecionados.horaFim
                         })
                     });
-                    
+
                     if (!response.ok) {
                         const error = await response.json();
                         throw new Error(error.message || 'Erro ao criar agendamento');
                     }
-                    
-                } catch (error) {
-                    console.error('Erro ao criar agendamento:', error);
-                    alert(`Erro ao agendar serviço: ${error.message}`);
-                    return;
                 }
+
+                loadingToast.hideToast();
+
+                toast('Agendamento realizado com sucesso!', 'success');
+
+                // Redirecionamento suave
+                setTimeout(() => {
+                    window.location.href = 'cliente-home.html';
+                }, 1800);
+
+            } catch (error) {
+                loadingToast.hideToast();
+                console.error(error);
+                toast(error.message || 'Erro ao realizar agendamento.', 'error');
             }
-            
-            // Sucesso
-            alert('Agendamento realizado com sucesso!');
-            window.location.href = 'cliente-home.html';
         }
+
         
         // Helper functions
         function parseJwt(token) {
@@ -1588,6 +1595,31 @@
             // Implemente notificações Toastify se quiser
             alert(message);
         }
+
+        function toast(message, type = 'success') {
+            const colors = {
+                success: 'linear-gradient(135deg, #16a34a, #22c55e)',
+                error: 'linear-gradient(135deg, #dc2626, #ef4444)',
+                warning: 'linear-gradient(135deg, #f59e0b, #fbbf24)',
+                info: 'linear-gradient(135deg, #0f172a, #1e293b)'
+            };
+
+            Toastify({
+                text: message,
+                duration: 3500,
+                close: true,
+                gravity: 'top',
+                position: 'right',
+                stopOnFocus: true,
+                style: {
+                    background: colors[type] || colors.info,
+                    borderRadius: '10px',
+                    fontWeight: '500',
+                    boxShadow: '0 10px 25px rgba(0,0,0,0.2)'
+                }
+            }).showToast();
+        }
+
     </script>
 </body>
 </html>

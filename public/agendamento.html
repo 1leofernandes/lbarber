@@ -1009,20 +1009,28 @@
                 const response = await fetch(`${API_BASE_URL}/usuarios/me`, {
                     headers: { 'Authorization': `Bearer ${estado.token}` }
                 });
-                
+
                 if (response.ok) {
                     const data = await response.json();
-                    estado.usuario = data.usuario;
-                    
-                    // Carregar assinatura se houver
-                    if (estado.usuario.assinatura_id) {
+                    // O backend retorna o objeto do usuário diretamente.
+                    // Ajuste para guardar o objeto completo em estado.usuario
+                    estado.usuario = data;
+
+                    // Proteção: se o campo assinatura_id existir e for truthy, carregar assinatura
+                    if (estado.usuario && estado.usuario.assinatura_id) {
                         await carregarAssinatura(estado.usuario.assinatura_id);
                     }
+                    return;
                 }
+
+                // Se não ok, logue o erro para debug
+                const errBody = await response.text();
+                console.error('Erro ao buscar usuário. Status:', response.status, errBody);
             } catch (error) {
                 console.error('Erro ao carregar dados do usuário:', error);
             }
         }
+
         
         async function carregarAssinatura(assinaturaId) {
             try {
@@ -1110,34 +1118,38 @@
         
         function renderizarServicos() {
             elementos.servicosContent.innerHTML = '';
-            const valorNumerico = parseFloat(servico.valor_servico) || 0;
-            
+
+            // Percorre os serviços do estado; calcula valor por item dentro do loop
             estado.servicos.forEach(servico => {
+                // segurança: garante que valor_servico existe e é número
+                const valorNumerico = parseFloat(servico.valor_servico) || 0;
+
                 const item = document.createElement('div');
                 item.className = `service-item ${estado.selecionados.servicos.includes(servico.id) ? 'selected' : ''}`;
-                
+
                 // Verificar se o serviço está coberto pela assinatura
-                const precoFinal = calcularPrecoServico(servico);
-                const estaCoberto = estado.assinatura && servico.assinatura_ids && 
-                                   servico.assinatura_ids.includes(estado.assinatura.id);
-                
+                const estaCoberto = estado.assinatura && servico.assinatura_ids &&
+                                    Array.isArray(servico.assinatura_ids) &&
+                                    servico.assinatura_ids.includes(estado.assinatura.id);
+
+                const precoHtml = estaCoberto
+                    ? '<div class="free-badge">INCLUSO</div>'
+                    : `<div class="original-price">R$ ${valorNumerico.toFixed(2)}</div>`;
+
                 item.innerHTML = `
                     <div class="service-info">
                         <div class="service-name">${servico.nome_servico}</div>
                         <div class="service-duration">${servico.duracao_servico} min</div>
                     </div>
                     <div class="service-price">
-                        ${estaCoberto 
-                            ? '<div class="free-badge">INCLUSO</div>' 
-                            : `<div class="original-price">R$ ${valorNumerico.toFixed(2)}</div>`
-                        }
+                        ${precoHtml}
                     </div>
                 `;
-                
+
                 item.onclick = () => toggleServico(servico.id);
                 elementos.servicosContent.appendChild(item);
             });
-            
+
             atualizarContadorServicos();
         }
         

@@ -1714,7 +1714,17 @@
             
             return horaString;
         }
-        
+
+        // Formatar data
+        function formatarData(dataString) {
+            const data = new Date(dataString);
+            return data.toLocaleDateString('pt-BR', {
+                weekday: 'long',
+                day: 'numeric',
+                month: 'long'
+            });
+        }
+
         // Configurar eventos
         function setupEventListeners() {
             // Toggle sidebar

@@ -4,61 +4,2949 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="assets/image0 (1).jpeg" type="image/jpeg">
-    <title>Painel Administrativo</title>
+    <title>Painel Administrativo - Barbearia Silva</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-dark: #121212;
+            --secondary-dark: #1a1a1a;
+            --accent-gold: #d4af37;
+            --light-gold: #e6c567;
+            --dark-gold: #b8860b;
+            --light-gray: #f5f5f5;
+            --medium-gray: #8c8c8c;
+            --success: #28a745;
+            --warning: #ffc107;
+            --error: #dc3545;
+            --info: #17a2b8;
+            --card-bg: #1e1e1e;
+            --modal-bg: rgba(0, 0, 0, 0.85);
+            --sidebar-width: 280px;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--primary-dark);
+            color: var(--light-gray);
+            min-height: 100vh;
+            display: flex;
+            background-image: linear-gradient(rgba(18, 18, 18, 0.95), rgba(18, 18, 18, 0.95));
+            overflow-x: hidden;
+        }
+        
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: var(--sidebar-width);
+            height: 100%;
+            background: linear-gradient(145deg, #151515, #121212);
+            border-right: 1px solid rgba(212, 175, 55, 0.2);
+            z-index: 1000;
+            transition: transform 0.3s ease;
+            overflow-y: auto;
+            box-shadow: 5px 0 25px rgba(0, 0, 0, 0.5);
+        }
+        
+        .sidebar-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid rgba(212, 175, 55, 0.1);
+            text-align: center;
+        }
+        
+        .admin-logo {
+            height: 60px;
+            filter: drop-shadow(0 0 6px rgba(212, 175, 55, 0.5));
+            border-radius: 10px;
+            margin-bottom: 1rem;
+        }
+        
+        .admin-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--accent-gold);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .admin-subtitle {
+            font-size: 0.9rem;
+            color: var(--medium-gray);
+            margin-top: 0.25rem;
+        }
+        
+        .sidebar-menu {
+            padding: 1.5rem 0;
+        }
+        
+        .menu-section {
+            padding: 0 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .menu-section-title {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            color: var(--medium-gray);
+            letter-spacing: 1px;
+            margin-bottom: 0.75rem;
+            font-weight: 600;
+        }
+        
+        .menu-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 0.9rem 1.5rem;
+            color: var(--light-gray);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            border-left: 3px solid transparent;
+            cursor: pointer;
+            margin-bottom: 0.25rem;
+        }
+        
+        .menu-item:hover {
+            background-color: rgba(212, 175, 55, 0.1);
+            border-left-color: var(--accent-gold);
+            color: var(--accent-gold);
+        }
+        
+        .menu-item.active {
+            background-color: rgba(212, 175, 55, 0.15);
+            border-left-color: var(--accent-gold);
+            color: var(--accent-gold);
+        }
+        
+        .menu-item i {
+            width: 20px;
+            text-align: center;
+            font-size: 1.1rem;
+        }
+        
+        .menu-item-text {
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+        
+        .menu-badge {
+            margin-left: auto;
+            background: var(--accent-gold);
+            color: var(--primary-dark);
+            font-size: 0.7rem;
+            padding: 0.2rem 0.5rem;
+            border-radius: 10px;
+            font-weight: 600;
+        }
+        
+        .sidebar-footer {
+            padding: 1.5rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            margin-top: auto;
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 1rem;
+        }
+        
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(145deg, var(--accent-gold), var(--dark-gold));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            color: var(--primary-dark);
+        }
+        
+        .user-details {
+            flex: 1;
+        }
+        
+        .user-name {
+            font-weight: 500;
+            color: var(--light-gray);
+        }
+        
+        .user-role {
+            font-size: 0.8rem;
+            color: var(--medium-gray);
+        }
+        
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            margin-left: var(--sidebar-width);
+            transition: margin-left 0.3s ease;
+            min-height: 100vh;
+        }
+        
+        .navbar {
+            background-color: rgba(26, 26, 26, 0.9);
+            backdrop-filter: blur(10px);
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid rgba(212, 175, 55, 0.15);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .navbar-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .menu-toggle {
+            display: none;
+            background: none;
+            border: none;
+            color: var(--accent-gold);
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+        }
+        
+        .menu-toggle:hover {
+            background-color: rgba(212, 175, 55, 0.1);
+        }
+        
+        .page-title {
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: var(--light-gray);
+        }
+        
+        .navbar-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .btn-icon {
+            background: none;
+            border: none;
+            color: var(--medium-gray);
+            font-size: 1.2rem;
+            cursor: pointer;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-icon:hover {
+            background-color: rgba(212, 175, 55, 0.1);
+            color: var(--accent-gold);
+        }
+        
+        /* Content Area */
+        .content-area {
+            padding: 2rem 1.5rem;
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
+        }
+        
+        /* Welcome Section */
+        .welcome-section {
+            margin-bottom: 2.5rem;
+        }
+        
+        .welcome-title {
+            font-size: 2rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(to right, var(--accent-gold), var(--light-gold));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .welcome-subtitle {
+            font-size: 1.1rem;
+            color: var(--medium-gray);
+        }
+        
+        /* Admin Cards */
+        .admin-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 3rem;
+        }
+        
+        .admin-card {
+            background: linear-gradient(145deg, var(--card-bg), #191919);
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(212, 175, 55, 0.1);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .admin-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+            border-color: rgba(212, 175, 55, 0.3);
+        }
+        
+        .admin-card-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 1.5rem;
+        }
+        
+        .admin-card-icon {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, rgba(212, 175, 55, 0.1), transparent);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-gold);
+            font-size: 1.8rem;
+            border: 1px solid rgba(212, 175, 55, 0.2);
+        }
+        
+        .admin-card-title {
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: var(--light-gray);
+            flex: 1;
+        }
+        
+        .admin-card-content {
+            color: var(--medium-gray);
+            line-height: 1.6;
+            margin-bottom: 1.5rem;
+        }
+        
+        .admin-card-stats {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 1rem;
+        }
+        
+        .stat-item {
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--accent-gold);
+            display: block;
+        }
+        
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--medium-gray);
+        }
+        
+        /* Quick Actions */
+        .quick-actions {
+            background: linear-gradient(145deg, #1a1a1a, #151515);
+            border-radius: 16px;
+            padding: 2rem;
+            border: 1px solid rgba(212, 175, 55, 0.1);
+            margin-bottom: 3rem;
+        }
+        
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--light-gray);
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .section-title i {
+            color: var(--accent-gold);
+        }
+        
+        .actions-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+        
+        .action-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            padding: 1.5rem 1rem;
+            background: rgba(40, 40, 40, 0.5);
+            border: 1px solid rgba(212, 175, 55, 0.1);
+            border-radius: 12px;
+            color: var(--light-gray);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .action-btn:hover {
+            background: rgba(212, 175, 55, 0.1);
+            border-color: var(--accent-gold);
+            transform: translateY(-3px);
+        }
+        
+        .action-icon {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, rgba(212, 175, 55, 0.1), transparent);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-gold);
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+        }
+        
+        .action-text {
+            font-weight: 500;
+            font-size: 1rem;
+            text-align: center;
+        }
+        
+        /* Table Styles */
+        .table-container {
+            background: linear-gradient(145deg, #1a1a1a, #151515);
+            border-radius: 16px;
+            overflow: hidden;
+            border: 1px solid rgba(212, 175, 55, 0.1);
+            margin-bottom: 2rem;
+        }
+        
+        .table-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid rgba(212, 175, 55, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .table-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--light-gray);
+        }
+        
+        .table-search {
+            background: rgba(40, 40, 40, 0.7);
+            border: 1px solid rgba(212, 175, 55, 0.2);
+            border-radius: 8px;
+            padding: 0.7rem 1rem;
+            color: var(--light-gray);
+            width: 250px;
+            transition: all 0.3s ease;
+        }
+        
+        .table-search:focus {
+            outline: none;
+            border-color: var(--accent-gold);
+            box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.2);
+        }
+        
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .table th {
+            background-color: rgba(212, 175, 55, 0.1);
+            color: var(--accent-gold);
+            font-weight: 600;
+            text-align: left;
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid rgba(212, 175, 55, 0.1);
+        }
+        
+        .table td {
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            color: var(--light-gray);
+        }
+        
+        .table tr:hover {
+            background-color: rgba(212, 175, 55, 0.05);
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 0.4rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        
+        .status-active {
+            background-color: rgba(40, 167, 69, 0.15);
+            color: var(--success);
+            border: 1px solid rgba(40, 167, 69, 0.3);
+        }
+        
+        .status-pending {
+            background-color: rgba(255, 193, 7, 0.15);
+            color: var(--warning);
+            border: 1px solid rgba(255, 193, 7, 0.3);
+        }
+        
+        .status-inactive {
+            background-color: rgba(108, 117, 125, 0.15);
+            color: var(--medium-gray);
+            border: 1px solid rgba(108, 117, 125, 0.3);
+        }
+        
+        .btn-table {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 6px;
+            font-weight: 500;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .btn-edit {
+            background-color: rgba(23, 162, 184, 0.15);
+            color: var(--info);
+            border: 1px solid rgba(23, 162, 184, 0.3);
+        }
+        
+        .btn-edit:hover {
+            background-color: rgba(23, 162, 184, 0.25);
+        }
+        
+        .btn-delete {
+            background-color: rgba(220, 53, 69, 0.15);
+            color: var(--error);
+            border: 1px solid rgba(220, 53, 69, 0.3);
+        }
+        
+        .btn-delete:hover {
+            background-color: rgba(220, 53, 69, 0.25);
+        }
+        
+        .btn-view {
+            background-color: rgba(212, 175, 55, 0.15);
+            color: var(--accent-gold);
+            border: 1px solid rgba(212, 175, 55, 0.3);
+        }
+        
+        .btn-view:hover {
+            background-color: rgba(212, 175, 55, 0.25);
+        }
+        
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--modal-bg);
+            backdrop-filter: blur(5px);
+            z-index: 2000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            padding: 1rem;
+        }
+        
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .modal-content {
+            background: linear-gradient(145deg, #1a1a1a, #151515);
+            border-radius: 20px;
+            width: 100%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(212, 175, 55, 0.2);
+            transform: translateY(30px);
+            transition: transform 0.4s ease;
+        }
+        
+        .modal-overlay.active .modal-content {
+            transform: translateY(0);
+        }
+        
+        .modal-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid rgba(212, 175, 55, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--light-gray);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .modal-title i {
+            color: var(--accent-gold);
+        }
+        
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--medium-gray);
+            font-size: 1.5rem;
+            cursor: pointer;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+        }
+        
+        .modal-close:hover {
+            background-color: rgba(212, 175, 55, 0.1);
+            color: var(--accent-gold);
+        }
+        
+        .modal-body {
+            padding: 1.5rem;
+        }
+        
+        /* Form Styles */
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--light-gray);
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 0.9rem 1rem;
+            background-color: rgba(40, 40, 40, 0.7);
+            border: 1px solid rgba(80, 80, 80, 0.3);
+            border-radius: 8px;
+            color: var(--light-gray);
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: var(--accent-gold);
+            box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.2);
+            background-color: rgba(50, 50, 50, 0.7);
+        }
+        
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+        
+        .btn {
+            padding: 0.8rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: none;
+            font-size: 1rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(to right, var(--accent-gold), var(--dark-gold));
+            color: var(--primary-dark);
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(212, 175, 55, 0.4);
+        }
+        
+        .btn-secondary {
+            background: rgba(40, 40, 40, 0.7);
+            color: var(--light-gray);
+            border: 1px solid rgba(212, 175, 55, 0.2);
+        }
+        
+        .btn-secondary:hover {
+            background: rgba(212, 175, 55, 0.1);
+        }
+        
+        .btn-block {
+            width: 100%;
+            justify-content: center;
+        }
+        
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            
+            .sidebar.active {
+                transform: translateX(0);
+            }
+            
+            .main-content {
+                margin-left: 0;
+            }
+            
+            .menu-toggle {
+                display: block;
+            }
+            
+            .navbar-left {
+                width: 100%;
+                justify-content: space-between;
+            }
+            
+            .sidebar.active + .main-content .navbar {
+                margin-left: 0;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .content-area {
+                padding: 1.5rem 1rem;
+            }
+            
+            .admin-cards {
+                grid-template-columns: 1fr;
+            }
+            
+            .actions-grid {
+                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            }
+            
+            .table-search {
+                width: 200px;
+            }
+            
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        @media (max-width: 576px) {
+            .navbar {
+                padding: 1rem;
+            }
+            
+            .page-title {
+                font-size: 1.2rem;
+            }
+            
+            .admin-card {
+                padding: 1.5rem;
+            }
+            
+            .admin-card-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+            
+            .table-header {
+                flex-direction: column;
+                gap: 1rem;
+                align-items: stretch;
+            }
+            
+            .table-search {
+                width: 100%;
+            }
+        }
+        
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease forwards;
+        }
+        
+        /* Overlay */
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+            display: none;
+        }
+        
+        .overlay.active {
+            display: block;
+        }
+    </style>
 </head>
 <body>
-    <h1>Interface do Administrador</h1>
-    <button onclick="window.location.href='registrar-barbeiro.html'">Registrar Barbeiro</button>
-
-    <h2>Lista de Barbeiros</h2>
-    <ul id="barbeiros-list"></ul>
+    <!-- Overlay para mobile -->
+    <div class="overlay" id="overlay"></div>
+    
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <img src="assets/image0 (1).jpeg" alt="Admin Logo" class="admin-logo">
+            <div class="admin-title">Painel Admin</div>
+            <div class="admin-subtitle">Barbearia Silva</div>
+        </div>
+        
+        <nav class="sidebar-menu">
+            <div class="menu-section">
+                <div class="menu-section-title">Principal</div>
+                <a href="#" class="menu-item active" data-page="inicio">
+                    <i class="fas fa-home"></i>
+                    <span class="menu-item-text">Início</span>
+                </a>
+                <a href="#" class="menu-item" data-page="dashboard">
+                    <i class="fas fa-chart-line"></i>
+                    <span class="menu-item-text">Dashboard</span>
+                </a>
+            </div>
+            
+            <div class="menu-section">
+                <div class="menu-section-title">Agendamentos</div>
+                <a href="#" class="menu-item" data-page="agendamentos">
+                    <i class="fas fa-calendar-alt"></i>
+                    <span class="menu-item-text">Agendamentos</span>
+                    <span class="menu-badge" id="agendamentos-badge">0</span>
+                </a>
+                <a href="#" class="menu-item" data-page="bloqueios">
+                    <i class="fas fa-ban"></i>
+                    <span class="menu-item-text">Bloqueios</span>
+                </a>
+            </div>
+            
+            <div class="menu-section">
+                <div class="menu-section-title">Gestão</div>
+                <a href="#" class="menu-item" data-page="servicos">
+                    <i class="fas fa-cut"></i>
+                    <span class="menu-item-text">Serviços</span>
+                    <span class="menu-badge" id="servicos-badge">0</span>
+                </a>
+                <a href="#" class="menu-item" data-page="barbeiros">
+                    <i class="fas fa-user-tie"></i>
+                    <span class="menu-item-text">Barbeiros</span>
+                    <span class="menu-badge" id="barbeiros-badge">0</span>
+                </a>
+                <a href="#" class="menu-item" data-page="assinaturas">
+                    <i class="fas fa-crown"></i>
+                    <span class="menu-item-text">Assinaturas</span>
+                </a>
+                <a href="#" class="menu-item" data-page="pagamentos">
+                    <i class="fas fa-credit-card"></i>
+                    <span class="menu-item-text">Pagamentos</span>
+                </a>
+            </div>
+            
+            <div class="menu-section">
+                <div class="menu-section-title">Configurações</div>
+                <a href="#" class="menu-item" data-page="informacoes">
+                    <i class="fas fa-info-circle"></i>
+                    <span class="menu-item-text">Informações</span>
+                </a>
+                <a href="#" class="menu-item" data-page="conta">
+                    <i class="fas fa-user-cog"></i>
+                    <span class="menu-item-text">Minha Conta</span>
+                </a>
+            </div>
+        </nav>
+        
+        <div class="sidebar-footer">
+            <div class="user-info">
+                <div class="user-avatar" id="user-avatar">A</div>
+                <div class="user-details">
+                    <div class="user-name" id="user-name">Admin</div>
+                    <div class="user-role">Administrador</div>
+                </div>
+            </div>
+            <button class="btn btn-secondary btn-block" id="logoutBtn">
+                <i class="fas fa-sign-out-alt"></i>
+                Sair
+            </button>
+        </div>
+    </aside>
+    
+    <!-- Main Content -->
+    <main class="main-content" id="mainContent">
+        <!-- Navbar -->
+        <nav class="navbar">
+            <div class="navbar-left">
+                <button class="menu-toggle" id="menuToggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <div class="page-title" id="pageTitle">Início</div>
+            </div>
+            <div class="navbar-actions">
+                <button class="btn-icon" id="notificationsBtn">
+                    <i class="fas fa-bell"></i>
+                </button>
+                <button class="btn-icon" id="helpBtn">
+                    <i class="fas fa-question-circle"></i>
+                </button>
+            </div>
+        </nav>
+        
+        <!-- Content Area -->
+        <div class="content-area" id="contentArea">
+            <!-- Página Início -->
+            <div id="page-inicio" class="page-content active">
+                <div class="welcome-section">
+                    <h1 class="welcome-title" id="welcomeTitle">Bem-vindo, Admin</h1>
+                    <p class="welcome-subtitle">Gerencie sua barbearia de forma eficiente</p>
+                </div>
+                
+                <div class="admin-cards">
+                    <div class="admin-card fade-in" onclick="navigateToPage('dashboard')">
+                        <div class="admin-card-header">
+                            <div class="admin-card-icon">
+                                <i class="fas fa-chart-pie"></i>
+                            </div>
+                            <div class="admin-card-title">Dashboard Financeiro</div>
+                        </div>
+                        <div class="admin-card-content">
+                            Visualize métricas financeiras, acompanhe receitas, despesas e crescimento do seu negócio.
+                        </div>
+                        <div class="admin-card-stats">
+                            <div class="stat-item">
+                                <span class="stat-value" id="total-receita">R$ 0,00</span>
+                                <span class="stat-label">Receita Total</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-value" id="agendamentos-hoje">0</span>
+                                <span class="stat-label">Hoje</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="admin-card fade-in" onclick="navigateToPage('servicos')">
+                        <div class="admin-card-header">
+                            <div class="admin-card-icon">
+                                <i class="fas fa-cut"></i>
+                            </div>
+                            <div class="admin-card-title">Serviços</div>
+                        </div>
+                        <div class="admin-card-content">
+                            Gerencie todos os serviços oferecidos, preços, durações e associações com planos de assinatura.
+                        </div>
+                        <div class="admin-card-stats">
+                            <div class="stat-item">
+                                <span class="stat-value" id="total-servicos">0</span>
+                                <span class="stat-label">Serviços Ativos</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-value" id="servicos-populares">0</span>
+                                <span class="stat-label">Mais Populares</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="admin-card fade-in" onclick="navigateToPage('assinaturas')">
+                        <div class="admin-card-header">
+                            <div class="admin-card-icon">
+                                <i class="fas fa-crown"></i>
+                            </div>
+                            <div class="admin-card-title">Assinaturas</div>
+                        </div>
+                        <div class="admin-card-content">
+                            Controle planos de assinatura, cobre valores recorrentes e gerencie benefícios para clientes.
+                        </div>
+                        <div class="admin-card-stats">
+                            <div class="stat-item">
+                                <span class="stat-value" id="total-assinantes">0</span>
+                                <span class="stat-label">Assinantes</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-value" id="receita-mensal">R$ 0,00</span>
+                                <span class="stat-label">Receita Mensal</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="quick-actions fade-in">
+                    <h2 class="section-title">
+                        <i class="fas fa-bolt"></i>
+                        Ações Rápidas
+                    </h2>
+                    <div class="actions-grid">
+                        <button class="action-btn" onclick="openModal('novo-agendamento')">
+                            <div class="action-icon">
+                                <i class="fas fa-calendar-plus"></i>
+                            </div>
+                            <span class="action-text">Novo Agendamento</span>
+                        </button>
+                        <button class="action-btn" onclick="navigateToPage('servicos')">
+                            <div class="action-icon">
+                                <i class="fas fa-plus-circle"></i>
+                            </div>
+                            <span class="action-text">Criar Serviço</span>
+                        </button>
+                        <button class="action-btn" onclick="navigateToPage('barbeiros')">
+                            <div class="action-icon">
+                                <i class="fas fa-user-plus"></i>
+                            </div>
+                            <span class="action-text">Adicionar Barbeiro</span>
+                        </button>
+                        <button class="action-btn" onclick="openModal('novo-bloqueio')">
+                            <div class="action-icon">
+                                <i class="fas fa-calendar-times"></i>
+                            </div>
+                            <span class="action-text">Bloquear Horário</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="table-container fade-in">
+                    <div class="table-header">
+                        <div class="table-title">Agendamentos Recentes</div>
+                        <input type="text" class="table-search" placeholder="Buscar agendamentos...">
+                    </div>
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Cliente</th>
+                                <th>Serviço</th>
+                                <th>Barbeiro</th>
+                                <th>Data/Hora</th>
+                                <th>Status</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recent-agendamentos">
+                            <!-- Dados serão carregados via JavaScript -->
+                            <tr>
+                                <td colspan="6" style="text-align: center; padding: 3rem;">
+                                    <i class="fas fa-spinner fa-spin"></i> Carregando...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Páginas serão carregadas dinamicamente -->
+            <div id="page-dashboard" class="page-content"></div>
+            <div id="page-agendamentos" class="page-content"></div>
+            <div id="page-bloqueios" class="page-content"></div>
+            <div id="page-servicos" class="page-content"></div>
+            <div id="page-barbeiros" class="page-content"></div>
+            <div id="page-assinaturas" class="page-content"></div>
+            <div id="page-pagamentos" class="page-content"></div>
+            <div id="page-informacoes" class="page-content"></div>
+            <div id="page-conta" class="page-content"></div>
+        </div>
+    </main>
+    
+    <!-- Modais -->
+    <div class="modal-overlay" id="modal-novo-agendamento">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">
+                    <i class="fas fa-calendar-plus"></i>
+                    Novo Agendamento
+                </h2>
+                <button class="modal-close" onclick="closeModal('novo-agendamento')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="form-novo-agendamento">
+                    <div class="form-group">
+                        <label class="form-label">Cliente</label>
+                        <select class="form-control" id="cliente-select" required>
+                            <option value="">Selecione um cliente...</option>
+                        </select>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Serviço</label>
+                            <select class="form-control" id="servico-select" required>
+                                <option value="">Selecione um serviço...</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Barbeiro</label>
+                            <select class="form-control" id="barbeiro-select" required>
+                                <option value="">Selecione um barbeiro...</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Data</label>
+                            <input type="date" class="form-control" id="agendamento-data" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Hora</label>
+                            <input type="time" class="form-control" id="agendamento-hora" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Observações</label>
+                        <textarea class="form-control" id="agendamento-obs" rows="3"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block">
+                        <i class="fas fa-save"></i>
+                        Agendar
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="modal-overlay" id="modal-novo-bloqueio">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">
+                    <i class="fas fa-calendar-times"></i>
+                    Bloquear Horário
+                </h2>
+                <button class="modal-close" onclick="closeModal('novo-bloqueio')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="form-novo-bloqueio">
+                    <div class="form-group">
+                        <label class="form-label">Tipo de Bloqueio</label>
+                        <select class="form-control" id="tipo-bloqueio" required>
+                            <option value="">Selecione...</option>
+                            <option value="horario">Horário Específico</option>
+                            <option value="dia">Dia Inteiro</option>
+                            <option value="periodo">Período</option>
+                        </select>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Data Início</label>
+                            <input type="date" class="form-control" id="bloqueio-data-inicio" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Data Fim</label>
+                            <input type="date" class="form-control" id="bloqueio-data-fim">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Hora Início</label>
+                            <input type="time" class="form-control" id="bloqueio-hora-inicio">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Hora Fim</label>
+                            <input type="time" class="form-control" id="bloqueio-hora-fim">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Aplicar para:</label>
+                        <div style="display: flex; gap: 1rem; margin-top: 0.5rem;">
+                            <label style="display: flex; align-items: center; gap: 5px;">
+                                <input type="radio" name="aplicacao" value="todos" checked>
+                                Todos os barbeiros
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 5px;">
+                                <input type="radio" name="aplicacao" value="especifico">
+                                Barbeiro específico
+                            </label>
+                        </div>
+                        <select class="form-control" id="barbeiro-bloqueio" style="margin-top: 0.5rem; display: none;">
+                            <option value="">Selecione um barbeiro...</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Motivo</label>
+                        <input type="text" class="form-control" id="bloqueio-motivo" placeholder="Ex: Feriado, Manutenção...">
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block">
+                        <i class="fas fa-ban"></i>
+                        Bloquear
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="modal-overlay" id="modal-editar-servico">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">
+                    <i class="fas fa-edit"></i>
+                    Editar Serviço
+                </h2>
+                <button class="modal-close" onclick="closeModal('editar-servico')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="form-editar-servico">
+                    <input type="hidden" id="servico-id">
+                    <div class="form-group">
+                        <label class="form-label">Nome do Serviço</label>
+                        <input type="text" class="form-control" id="servico-nome" required>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Duração (minutos)</label>
+                            <input type="number" class="form-control" id="servico-duracao" min="15" step="15" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Valor (R$)</label>
+                            <input type="number" class="form-control" id="servico-valor" min="0" step="0.01" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Descrição</label>
+                        <textarea class="form-control" id="servico-descricao" rows="3"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Coberto por Assinaturas</label>
+                        <div id="assinaturas-checkboxes">
+                            <!-- Checkboxes serão gerados dinamicamente -->
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block">
+                        <i class="fas fa-save"></i>
+                        Salvar Alterações
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
 
     <script>
+        // Configurações iniciais
         const API_BASE_URL = window.location.hostname === 'localhost' 
             ? 'http://localhost:3000' 
             : 'https://barbeariasilva.onrender.com';
-        // Função para carregar a lista de barbeiros
-        async function carregarBarbeiros() {
+        
+        // Estado da aplicação
+        const state = {
+            currentPage: 'inicio',
+            user: null,
+            stats: {
+                totalAgendamentos: 0,
+                totalServicos: 0,
+                totalBarbeiros: 0,
+                totalReceita: 0,
+                totalAssinantes: 0
+            },
+            modals: {}
+        };
+        
+        // Elementos DOM
+        const elements = {
+            sidebar: document.getElementById('sidebar'),
+            menuToggle: document.getElementById('menuToggle'),
+            overlay: document.getElementById('overlay'),
+            mainContent: document.getElementById('mainContent'),
+            pageTitle: document.getElementById('pageTitle'),
+            contentArea: document.getElementById('contentArea'),
+            welcomeTitle: document.getElementById('welcomeTitle'),
+            userAvatar: document.getElementById('user-avatar'),
+            userName: document.getElementById('user-name'),
+            logoutBtn: document.getElementById('logoutBtn'),
+            menuItems: document.querySelectorAll('.menu-item'),
+            pageContents: document.querySelectorAll('.page-content')
+        };
+        
+        // Inicialização
+        async function initAdmin() {
+            // Verificar autenticação
             const token = localStorage.getItem('token');
-            const res = await fetch(`${API_BASE_URL}/barbeiros`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            
-            if (!res.ok) {
-                console.error('Erro ao carregar barbeiros');
+            if (!token) {
+                window.location.href = 'login.html';
                 return;
             }
-
-            const barbeiros = await res.json();
-
-            // Popula a lista de barbeiros
-            const lista = document.getElementById('barbeiros-list');
-            lista.innerHTML = barbeiros.map(b => `
-                <li>
-                    ${b.nome} (${b.email})
-                    <button onclick="excluirBarbeiro(${b.id})">Excluir</button>
-                </li>
-            `).join('');
+            
+            // Verificar se é admin
+            const userData = parseJwt(token);
+            if (!userData.roles || !userData.roles.includes('admin')) {
+                window.location.href = 'cliente-home.html';
+                return;
+            }
+            
+            state.user = userData;
+            updateUserInfo();
+            setupEventListeners();
+            loadDashboardStats();
+            loadRecentAgendamentos();
+            setupModals();
+            
+            // Configurar data mínima para agendamentos (hoje)
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('agendamento-data').min = today;
+            document.getElementById('bloqueio-data-inicio').min = today;
         }
-
-        // Função para excluir barbeiro
-        async function excluirBarbeiro(id) {
-            const token = localStorage.getItem('token');
-            const res = await fetch(`${API_BASE_URL}/admin/barbeiros/${id}`, {
-                method: 'DELETE',
-                headers: { Authorization: `Bearer ${token}` }
+        
+        // Parse JWT token
+        function parseJwt(token) {
+            try {
+                const base64Url = token.split('.')[1];
+                const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+                return JSON.parse(atob(base64));
+            } catch (error) {
+                console.error('Erro ao parse token:', error);
+                return {};
+            }
+        }
+        
+        // Atualizar informações do usuário
+        function updateUserInfo() {
+            if (state.user) {
+                elements.welcomeTitle.textContent = `Bem-vindo, ${state.user.nome}`;
+                elements.userName.textContent = state.user.nome;
+                if (state.user.nome) {
+                    elements.userAvatar.textContent = state.user.nome.charAt(0).toUpperCase();
+                }
+            }
+        }
+        
+        // Configurar eventos
+        function setupEventListeners() {
+            // Toggle sidebar mobile
+            elements.menuToggle.addEventListener('click', () => {
+                elements.sidebar.classList.toggle('active');
+                elements.overlay.classList.toggle('active');
+                document.body.style.overflow = elements.sidebar.classList.contains('active') ? 'hidden' : 'auto';
             });
             
-            if (res.ok) {
-                alert('Barbeiro excluído com sucesso');
-                carregarBarbeiros();  // Atualiza a lista
-            } else {
+            // Fechar sidebar ao clicar no overlay
+            elements.overlay.addEventListener('click', () => {
+                elements.sidebar.classList.remove('active');
+                elements.overlay.classList.remove('active');
+                document.body.style.overflow = 'auto';
+            });
+            
+            // Menu items
+            elements.menuItems.forEach(item => {
+                item.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const page = item.getAttribute('data-page');
+                    
+                    // Atualizar item ativo
+                    elements.menuItems.forEach(i => i.classList.remove('active'));
+                    item.classList.add('active');
+                    
+                    // Navegar para página
+                    navigateToPage(page);
+                    
+                    // Fechar sidebar em mobile
+                    if (window.innerWidth <= 1024) {
+                        elements.sidebar.classList.remove('active');
+                        elements.overlay.classList.remove('active');
+                        document.body.style.overflow = 'auto';
+                    }
+                });
+            });
+            
+            // Logout
+            elements.logoutBtn.addEventListener('click', logout);
+            
+            // Notificações
+            document.getElementById('notificationsBtn').addEventListener('click', () => {
+                alert('Notificações - Em desenvolvimento');
+            });
+            
+            // Ajuda
+            document.getElementById('helpBtn').addEventListener('click', () => {
+                alert('Ajuda - Em desenvolvimento');
+            });
+            
+            // Formulários
+            document.getElementById('form-novo-agendamento')?.addEventListener('submit', handleNovoAgendamento);
+            document.getElementById('form-novo-bloqueio')?.addEventListener('submit', handleNovoBloqueio);
+            document.getElementById('form-editar-servico')?.addEventListener('submit', handleEditarServico);
+            
+            // Radio buttons para bloqueio
+            document.querySelectorAll('input[name="aplicacao"]').forEach(radio => {
+                radio.addEventListener('change', (e) => {
+                    const barbeiroSelect = document.getElementById('barbeiro-bloqueio');
+                    barbeiroSelect.style.display = e.target.value === 'especifico' ? 'block' : 'none';
+                });
+            });
+        }
+        
+        // Navegar entre páginas
+        function navigateToPage(page) {
+            state.currentPage = page;
+            
+            // Atualizar título da página
+            const pageTitles = {
+                'inicio': 'Início',
+                'dashboard': 'Dashboard Financeiro',
+                'agendamentos': 'Agendamentos',
+                'bloqueios': 'Bloqueios',
+                'servicos': 'Serviços',
+                'barbeiros': 'Barbeiros',
+                'assinaturas': 'Assinaturas',
+                'pagamentos': 'Pagamentos',
+                'informacoes': 'Informações',
+                'conta': 'Minha Conta'
+            };
+            
+            elements.pageTitle.textContent = pageTitles[page] || 'Painel Admin';
+            
+            // Esconder todas as páginas
+            elements.pageContents.forEach(p => {
+                p.classList.remove('active');
+                p.innerHTML = '';
+            });
+            
+            // Mostrar página atual
+            const currentPageElement = document.getElementById(`page-${page}`);
+            if (currentPageElement) {
+                currentPageElement.classList.add('active');
+                loadPageContent(page);
+            }
+        }
+        
+        // Carregar conteúdo da página
+        async function loadPageContent(page) {
+            switch(page) {
+                case 'dashboard':
+                    loadDashboardPage();
+                    break;
+                case 'agendamentos':
+                    loadAgendamentosPage();
+                    break;
+                case 'servicos':
+                    loadServicosPage();
+                    break;
+                case 'barbeiros':
+                    loadBarbeirosPage();
+                    break;
+                case 'assinaturas':
+                    loadAssinaturasPage();
+                    break;
+                case 'pagamentos':
+                    loadPagamentosPage();
+                    break;
+                case 'bloqueios':
+                    loadBloqueiosPage();
+                    break;
+                case 'informacoes':
+                    loadInformacoesPage();
+                    break;
+                case 'conta':
+                    loadContaPage();
+                    break;
+            }
+        }
+        
+        // ============ FUNÇÕES DE CARREGAMENTO DE DADOS ============
+        
+        async function loadDashboardStats() {
+            try {
+                const token = localStorage.getItem('token');
+                
+                // Simular carregamento de dados (substituir por API real)
+                setTimeout(() => {
+                    document.getElementById('total-receita').textContent = 'R$ 12.450,00';
+                    document.getElementById('agendamentos-hoje').textContent = '8';
+                    document.getElementById('total-servicos').textContent = '12';
+                    document.getElementById('servicos-populares').textContent = '3';
+                    document.getElementById('total-assinantes').textContent = '24';
+                    document.getElementById('receita-mensal').textContent = 'R$ 2.156,00';
+                    
+                    // Atualizar badges
+                    document.getElementById('agendamentos-badge').textContent = '8';
+                    document.getElementById('servicos-badge').textContent = '12';
+                    document.getElementById('barbeiros-badge').textContent = '5';
+                }, 1000);
+                
+            } catch (error) {
+                console.error('Erro ao carregar estatísticas:', error);
+            }
+        }
+        
+        async function loadRecentAgendamentos() {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_BASE_URL}/admin/agendamentos/recentes`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (response.ok) {
+                    const agendamentos = await response.json();
+                    renderRecentAgendamentos(agendamentos);
+                } else {
+                    // Fallback para dados mockados
+                    renderMockAgendamentos();
+                }
+            } catch (error) {
+                console.error('Erro ao carregar agendamentos recentes:', error);
+                renderMockAgendamentos();
+            }
+        }
+        
+        function renderRecentAgendamentos(agendamentos) {
+            const tbody = document.getElementById('recent-agendamentos');
+            
+            if (!agendamentos || agendamentos.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" style="text-align: center; padding: 3rem;">
+                            <i class="fas fa-calendar-times"></i>
+                            <p style="margin-top: 1rem;">Nenhum agendamento recente</p>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            tbody.innerHTML = agendamentos.map(agendamento => `
+                <tr>
+                    <td>${agendamento.cliente_nome || 'Cliente'}</td>
+                    <td>${agendamento.servico_nome || 'Serviço'}</td>
+                    <td>${agendamento.barbeiro_nome || 'Barbeiro'}</td>
+                    <td>${formatDateTime(agendamento.data_agendada, agendamento.hora_inicio)}</td>
+                    <td>
+                        <span class="status-badge ${getStatusClass(agendamento.status)}">
+                            ${getStatusText(agendamento.status)}
+                        </span>
+                    </td>
+                    <td>
+                        <button class="btn-table btn-view" onclick="verAgendamento(${agendamento.id})">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="btn-table btn-edit" onclick="editarAgendamento(${agendamento.id})">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+        
+        function renderMockAgendamentos() {
+            const mockData = [
+                { id: 1, cliente_nome: 'João Silva', servico_nome: 'Corte Social', barbeiro_nome: 'Carlos', data_agendada: '2024-01-22', hora_inicio: '14:00', status: 'confirmado' },
+                { id: 2, cliente_nome: 'Maria Santos', servico_nome: 'Barba Completa', barbeiro_nome: 'Pedro', data_agendada: '2024-01-22', hora_inicio: '15:30', status: 'pendente' },
+                { id: 3, cliente_nome: 'José Oliveira', servico_nome: 'Corte + Barba', barbeiro_nome: 'Carlos', data_agendada: '2024-01-23', hora_inicio: '10:00', status: 'finalizado' }
+            ];
+            
+            renderRecentAgendamentos(mockData);
+        }
+        
+        // ============ FUNÇÕES AUXILIARES ============
+        
+        function formatDateTime(dateStr, timeStr) {
+            const date = new Date(dateStr);
+            return `${date.toLocaleDateString('pt-BR')} ${timeStr}`;
+        }
+        
+        function getStatusClass(status) {
+            const statusMap = {
+                'confirmado': 'status-active',
+                'pendente': 'status-pending',
+                'finalizado': 'status-active',
+                'cancelado': 'status-inactive'
+            };
+            return statusMap[status] || 'status-inactive';
+        }
+        
+        function getStatusText(status) {
+            const statusMap = {
+                'confirmado': 'Confirmado',
+                'pendente': 'Pendente',
+                'finalizado': 'Finalizado',
+                'cancelado': 'Cancelado'
+            };
+            return statusMap[status] || status;
+        }
+        
+        // ============ FUNÇÕES DE PÁGINAS ============
+        
+        async function loadDashboardPage() {
+            const page = document.getElementById('page-dashboard');
+            page.innerHTML = `
+                <div class="welcome-section">
+                    <h1 class="welcome-title">Dashboard Financeiro</h1>
+                    <p class="welcome-subtitle">Métricas e análises do seu negócio</p>
+                </div>
+                
+                <div class="admin-cards">
+                    <div class="admin-card fade-in">
+                        <div class="admin-card-header">
+                            <div class="admin-card-icon">
+                                <i class="fas fa-money-bill-wave"></i>
+                            </div>
+                            <div class="admin-card-title">Receita Mensal</div>
+                        </div>
+                        <div class="admin-card-stats">
+                            <div class="stat-item">
+                                <span class="stat-value" id="receita-mes-atual">R$ 0,00</span>
+                                <span class="stat-label">Este Mês</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-value" id="variacao-receita">0%</span>
+                                <span class="stat-label">Variação</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="admin-card fade-in">
+                        <div class="admin-card-header">
+                            <div class="admin-card-icon">
+                                <i class="fas fa-users"></i>
+                            </div>
+                            <div class="admin-card-title">Clientes Ativos</div>
+                        </div>
+                        <div class="admin-card-stats">
+                            <div class="stat-item">
+                                <span class="stat-value" id="total-clientes">0</span>
+                                <span class="stat-label">Total</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-value" id="novos-clientes">0</span>
+                                <span class="stat-label">Este Mês</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="admin-card fade-in">
+                        <div class="admin-card-header">
+                            <div class="admin-card-icon">
+                                <i class="fas fa-calendar-check"></i>
+                            </div>
+                            <div class="admin-card-title">Agendamentos</div>
+                        </div>
+                        <div class="admin-card-stats">
+                            <div class="stat-item">
+                                <span class="stat-value" id="agendamentos-mes">0</span>
+                                <span class="stat-label">Este Mês</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-value" id="taxa-conversao">0%</span>
+                                <span class="stat-label">Taxa de Conversão</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="table-container fade-in">
+                    <div class="table-header">
+                        <div class="table-title">Relatório de Serviços (Últimos 30 dias)</div>
+                        <div>
+                            <button class="btn btn-secondary">
+                                <i class="fas fa-download"></i>
+                                Exportar
+                            </button>
+                        </div>
+                    </div>
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Serviço</th>
+                                <th>Quantidade</th>
+                                <th>Receita Total</th>
+                                <th>Média por Serviço</th>
+                                <th>Crescimento</th>
+                            </tr>
+                        </thead>
+                        <tbody id="relatorio-servicos">
+                            <tr>
+                                <td colspan="5" style="text-align: center; padding: 3rem;">
+                                    <i class="fas fa-spinner fa-spin"></i> Carregando relatório...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            `;
+            
+            // Carregar dados do dashboard
+            setTimeout(() => {
+                // Simular dados
+                document.getElementById('receita-mes-atual').textContent = 'R$ 8.450,00';
+                document.getElementById('variacao-receita').textContent = '+12%';
+                document.getElementById('total-clientes').textContent = '156';
+                document.getElementById('novos-clientes').textContent = '23';
+                document.getElementById('agendamentos-mes').textContent = '84';
+                document.getElementById('taxa-conversao').textContent = '68%';
+                
+                // Preencher relatório
+                const relatorio = [
+                    { servico: 'Corte Social', quantidade: 45, receita: 2025, media: 45, crescimento: '+8%' },
+                    { servico: 'Barba Completa', quantidade: 32, receita: 1120, media: 35, crescimento: '+15%' },
+                    { servico: 'Corte + Barba', quantidade: 28, receita: 1680, media: 60, crescimento: '+5%' },
+                    { servico: 'Sobrancelha', quantidade: 18, receita: 540, media: 30, crescimento: '+12%' }
+                ];
+                
+                const tbody = document.getElementById('relatorio-servicos');
+                tbody.innerHTML = relatorio.map(item => `
+                    <tr>
+                        <td>${item.servico}</td>
+                        <td>${item.quantidade}</td>
+                        <td>R$ ${item.receita},00</td>
+                        <td>R$ ${item.media},00</td>
+                        <td>
+                            <span style="color: ${item.crescimento.includes('+') ? '#28a745' : '#dc3545'}">
+                                ${item.crescimento}
+                            </span>
+                        </td>
+                    </tr>
+                `).join('');
+            }, 1000);
+        }
+        
+        async function loadAgendamentosPage() {
+            const page = document.getElementById('page-agendamentos');
+            page.innerHTML = `
+                <div class="welcome-section">
+                    <h1 class="welcome-title">Gestão de Agendamentos</h1>
+                    <p class="welcome-subtitle">Gerencie todos os agendamentos da barbearia</p>
+                </div>
+                
+                <div class="quick-actions fade-in">
+                    <h2 class="section-title">
+                        <i class="fas fa-filter"></i>
+                        Filtros
+                    </h2>
+                    <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                        <input type="date" class="form-control" style="width: 200px;" id="filter-data">
+                        <select class="form-control" style="width: 200px;" id="filter-status">
+                            <option value="">Todos os status</option>
+                            <option value="pendente">Pendente</option>
+                            <option value="confirmado">Confirmado</option>
+                            <option value="finalizado">Finalizado</option>
+                            <option value="cancelado">Cancelado</option>
+                        </select>
+                        <select class="form-control" style="width: 200px;" id="filter-barbeiro">
+                            <option value="">Todos os barbeiros</option>
+                        </select>
+                        <button class="btn btn-primary" onclick="filtrarAgendamentos()">
+                            <i class="fas fa-search"></i>
+                            Filtrar
+                        </button>
+                        <button class="btn btn-secondary" onclick="limparFiltros()">
+                            <i class="fas fa-times"></i>
+                            Limpar
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="table-container fade-in">
+                    <div class="table-header">
+                        <div class="table-title">Todos os Agendamentos</div>
+                        <div style="display: flex; gap: 10px;">
+                            <input type="text" class="table-search" placeholder="Buscar por cliente..." id="search-agendamentos">
+                            <button class="btn btn-primary" onclick="openModal('novo-agendamento')">
+                                <i class="fas fa-plus"></i>
+                                Novo Agendamento
+                            </button>
+                        </div>
+                    </div>
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Cliente</th>
+                                <th>Serviço</th>
+                                <th>Barbeiro</th>
+                                <th>Data/Hora</th>
+                                <th>Valor</th>
+                                <th>Status</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="todos-agendamentos">
+                            <tr>
+                                <td colspan="8" style="text-align: center; padding: 3rem;">
+                                    <i class="fas fa-spinner fa-spin"></i> Carregando agendamentos...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            `;
+            
+            // Carregar agendamentos
+            setTimeout(() => {
+                // Simular dados
+                const agendamentos = [
+                    { id: 1, cliente: 'João Silva', servico: 'Corte Social', barbeiro: 'Carlos', data: '22/01/2024 14:00', valor: 45.00, status: 'confirmado' },
+                    { id: 2, cliente: 'Maria Santos', servico: 'Barba Completa', barbeiro: 'Pedro', data: '22/01/2024 15:30', valor: 35.00, status: 'pendente' },
+                    { id: 3, cliente: 'José Oliveira', servico: 'Corte + Barba', barbeiro: 'Carlos', data: '23/01/2024 10:00', valor: 70.00, status: 'finalizado' },
+                    { id: 4, cliente: 'Ana Costa', servico: 'Sobrancelha', barbeiro: 'Pedro', data: '23/01/2024 11:00', valor: 30.00, status: 'cancelado' }
+                ];
+                
+                const tbody = document.getElementById('todos-agendamentos');
+                tbody.innerHTML = agendamentos.map(ag => `
+                    <tr>
+                        <td>${ag.id}</td>
+                        <td>${ag.cliente}</td>
+                        <td>${ag.servico}</td>
+                        <td>${ag.barbeiro}</td>
+                        <td>${ag.data}</td>
+                        <td>R$ ${ag.valor.toFixed(2)}</td>
+                        <td>
+                            <select class="form-control" style="width: 120px; padding: 0.3rem;" onchange="atualizarStatusAgendamento(${ag.id}, this.value)">
+                                <option value="pendente" ${ag.status === 'pendente' ? 'selected' : ''}>Pendente</option>
+                                <option value="confirmado" ${ag.status === 'confirmado' ? 'selected' : ''}>Confirmado</option>
+                                <option value="finalizado" ${ag.status === 'finalizado' ? 'selected' : ''}>Finalizado</option>
+                                <option value="cancelado" ${ag.status === 'cancelado' ? 'selected' : ''}>Cancelado</option>
+                            </select>
+                        </td>
+                        <td>
+                            <button class="btn-table btn-view" onclick="verAgendamento(${ag.id})">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button class="btn-table btn-edit" onclick="editarAgendamento(${ag.id})">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn-table btn-delete" onclick="excluirAgendamento(${ag.id})">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+            }, 1000);
+        }
+        
+        async function loadServicosPage() {
+            const page = document.getElementById('page-servicos');
+            page.innerHTML = `
+                <div class="welcome-section">
+                    <h1 class="welcome-title">Gestão de Serviços</h1>
+                    <p class="welcome-subtitle">Gerencie os serviços oferecidos pela barbearia</p>
+                </div>
+                
+                <div class="quick-actions fade-in">
+                    <h2 class="section-title">
+                        <i class="fas fa-info-circle"></i>
+                        Informações
+                    </h2>
+                    <p style="color: var(--medium-gray); margin-bottom: 1rem;">
+                        Aqui você pode adicionar, editar ou remover serviços. Cada serviço pode estar associado a um ou mais planos de assinatura.
+                    </p>
+                    <button class="btn btn-primary" onclick="openModal('novo-servico')">
+                        <i class="fas fa-plus"></i>
+                        Adicionar Novo Serviço
+                    </button>
+                </div>
+                
+                <div class="table-container fade-in">
+                    <div class="table-header">
+                        <div class="table-title">Todos os Serviços</div>
+                        <input type="text" class="table-search" placeholder="Buscar serviços..." id="search-servicos">
+                    </div>
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Nome</th>
+                                <th>Duração</th>
+                                <th>Valor</th>
+                                <th>Descrição</th>
+                                <th>Coberto por</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="lista-servicos">
+                            <tr>
+                                <td colspan="6" style="text-align: center; padding: 3rem;">
+                                    <i class="fas fa-spinner fa-spin"></i> Carregando serviços...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            `;
+            
+            // Carregar serviços
+            setTimeout(() => {
+                // Simular dados
+                const servicos = [
+                    { id: 1, nome: 'Corte Social', duracao: '45 min', valor: 45.00, descricao: 'Corte clássico masculino', cobertura: 'Plano Premium' },
+                    { id: 2, nome: 'Barba Completa', duracao: '30 min', valor: 35.00, descricao: 'Aparação e modelagem completa', cobertura: 'Todos os planos' },
+                    { id: 3, nome: 'Corte + Barba', duracao: '60 min', valor: 70.00, descricao: 'Combo completo', cobertura: 'Plano Premium' },
+                    { id: 4, nome: 'Sobrancelha', duracao: '15 min', valor: 30.00, descricao: 'Design e manutenção', cobertura: 'Nenhum' }
+                ];
+                
+                const tbody = document.getElementById('lista-servicos');
+                tbody.innerHTML = servicos.map(servico => `
+                    <tr>
+                        <td><strong>${servico.nome}</strong></td>
+                        <td>${servico.duracao}</td>
+                        <td>R$ ${servico.valor.toFixed(2)}</td>
+                        <td>${servico.descricao}</td>
+                        <td>${servico.cobertura}</td>
+                        <td>
+                            <button class="btn-table btn-edit" onclick="editarServico(${servico.id})">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn-table btn-delete" onclick="excluirServico(${servico.id})">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+            }, 1000);
+        }
+        
+        async function loadBarbeirosPage() {
+            const page = document.getElementById('page-barbeiros');
+            page.innerHTML = `
+                <div class="welcome-section">
+                    <h1 class="welcome-title">Gestão de Barbeiros</h1>
+                    <p class="welcome-subtitle">Gerencie a equipe de barbeiros da barbearia</p>
+                </div>
+                
+                <div class="admin-cards">
+                    <div class="admin-card fade-in">
+                        <div class="admin-card-header">
+                            <div class="admin-card-icon">
+                                <i class="fas fa-user-plus"></i>
+                            </div>
+                            <div class="admin-card-title">Adicionar Barbeiro</div>
+                        </div>
+                        <div class="admin-card-content">
+                            Crie uma nova conta de barbeiro ou promova um usuário existente.
+                        </div>
+                        <button class="btn btn-primary" style="width: 100%; margin-top: 1rem;" onclick="openModal('novo-barbeiro')">
+                            <i class="fas fa-plus"></i>
+                            Adicionar Barbeiro
+                        </button>
+                    </div>
+                    
+                    <div class="admin-card fade-in">
+                        <div class="admin-card-header">
+                            <div class="admin-card-icon">
+                                <i class="fas fa-user-friends"></i>
+                            </div>
+                            <div class="admin-card-title">Promover Usuário</div>
+                        </div>
+                        <div class="admin-card-content">
+                            Transforme um cliente comum em barbeiro mantendo seus dados.
+                        </div>
+                        <button class="btn btn-secondary" style="width: 100%; margin-top: 1rem;" onclick="openModal('promover-usuario')">
+                            <i class="fas fa-user-shield"></i>
+                            Promover Usuário
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="table-container fade-in">
+                    <div class="table-header">
+                        <div class="table-title">Barbeiros Cadastrados</div>
+                        <input type="text" class="table-search" placeholder="Buscar barbeiros..." id="search-barbeiros">
+                    </div>
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Nome</th>
+                                <th>E-mail</th>
+                                <th>Telefone</th>
+                                <th>Agendamentos (Hoje)</th>
+                                <th>Status</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="lista-barbeiros">
+                            <tr>
+                                <td colspan="6" style="text-align: center; padding: 3rem;">
+                                    <i class="fas fa-spinner fa-spin"></i> Carregando barbeiros...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            `;
+            
+            // Carregar barbeiros
+            setTimeout(() => {
+                // Simular dados
+                const barbeiros = [
+                    { id: 1, nome: 'Carlos Silva', email: 'carlos@barbearia.com', telefone: '(11) 99999-8888', agendamentos: 5, status: 'ativo' },
+                    { id: 2, nome: 'Pedro Santos', email: 'pedro@barbearia.com', telefone: '(11) 98888-7777', agendamentos: 3, status: 'ativo' },
+                    { id: 3, nome: 'João Oliveira', email: 'joao@barbearia.com', telefone: '(11) 97777-6666', agendamentos: 0, status: 'inativo' }
+                ];
+                
+                const tbody = document.getElementById('lista-barbeiros');
+                tbody.innerHTML = barbeiros.map(barbeiro => `
+                    <tr>
+                        <td><strong>${barbeiro.nome}</strong></td>
+                        <td>${barbeiro.email}</td>
+                        <td>${barbeiro.telefone}</td>
+                        <td>${barbeiro.agendamentos}</td>
+                        <td>
+                            <span class="status-badge ${barbeiro.status === 'ativo' ? 'status-active' : 'status-inactive'}">
+                                ${barbeiro.status === 'ativo' ? 'Ativo' : 'Inativo'}
+                            </span>
+                        </td>
+                        <td>
+                            <button class="btn-table btn-edit" onclick="editarBarbeiro(${barbeiro.id})">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn-table btn-delete" onclick="excluirBarbeiro(${barbeiro.id})">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+            }, 1000);
+        }
+        
+        async function loadAssinaturasPage() {
+            const page = document.getElementById('page-assinaturas');
+            page.innerHTML = `
+                <div class="welcome-section">
+                    <h1 class="welcome-title">Gestão de Assinaturas</h1>
+                    <p class="welcome-subtitle">Gerencie os planos de assinatura recorrente</p>
+                </div>
+                
+                <div class="admin-cards">
+                    <div class="admin-card fade-in">
+                        <div class="admin-card-header">
+                            <div class="admin-card-icon">
+                                <i class="fas fa-crown"></i>
+                            </div>
+                            <div class="admin-card-title">Plano Básico</div>
+                        </div>
+                        <div class="admin-card-content">
+                            <ul style="color: var(--medium-gray); margin-left: 1rem;">
+                                <li>1 Corte por mês</li>
+                                <li>10% de desconto em produtos</li>
+                                <li>Agendamento prioritário</li>
+                            </ul>
+                        </div>
+                        <div class="admin-card-stats">
+                            <div class="stat-item">
+                                <span class="stat-value">R$ 49,90</span>
+                                <span class="stat-label">Mensalidade</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-value">12</span>
+                                <span class="stat-label">Assinantes</span>
+                            </div>
+                        </div>
+                        <button class="btn btn-secondary" style="width: 100%; margin-top: 1rem;" onclick="editarPlano(1)">
+                            <i class="fas fa-edit"></i>
+                            Editar Plano
+                        </button>
+                    </div>
+                    
+                    <div class="admin-card fade-in" style="border-color: var(--accent-gold);">
+                        <div class="admin-card-header">
+                            <div class="admin-card-icon" style="background: linear-gradient(135deg, rgba(212, 175, 55, 0.2), transparent);">
+                                <i class="fas fa-gem"></i>
+                            </div>
+                            <div class="admin-card-title">Plano Premium</div>
+                            <span class="badge" style="background: var(--accent-gold); color: var(--primary-dark);">Popular</span>
+                        </div>
+                        <div class="admin-card-content">
+                            <ul style="color: var(--medium-gray); margin-left: 1rem;">
+                                <li>Corte ilimitado</li>
+                                <li>Barba ilimitada</li>
+                                <li>20% de desconto em produtos</li>
+                                <li>Prioridade máxima</li>
+                            </ul>
+                        </div>
+                        <div class="admin-card-stats">
+                            <div class="stat-item">
+                                <span class="stat-value">R$ 89,90</span>
+                                <span class="stat-label">Mensalidade</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-value">24</span>
+                                <span class="stat-label">Assinantes</span>
+                            </div>
+                        </div>
+                        <button class="btn btn-primary" style="width: 100%; margin-top: 1rem;" onclick="editarPlano(2)">
+                            <i class="fas fa-edit"></i>
+                            Editar Plano
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="table-container fade-in">
+                    <div class="table-header">
+                        <div class="table-title">Assinantes Ativos</div>
+                        <div>
+                            <button class="btn btn-primary" onclick="openModal('nova-assinatura')">
+                                <i class="fas fa-plus"></i>
+                                Novo Plano
+                            </button>
+                        </div>
+                    </div>
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Cliente</th>
+                                <th>Plano</th>
+                                <th>Valor</th>
+                                <th>Início</th>
+                                <th>Próxima Cobrança</th>
+                                <th>Status</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="lista-assinantes">
+                            <tr>
+                                <td colspan="7" style="text-align: center; padding: 3rem;">
+                                    <i class="fas fa-spinner fa-spin"></i> Carregando assinantes...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            `;
+            
+            // Carregar assinantes
+            setTimeout(() => {
+                const assinantes = [
+                    { id: 1, cliente: 'João Silva', plano: 'Premium', valor: 89.90, inicio: '01/01/2024', proxima: '01/02/2024', status: 'ativo' },
+                    { id: 2, cliente: 'Maria Santos', plano: 'Básico', valor: 49.90, inicio: '15/01/2024', proxima: '15/02/2024', status: 'ativo' },
+                    { id: 3, cliente: 'José Oliveira', plano: 'Premium', valor: 89.90, inicio: '01/12/2023', proxima: '01/02/2024', status: 'pendente' }
+                ];
+                
+                const tbody = document.getElementById('lista-assinantes');
+                tbody.innerHTML = assinantes.map(assinante => `
+                    <tr>
+                        <td>${assinante.cliente}</td>
+                        <td>${assinante.plano}</td>
+                        <td>R$ ${assinante.valor.toFixed(2)}</td>
+                        <td>${assinante.inicio}</td>
+                        <td>${assinante.proxima}</td>
+                        <td>
+                            <span class="status-badge ${assinante.status === 'ativo' ? 'status-active' : 'status-pending'}">
+                                ${assinante.status === 'ativo' ? 'Ativo' : 'Pendente'}
+                            </span>
+                        </td>
+                        <td>
+                            <button class="btn-table btn-view" onclick="verAssinatura(${assinante.id})">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button class="btn-table btn-edit" onclick="editarAssinatura(${assinante.id})">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+            }, 1000);
+        }
+        
+        async function loadPagamentosPage() {
+            const page = document.getElementById('page-pagamentos');
+            page.innerHTML = `
+                <div class="welcome-section">
+                    <h1 class="welcome-title">Gestão de Pagamentos</h1>
+                    <p class="welcome-subtitle">Controle financeiro e recebimentos</p>
+                </div>
+                
+                <div class="admin-cards">
+                    <div class="admin-card fade-in">
+                        <div class="admin-card-header">
+                            <div class="admin-card-icon">
+                                <i class="fas fa-money-check-alt"></i>
+                            </div>
+                            <div class="admin-card-title">Recebimentos Hoje</div>
+                        </div>
+                        <div class="admin-card-stats">
+                            <div class="stat-item">
+                                <span class="stat-value">R$ 450,00</span>
+                                <span class="stat-label">Total</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-value">8</span>
+                                <span class="stat-label">Transações</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="admin-card fade-in">
+                        <div class="admin-card-header">
+                            <div class="admin-card-icon">
+                                <i class="fas fa-calendar-alt"></i>
+                            </div>
+                            <div class="admin-card-title">Receita Mensal</div>
+                        </div>
+                        <div class="admin-card-stats">
+                            <div class="stat-item">
+                                <span class="stat-value">R$ 8.450,00</span>
+                                <span class="stat-label">Este Mês</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-value">+12%</span>
+                                <span class="stat-label">Crescimento</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="admin-card fade-in">
+                        <div class="admin-card-header">
+                            <div class="admin-card-icon">
+                                <i class="fas fa-credit-card"></i>
+                            </div>
+                            <div class="admin-card-title">Configurações</div>
+                        </div>
+                        <div class="admin-card-content">
+                            Configure as opções de pagamento e conta bancária para recebimentos.
+                        </div>
+                        <button class="btn btn-primary" style="width: 100%; margin-top: 1rem;" onclick="openModal('config-pagamentos')">
+                            <i class="fas fa-cog"></i>
+                            Configurar Pagamentos
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="table-container fade-in">
+                    <div class="table-header">
+                        <div class="table-title">Histórico de Pagamentos</div>
+                        <div style="display: flex; gap: 10px;">
+                            <select class="form-control" style="width: 150px;" id="filter-tipo-pagamento">
+                                <option value="">Todos os tipos</option>
+                                <option value="assinatura">Assinatura</option>
+                                <option value="agendamento">Agendamento</option>
+                            </select>
+                            <button class="btn btn-secondary" onclick="exportarPagamentos()">
+                                <i class="fas fa-download"></i>
+                                Exportar
+                            </button>
+                        </div>
+                    </div>
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Data</th>
+                                <th>Cliente</th>
+                                <th>Tipo</th>
+                                <th>Descrição</th>
+                                <th>Valor</th>
+                                <th>Status</th>
+                                <th>Método</th>
+                            </tr>
+                        </thead>
+                        <tbody id="historico-pagamentos">
+                            <tr>
+                                <td colspan="7" style="text-align: center; padding: 3rem;">
+                                    <i class="fas fa-spinner fa-spin"></i> Carregando pagamentos...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            `;
+            
+            // Carregar histórico de pagamentos
+            setTimeout(() => {
+                const pagamentos = [
+                    { data: '22/01/2024', cliente: 'João Silva', tipo: 'Agendamento', descricao: 'Corte Social', valor: 45.00, status: 'pago', metodo: 'Cartão' },
+                    { data: '22/01/2024', cliente: 'Maria Santos', tipo: 'Assinatura', descricao: 'Plano Premium', valor: 89.90, status: 'pago', metodo: 'PIX' },
+                    { data: '21/01/2024', cliente: 'José Oliveira', tipo: 'Agendamento', descricao: 'Corte + Barba', valor: 70.00, status: 'pendente', metodo: 'Cartão' },
+                    { data: '20/01/2024', cliente: 'Ana Costa', tipo: 'Assinatura', descricao: 'Plano Básico', valor: 49.90, status: 'pago', metodo: 'Cartão' }
+                ];
+                
+                const tbody = document.getElementById('historico-pagamentos');
+                tbody.innerHTML = pagamentos.map(pagamento => `
+                    <tr>
+                        <td>${pagamento.data}</td>
+                        <td>${pagamento.cliente}</td>
+                        <td>
+                            <span class="status-badge ${pagamento.tipo === 'Assinatura' ? 'status-active' : 'status-pending'}">
+                                ${pagamento.tipo}
+                            </span>
+                        </td>
+                        <td>${pagamento.descricao}</td>
+                        <td>R$ ${pagamento.valor.toFixed(2)}</td>
+                        <td>
+                            <span class="status-badge ${pagamento.status === 'pago' ? 'status-active' : 'status-pending'}">
+                                ${pagamento.status === 'pago' ? 'Pago' : 'Pendente'}
+                            </span>
+                        </td>
+                        <td>${pagamento.metodo}</td>
+                    </tr>
+                `).join('');
+            }, 1000);
+        }
+        
+        async function loadBloqueiosPage() {
+            const page = document.getElementById('page-bloqueios');
+            page.innerHTML = `
+                <div class="welcome-section">
+                    <h1 class="welcome-title">Gestão de Bloqueios</h1>
+                    <p class="welcome-subtitle">Controle de horários indisponíveis</p>
+                </div>
+                
+                <div class="quick-actions fade-in">
+                    <h2 class="section-title">
+                        <i class="fas fa-calendar-times"></i>
+                        Tipos de Bloqueio
+                    </h2>
+                    <div class="actions-grid">
+                        <button class="action-btn" onclick="criarBloqueioHorario()">
+                            <div class="action-icon">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                            <span class="action-text">Horário Específico</span>
+                        </button>
+                        <button class="action-btn" onclick="criarBloqueioDia()">
+                            <div class="action-icon">
+                                <i class="fas fa-calendar-day"></i>
+                            </div>
+                            <span class="action-text">Dia Inteiro</span>
+                        </button>
+                        <button class="action-btn" onclick="criarBloqueioPeriodo()">
+                            <div class="action-icon">
+                                <i class="fas fa-calendar-week"></i>
+                            </div>
+                            <span class="action-text">Período</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="table-container fade-in">
+                    <div class="table-header">
+                        <div class="table-title">Bloqueios Ativos</div>
+                        <div>
+                            <button class="btn btn-primary" onclick="openModal('novo-bloqueio')">
+                                <i class="fas fa-plus"></i>
+                                Novo Bloqueio
+                            </button>
+                        </div>
+                    </div>
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Tipo</th>
+                                <th>Período</th>
+                                <th>Horário</th>
+                                <th>Aplicado para</th>
+                                <th>Motivo</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="lista-bloqueios">
+                            <tr>
+                                <td colspan="6" style="text-align: center; padding: 3rem;">
+                                    <i class="fas fa-spinner fa-spin"></i> Carregando bloqueios...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            `;
+            
+            // Carregar bloqueios
+            setTimeout(() => {
+                const bloqueios = [
+                    { id: 1, tipo: 'Dia Inteiro', periodo: '25/01/2024', horario: '00:00 - 23:59', aplicacao: 'Todos', motivo: 'Feriado' },
+                    { id: 2, tipo: 'Horário', periodo: '22/01/2024', horario: '12:00 - 14:00', aplicacao: 'Carlos', motivo: 'Almoço' },
+                    { id: 3, tipo: 'Período', periodo: '01/02 - 05/02/2024', horario: '00:00 - 23:59', aplicacao: 'Todos', motivo: 'Férias Coletivas' }
+                ];
+                
+                const tbody = document.getElementById('lista-bloqueios');
+                tbody.innerHTML = bloqueios.map(bloqueio => `
+                    <tr>
+                        <td>${bloqueio.tipo}</td>
+                        <td>${bloqueio.periodo}</td>
+                        <td>${bloqueio.horario}</td>
+                        <td>${bloqueio.aplicacao}</td>
+                        <td>${bloqueio.motivo}</td>
+                        <td>
+                            <button class="btn-table btn-delete" onclick="removerBloqueio(${bloqueio.id})">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+            }, 1000);
+        }
+        
+        async function loadInformacoesPage() {
+            const page = document.getElementById('page-informacoes');
+            page.innerHTML = `
+                <div class="welcome-section">
+                    <h1 class="welcome-title">Informações da Barbearia</h1>
+                    <p class="welcome-subtitle">Configure as informações públicas da sua barbearia</p>
+                </div>
+                
+                <div class="admin-cards">
+                    <div class="admin-card fade-in">
+                        <div class="admin-card-header">
+                            <div class="admin-card-icon">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                            <div class="admin-card-title">Horários de Funcionamento</div>
+                        </div>
+                        <div class="admin-card-content">
+                            <p style="color: var(--medium-gray); margin-bottom: 1rem;">Defina os horários de atendimento para cada dia da semana.</p>
+                            <button class="btn btn-secondary" style="width: 100%;" onclick="openModal('editar-horarios')">
+                                <i class="fas fa-edit"></i>
+                                Editar Horários
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="admin-card fade-in">
+                        <div class="admin-card-header">
+                            <div class="admin-card-icon">
+                                <i class="fas fa-map-marker-alt"></i>
+                            </div>
+                            <div class="admin-card-title">Localização</div>
+                        </div>
+                        <div class="admin-card-content">
+                            <p style="color: var(--medium-gray); margin-bottom: 1rem;">Configure o endereço e informações de contato.</p>
+                            <button class="btn btn-secondary" style="width: 100%;" onclick="openModal('editar-localizacao')">
+                                <i class="fas fa-edit"></i>
+                                Editar Localização
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="admin-card fade-in">
+                        <div class="admin-card-header">
+                            <div class="admin-card-icon">
+                                <i class="fas fa-info-circle"></i>
+                            </div>
+                            <div class="admin-card-title">Sobre a Barbearia</div>
+                        </div>
+                        <div class="admin-card-content">
+                            <p style="color: var(--medium-gray); margin-bottom: 1rem;">Adicione uma descrição sobre sua barbearia e seus valores.</p>
+                            <button class="btn btn-secondary" style="width: 100%;" onclick="openModal('editar-sobre')">
+                                <i class="fas fa-edit"></i>
+                                Editar Sobre
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="quick-actions fade-in">
+                    <h2 class="section-title">
+                        <i class="fas fa-shield-alt"></i>
+                        Políticas e Termos
+                    </h2>
+                    <div class="actions-grid">
+                        <button class="action-btn" onclick="openModal('editar-politicas')">
+                            <div class="action-icon">
+                                <i class="fas fa-file-contract"></i>
+                            </div>
+                            <span class="action-text">Política de Cancelamento</span>
+                        </button>
+                        <button class="action-btn" onclick="openModal('editar-termos')">
+                            <div class="action-icon">
+                                <i class="fas fa-gavel"></i>
+                            </div>
+                            <span class="action-text">Termos de Uso</span>
+                        </button>
+                        <button class="action-btn" onclick="openModal('editar-privacidade')">
+                            <div class="action-icon">
+                                <i class="fas fa-user-shield"></i>
+                            </div>
+                            <span class="action-text">Política de Privacidade</span>
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+        
+        async function loadContaPage() {
+            const page = document.getElementById('page-conta');
+            page.innerHTML = `
+                <div class="welcome-section">
+                    <h1 class="welcome-title">Minha Conta</h1>
+                    <p class="welcome-subtitle">Gerencie suas informações pessoais</p>
+                </div>
+                
+                <div class="admin-cards">
+                    <div class="admin-card fade-in">
+                        <div class="admin-card-header">
+                            <div class="admin-card-icon">
+                                <i class="fas fa-user"></i>
+                            </div>
+                            <div class="admin-card-title">Informações Pessoais</div>
+                        </div>
+                        <form id="form-info-pessoal">
+                            <div class="form-group">
+                                <label class="form-label">Nome Completo</label>
+                                <input type="text" class="form-control" id="admin-nome" value="${state.user?.nome || ''}">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">E-mail</label>
+                                <input type="email" class="form-control" id="admin-email" value="${state.user?.email || ''}">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Telefone</label>
+                                <input type="tel" class="form-control" id="admin-telefone" value="${state.user?.telefone || ''}">
+                            </div>
+                            <button type="submit" class="btn btn-primary btn-block">
+                                <i class="fas fa-save"></i>
+                                Salvar Alterações
+                            </button>
+                        </form>
+                    </div>
+                    
+                    <div class="admin-card fade-in">
+                        <div class="admin-card-header">
+                            <div class="admin-card-icon">
+                                <i class="fas fa-lock"></i>
+                            </div>
+                            <div class="admin-card-title">Segurança</div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Senha Atual</label>
+                            <input type="password" class="form-control" id="senha-atual">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Nova Senha</label>
+                            <input type="password" class="form-control" id="nova-senha">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Confirmar Nova Senha</label>
+                            <input type="password" class="form-control" id="confirmar-senha">
+                        </div>
+                        <button class="btn btn-primary btn-block" onclick="alterarSenha()">
+                            <i class="fas fa-key"></i>
+                            Alterar Senha
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // ============ FUNÇÕES DE MODAL ============
+        
+        function setupModals() {
+            // Fechar modais ao clicar no overlay
+            document.querySelectorAll('.modal-overlay').forEach(modal => {
+                modal.addEventListener('click', (e) => {
+                    if (e.target === modal) {
+                        const modalId = modal.id.replace('modal-', '');
+                        closeModal(modalId);
+                    }
+                });
+            });
+            
+            // Fechar modais com ESC
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    closeAllModals();
+                }
+            });
+        }
+        
+        function openModal(modalId) {
+            const modal = document.getElementById(`modal-${modalId}`);
+            if (modal) {
+                modal.classList.add('active');
+                document.body.style.overflow = 'hidden';
+            }
+        }
+        
+        function closeModal(modalId) {
+            const modal = document.getElementById(`modal-${modalId}`);
+            if (modal) {
+                modal.classList.remove('active');
+                document.body.style.overflow = 'auto';
+            }
+        }
+        
+        function closeAllModals() {
+            document.querySelectorAll('.modal-overlay').forEach(modal => {
+                modal.classList.remove('active');
+            });
+            document.body.style.overflow = 'auto';
+        }
+        
+        // ============ HANDLERS DE FORMULÁRIOS ============
+        
+        async function handleNovoAgendamento(e) {
+            e.preventDefault();
+            
+            const agendamentoData = {
+                cliente_id: document.getElementById('cliente-select').value,
+                servico_id: document.getElementById('servico-select').value,
+                barbeiro_id: document.getElementById('barbeiro-select').value,
+                data_agendada: document.getElementById('agendamento-data').value,
+                hora_inicio: document.getElementById('agendamento-hora').value,
+                observacoes: document.getElementById('agendamento-obs').value
+            };
+            
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_BASE_URL}/admin/agendamentos`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(agendamentoData)
+                });
+                
+                if (response.ok) {
+                    alert('Agendamento criado com sucesso!');
+                    closeModal('novo-agendamento');
+                    if (state.currentPage === 'agendamentos') {
+                        loadAgendamentosPage();
+                    }
+                } else {
+                    alert('Erro ao criar agendamento');
+                }
+            } catch (error) {
+                console.error('Erro:', error);
+                alert('Erro ao criar agendamento');
+            }
+        }
+        
+        async function handleNovoBloqueio(e) {
+            e.preventDefault();
+            
+            const bloqueioData = {
+                tipo: document.getElementById('tipo-bloqueio').value,
+                data_inicio: document.getElementById('bloqueio-data-inicio').value,
+                data_fim: document.getElementById('bloqueio-data-fim').value,
+                hora_inicio: document.getElementById('bloqueio-hora-inicio').value,
+                hora_fim: document.getElementById('bloqueio-hora-fim').value,
+                aplicacao: document.querySelector('input[name="aplicacao"]:checked').value,
+                barbeiro_id: document.getElementById('barbeiro-bloqueio').value,
+                motivo: document.getElementById('bloqueio-motivo').value
+            };
+            
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_BASE_URL}/admin/bloqueios`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(bloqueioData)
+                });
+                
+                if (response.ok) {
+                    alert('Bloqueio criado com sucesso!');
+                    closeModal('novo-bloqueio');
+                    if (state.currentPage === 'bloqueios') {
+                        loadBloqueiosPage();
+                    }
+                } else {
+                    alert('Erro ao criar bloqueio');
+                }
+            } catch (error) {
+                console.error('Erro:', error);
+                alert('Erro ao criar bloqueio');
+            }
+        }
+        
+        async function handleEditarServico(e) {
+            e.preventDefault();
+            
+            const servicoData = {
+                nome: document.getElementById('servico-nome').value,
+                duracao: document.getElementById('servico-duracao').value,
+                valor: document.getElementById('servico-valor').value,
+                descricao: document.getElementById('servico-descricao').value,
+                assinatura_ids: Array.from(document.querySelectorAll('input[name="assinaturas"]:checked')).map(cb => cb.value)
+            };
+            
+            try {
+                const token = localStorage.getItem('token');
+                const servicoId = document.getElementById('servico-id').value;
+                const response = await fetch(`${API_BASE_URL}/admin/servicos/${servicoId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(servicoData)
+                });
+                
+                if (response.ok) {
+                    alert('Serviço atualizado com sucesso!');
+                    closeModal('editar-servico');
+                    if (state.currentPage === 'servicos') {
+                        loadServicosPage();
+                    }
+                } else {
+                    alert('Erro ao atualizar serviço');
+                }
+            } catch (error) {
+                console.error('Erro:', error);
+                alert('Erro ao atualizar serviço');
+            }
+        }
+        
+        // ============ FUNÇÕES DE AÇÃO ============
+        
+        function filtrarAgendamentos() {
+            alert('Filtro aplicado! (Funcionalidade em desenvolvimento)');
+        }
+        
+        function limparFiltros() {
+            alert('Filtros limpos! (Funcionalidade em desenvolvimento)');
+        }
+        
+        async function atualizarStatusAgendamento(id, status) {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_BASE_URL}/admin/agendamentos/${id}/status`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ status })
+                });
+                
+                if (response.ok) {
+                    alert('Status atualizado com sucesso!');
+                } else {
+                    alert('Erro ao atualizar status');
+                }
+            } catch (error) {
+                console.error('Erro:', error);
+                alert('Erro ao atualizar status');
+            }
+        }
+        
+        function verAgendamento(id) {
+            alert(`Visualizar agendamento ${id} (Funcionalidade em desenvolvimento)`);
+        }
+        
+        function editarAgendamento(id) {
+            alert(`Editar agendamento ${id} (Funcionalidade em desenvolvimento)`);
+        }
+        
+        async function excluirAgendamento(id) {
+            if (!confirm('Tem certeza que deseja excluir este agendamento?')) return;
+            
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_BASE_URL}/admin/agendamentos/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (response.ok) {
+                    alert('Agendamento excluído com sucesso!');
+                    if (state.currentPage === 'agendamentos') {
+                        loadAgendamentosPage();
+                    }
+                } else {
+                    alert('Erro ao excluir agendamento');
+                }
+            } catch (error) {
+                console.error('Erro:', error);
+                alert('Erro ao excluir agendamento');
+            }
+        }
+        
+        function editarServico(id) {
+            // Carregar dados do serviço e abrir modal
+            openModal('editar-servico');
+        }
+        
+        async function excluirServico(id) {
+            if (!confirm('Tem certeza que deseja excluir este serviço?')) return;
+            
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_BASE_URL}/admin/servicos/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (response.ok) {
+                    alert('Serviço excluído com sucesso!');
+                    if (state.currentPage === 'servicos') {
+                        loadServicosPage();
+                    }
+                } else {
+                    alert('Erro ao excluir serviço');
+                }
+            } catch (error) {
+                console.error('Erro:', error);
+                alert('Erro ao excluir serviço');
+            }
+        }
+        
+        function editarBarbeiro(id) {
+            alert(`Editar barbeiro ${id} (Funcionalidade em desenvolvimento)`);
+        }
+        
+        async function excluirBarbeiro(id) {
+            if (!confirm('Tem certeza que deseja excluir este barbeiro?')) return;
+            
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_BASE_URL}/admin/barbeiros/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (response.ok) {
+                    alert('Barbeiro excluído com sucesso!');
+                    if (state.currentPage === 'barbeiros') {
+                        loadBarbeirosPage();
+                    }
+                } else {
+                    alert('Erro ao excluir barbeiro');
+                }
+            } catch (error) {
+                console.error('Erro:', error);
                 alert('Erro ao excluir barbeiro');
             }
         }
-
-        // Carrega os barbeiros quando a página é carregada
-        carregarBarbeiros();
+        
+        function editarPlano(id) {
+            alert(`Editar plano ${id} (Funcionalidade em desenvolvimento)`);
+        }
+        
+        function verAssinatura(id) {
+            alert(`Ver assinatura ${id} (Funcionalidade em desenvolvimento)`);
+        }
+        
+        function editarAssinatura(id) {
+            alert(`Editar assinatura ${id} (Funcionalidade em desenvolvimento)`);
+        }
+        
+        function exportarPagamentos() {
+            alert('Exportando pagamentos... (Funcionalidade em desenvolvimento)');
+        }
+        
+        function criarBloqueioHorario() {
+            openModal('novo-bloqueio');
+        }
+        
+        function criarBloqueioDia() {
+            openModal('novo-bloqueio');
+        }
+        
+        function criarBloqueioPeriodo() {
+            openModal('novo-bloqueio');
+        }
+        
+        async function removerBloqueio(id) {
+            if (!confirm('Tem certeza que deseja remover este bloqueio?')) return;
+            
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_BASE_URL}/admin/bloqueios/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (response.ok) {
+                    alert('Bloqueio removido com sucesso!');
+                    if (state.currentPage === 'bloqueios') {
+                        loadBloqueiosPage();
+                    }
+                } else {
+                    alert('Erro ao remover bloqueio');
+                }
+            } catch (error) {
+                console.error('Erro:', error);
+                alert('Erro ao remover bloqueio');
+            }
+        }
+        
+        async function alterarSenha() {
+            const senhaAtual = document.getElementById('senha-atual').value;
+            const novaSenha = document.getElementById('nova-senha').value;
+            const confirmarSenha = document.getElementById('confirmar-senha').value;
+            
+            if (novaSenha !== confirmarSenha) {
+                alert('As senhas não coincidem!');
+                return;
+            }
+            
+            if (novaSenha.length < 6) {
+                alert('A senha deve ter pelo menos 6 caracteres!');
+                return;
+            }
+            
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_BASE_URL}/admin/conta/senha`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        senha_atual: senhaAtual,
+                        nova_senha: novaSenha
+                    })
+                });
+                
+                if (response.ok) {
+                    alert('Senha alterada com sucesso!');
+                    document.getElementById('senha-atual').value = '';
+                    document.getElementById('nova-senha').value = '';
+                    document.getElementById('confirmar-senha').value = '';
+                } else {
+                    alert('Erro ao alterar senha. Verifique sua senha atual.');
+                }
+            } catch (error) {
+                console.error('Erro:', error);
+                alert('Erro ao alterar senha');
+            }
+        }
+        
+        function logout() {
+            localStorage.removeItem('token');
+            window.location.href = 'login.html';
+        }
+        
+        // Inicializar quando a página carregar
+        document.addEventListener('DOMContentLoaded', initAdmin);
     </script>
 </body>
 </html>

@@ -2,17 +2,17 @@
 const pool = require('../config/database');
 
 class Appointment {
-  static async create(usuario_id, barbeiro_id, servico_id, data_agendada, hora_agendada) {
+  static async create(usuario_id, barbeiro_id, servico_id, data_agendada, hora_inicio, hora_fim) {
     const query = `
-      INSERT INTO agendamentos (usuario_id, barbeiro_id, servico_id, data_agendada, hora_agendada, created_at, updated_at)
-      VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
-      RETURNING id, usuario_id, barbeiro_id, servico_id, data_agendada, hora_agendada, created_at
+      INSERT INTO agendamentos (usuario_id, barbeiro_id, servico_id, data_agendada, hora_inicio, hora_fim, created_at, updated_at)
+      VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
+      RETURNING id, usuario_id, barbeiro_id, servico_id, data_agendada, hora_inicio, hora_fim, created_at
     `;
-    const result = await pool.query(query, [usuario_id, barbeiro_id, servico_id, data_agendada, hora_agendada]);
+    const result = await pool.query(query, [usuario_id, barbeiro_id, servico_id, data_agendada, hora_inicio, hora_fim]);
     return result.rows[0];
   }
 
-  static async checkConflict(barbeiro_id, data_agendada, hora_agendada) {
+  static async checkConflict(barbeiro_id, data_agendada, hora_inicio, hora_fim) {
     const query = `
       SELECT id
       FROM agendamentos
@@ -22,7 +22,7 @@ class Appointment {
       AND status != 'cancelado'
       LIMIT 1
     `;
-    const result = await pool.query(query, [barbeiro_id, data_agendada, hora_agendada]);
+    const result = await pool.query(query, [barbeiro_id, data_agendada, hora_inicio, hora_fim]);
     return result.rows.length > 0;
   }
 

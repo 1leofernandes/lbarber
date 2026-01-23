@@ -1276,6 +1276,24 @@
         const API_BASE_URL = window.location.hostname === 'localhost' 
             ? 'http://localhost:3000' 
             : 'https://barbeariasilva.onrender.com';
+
+        // const API_BASE_URL = () => {
+        //     const hostname = window.location.hostname;
+        //     const port = window.location.port;
+            
+        //     // Se estiver rodando localmente (qualquer porta)
+        //     if (hostname === 'localhost' || hostname === '127.0.0.1') {
+        //         // Se o frontend está na porta 5500 (Live Server comum)
+        //         if (port === '5500' || port === '') {
+        //             return 'http://localhost:3000'; // Backend local
+        //         }
+        //         // Se estiver em outra porta
+        //         return 'http://localhost:3000';
+        //     }
+            
+        //     // Se estiver no Vercel/Render (produção)
+        //     return 'https://barbeariasilva.onrender.com';
+        // };
         
         // Estado da aplicação
         const state = {

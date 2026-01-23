@@ -1014,8 +1014,6 @@
 
                 if (response.ok) {
                     const data = await response.json();
-                    // O backend retorna o objeto do usuário diretamente.
-                    // Ajuste para guardar o objeto completo em estado.usuario
                     estado.usuario = data;
 
                     // Proteção: se o campo assinatura_id existir e for truthy, carregar assinatura
@@ -1312,6 +1310,21 @@
                 return;
             }
             
+            // VALIDAÇÃO: Verificar se não está agendando no passado
+            const agora = new Date();
+            const dataAgendamento = new Date(estado.selecionados.data);
+            const [horaAgendamento, minutoAgendamento] = estado.selecionados.horaInicio.split(':').map(Number);
+            
+            // Criar objeto Date para o horário do agendamento
+            const horarioAgendamento = new Date(dataAgendamento);
+            horarioAgendamento.setHours(horaAgendamento, minutoAgendamento, 0, 0);
+            
+            // Se o agendamento for no passado
+            if (horarioAgendamento < agora) {
+                toast('Não é possível agendar para um horário no passado. Por favor, escolha um horário futuro.', 'error');
+                return;
+            }
+            
             // Formatar data e hora para exibição
             const dataObj = new Date(estado.selecionados.data);
             const dataFormatada = dataObj.toLocaleDateString('pt-BR');
@@ -1335,11 +1348,17 @@
             elementos.dateCarousel.innerHTML = '';
             
             const hoje = new Date();
+            hoje.setHours(0, 0, 0, 0); // Zerar horas para comparar apenas a data
             
-            // Gerar próximos 7 dias
+            // Gerar próximos 7 dias (começando de HOJE)
             for (let i = 0; i < 7; i++) {
                 const data = new Date(hoje);
                 data.setDate(hoje.getDate() + i);
+                
+                // Pular datas passadas (nunca deve acontecer com i >= 0, mas por segurança)
+                if (data < hoje && i === 0) {
+                    continue; // Garante que não mostre datas passadas
+                }
                 
                 const diaSemana = data.toLocaleDateString('pt-BR', { weekday: 'short' });
                 const dia = data.getDate();
@@ -1358,10 +1377,9 @@
                 elementos.dateCarousel.appendChild(dateCard);
             }
             
-            // Selecionar primeira data por padrão
+            // Selecionar primeira data por padrão (HOJE)
             if (!estado.dataSelecionada) {
                 const primeiraData = new Date(hoje);
-                primeiraData.setDate(hoje.getDate());
                 const dataISO = primeiraData.toISOString().split('T')[0];
                 
                 const primeiroCard = elementos.dateCarousel.querySelector('.date-card');
@@ -1419,7 +1437,31 @@
                 });
                 
                 if (response.ok) {
-                    const horarios = await response.json();
+                    let horarios = await response.json();
+                    
+                    // FILTRAR HORÁRIOS PASSADOS se for HOJE
+                    const agora = new Date();
+                    const dataSelecionada = new Date(dataISO);
+                    const hoje = new Date();
+                    hoje.setHours(0, 0, 0, 0);
+                    dataSelecionada.setHours(0, 0, 0, 0);
+                    
+                    // Se for hoje, remover horários que já passaram
+                    if (dataSelecionada.getTime() === hoje.getTime()) {
+                        const horaAtual = agora.getHours();
+                        const minutoAtual = agora.getMinutes();
+                        
+                        horarios = horarios.filter(horario => {
+                            const [hora, minuto] = horario.inicio.split(':').map(Number);
+                            
+                            // Verificar se o horário ainda não passou
+                            if (hora < horaAtual) return false;
+                            if (hora === horaAtual && minuto <= minutoAtual) return false;
+                            
+                            return true;
+                        });
+                    }
+                    
                     estado.horariosDisponiveis = horarios;
                     renderizarHorarios(horarios, duracaoTotal);
                 }
@@ -1453,6 +1495,25 @@
         }
         
         function selecionarHorario(horario, slotElement, duracaoTotal) {
+            const agora = new Date();
+            const dataSelecionada = new Date(estado.dataSelecionada);
+            const [hora, minutos] = horario.inicio.split(':').map(Number);
+            
+            // VALIDAÇÃO: Verificar se não está agendando no passado
+            const hoje = new Date();
+            hoje.setHours(0, 0, 0, 0);
+            dataSelecionada.setHours(0, 0, 0, 0);
+            
+            if (dataSelecionada.getTime() === hoje.getTime()) {
+                const horaAtual = agora.getHours();
+                const minutoAtual = agora.getMinutes();
+                
+                if (hora < horaAtual || (hora === horaAtual && minutos < minutoAtual)) {
+                    toast('Este horário já passou. Por favor, escolha um horário futuro.', 'warning');
+                    return;
+                }
+            }
+            
             // Remover seleção anterior
             elementos.timeSlotsGrid.querySelectorAll('.time-slot').forEach(slot => {
                 slot.classList.remove('selected');
@@ -1462,7 +1523,6 @@
             slotElement.classList.add('selected');
             
             // Calcular hora de término
-            const [hora, minutos] = horario.inicio.split(':').map(Number);
             const dataInicio = new Date();
             dataInicio.setHours(hora, minutos, 0, 0);
             
@@ -1520,7 +1580,7 @@
         }
         
         async function confirmarAgendamento() {
-            // Validações
+            // Validações básicas
             if (!estado.selecionados.data || !estado.selecionados.horaInicio || !estado.selecionados.horaFim) {
                 toast('Selecione uma data e horário válidos.', 'warning');
                 return;
@@ -1528,6 +1588,21 @@
 
             if (estado.selecionados.servicos.length === 0) {
                 toast('Selecione pelo menos um serviço.', 'warning');
+                return;
+            }
+
+            // VALIDAÇÃO FINAL: Verificar se não está agendando no passado
+            const agora = new Date();
+            const dataAgendamento = new Date(estado.selecionados.data);
+            const [horaAgendamento, minutoAgendamento] = estado.selecionados.horaInicio.split(':').map(Number);
+            
+            // Criar objeto Date para o horário do agendamento
+            const horarioAgendamento = new Date(dataAgendamento);
+            horarioAgendamento.setHours(horaAgendamento, minutoAgendamento, 0, 0);
+            
+            // Se o agendamento for no passado
+            if (horarioAgendamento < agora) {
+                toast('Não é possível agendar para um horário no passado. Por favor, escolha um horário futuro.', 'error');
                 return;
             }
 

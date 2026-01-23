@@ -148,6 +148,7 @@ class AgendamentoService {
     }
     
     // Buscar um agendamento específico com serviços
+    // NO SEU services/agendamentoService.js - MÉTODO getAgendamentoComServicosById
     async getAgendamentoComServicosById(agendamentoId, usuarioId = null) {
         try {
             let query;
@@ -160,7 +161,7 @@ class AgendamentoService {
                         u.nome as barbeiro_nome,
                         COALESCE(
                             json_agg(
-                                json_build_object(
+                                DISTINCT jsonb_build_object(
                                     'id', s.id,
                                     'nome_servico', s.nome_servico,
                                     'valor_servico', s.valor_servico,
@@ -184,7 +185,7 @@ class AgendamentoService {
                         u.nome as barbeiro_nome,
                         COALESCE(
                             json_agg(
-                                json_build_object(
+                                DISTINCT jsonb_build_object(
                                     'id', s.id,
                                     'nome_servico', s.nome_servico,
                                     'valor_servico', s.valor_servico,
@@ -215,9 +216,8 @@ class AgendamentoService {
     async cancelarAgendamento(agendamentoId, usuarioId) {
         try {
             const query = `
-                UPDATE agendamentos 
-                SET status = 'cancelado', updated_at = NOW()
-                WHERE id = $1 AND usuario_id = $2 AND status != 'cancelado'
+                DELETE FROM agendamentos 
+                WHERE id = $1 AND usuario_id = $2
                 RETURNING *
             `;
             const result = await pool.query(query, [agendamentoId, usuarioId]);
@@ -348,7 +348,6 @@ class AgendamentoService {
                     FROM agendamentos 
                     WHERE barbeiro_id = $1 
                     AND data_agendada = $2 
-                    AND status != 'cancelado'
                     AND (
                         (hora_inicio < $4 AND hora_fim > $3) OR
                         (hora_inicio >= $3 AND hora_inicio < $4)
@@ -360,7 +359,6 @@ class AgendamentoService {
                     SELECT COUNT(DISTINCT barbeiro_id) as count 
                     FROM agendamentos 
                     WHERE data_agendada = $1 
-                    AND status != 'cancelado'
                     AND (
                         (hora_inicio < $3 AND hora_fim > $2) OR
                         (hora_inicio >= $2 AND hora_inicio < $3)

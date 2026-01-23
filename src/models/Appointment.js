@@ -233,65 +233,69 @@ class Appointment {
   }
 
   // NOVO: findByIdWithServices
+  // NO models/Appointment.js - MÉTODO findByIdWithServices
   static async findByIdWithServices(id) {
-    const query = `
-      SELECT 
-        a.*,
-        c.nome as cliente_nome,
-        b.nome as barbeiro_nome,
-        COALESCE(
-          json_agg(
-            json_build_object(
-              'id', s.id,
-              'nome_servico', s.nome_servico,
-              'valor_servico', s.valor_servico,
-              'duracao_servico', s.duracao_servico,
-              'descricao', s.descricao
-            )
-          ) FILTER (WHERE s.id IS NOT NULL),
-          '[]'::json
-        ) as servicos
-      FROM agendamentos a
-      LEFT JOIN usuarios c ON a.usuario_id = c.id
-      LEFT JOIN usuarios b ON a.barbeiro_id = b.id
-      LEFT JOIN agendamento_servicos ags ON a.id = ags.agendamento_id
-      LEFT JOIN servicos s ON ags.servico_id = s.id
-      WHERE a.id = $1
-      GROUP BY a.id, c.nome, b.nome
-    `;
-    
-    const result = await pool.query(query, [id]);
-    return result.rows[0];
+      const query = `
+          SELECT 
+              a.*,
+              c.nome as cliente_nome,
+              b.nome as barbeiro_nome,
+              COALESCE(
+                  json_agg(
+                      DISTINCT jsonb_build_object(
+                          'id', s.id,
+                          'nome_servico', s.nome_servico,
+                          'valor_servico', s.valor_servico,
+                          'duracao_servico', s.duracao_servico,
+                          'descricao', s.descricao
+                      )
+                  ) FILTER (WHERE s.id IS NOT NULL),
+                  '[]'::json
+              ) as servicos
+          FROM agendamentos a
+          LEFT JOIN usuarios c ON a.usuario_id = c.id
+          LEFT JOIN usuarios b ON a.barbeiro_id = b.id
+          LEFT JOIN agendamento_servicos ags ON a.id = ags.agendamento_id
+          LEFT JOIN servicos s ON ags.servico_id = s.id
+          WHERE a.id = $1
+          GROUP BY a.id, c.nome, b.nome
+      `;
+      
+      const result = await pool.query(query, [id]);
+      return result.rows[0];
   }
 
   // NOVO: findByUserWithServices
+  // NO models/Appointment.js - MÉTODO findByUserWithServices
   static async findByUserWithServices(usuario_id) {
-    const query = `
-      SELECT 
-        a.*,
-        b.nome as barbeiro_nome,
-        COALESCE(
-          json_agg(
-            json_build_object(
-              'id', s.id,
-              'nome_servico', s.nome_servico,
-              'valor_servico', s.valor_servico,
-              'duracao_servico', s.duracao_servico
-            )
-          ) FILTER (WHERE s.id IS NOT NULL),
-          '[]'::json
-        ) as servicos
-      FROM agendamentos a
-      LEFT JOIN usuarios b ON a.barbeiro_id = b.id
-      LEFT JOIN agendamento_servicos ags ON a.id = ags.agendamento_id
-      LEFT JOIN servicos s ON ags.servico_id = s.id
-      WHERE a.usuario_id = $1
-      GROUP BY a.id, b.nome
-      ORDER BY a.data_agendada DESC, a.hora_inicio DESC
-    `;
-    
-    const result = await pool.query(query, [usuario_id]);
-    return result.rows;
+      const query = `
+          SELECT 
+              a.*,
+              c.nome as cliente_nome,
+              b.nome as barbeiro_nome,
+              COALESCE(
+                  json_agg(
+                      DISTINCT jsonb_build_object(
+                          'id', s.id,
+                          'nome_servico', s.nome_servico,
+                          'valor_servico', s.valor_servico,
+                          'duracao_servico', s.duracao_servico
+                      )
+                  ) FILTER (WHERE s.id IS NOT NULL),
+                  '[]'::json
+              ) as servicos
+          FROM agendamentos a
+          LEFT JOIN usuarios c ON a.usuario_id = c.id
+          LEFT JOIN usuarios b ON a.barbeiro_id = b.id
+          LEFT JOIN agendamento_servicos ags ON a.id = ags.agendamento_id
+          LEFT JOIN servicos s ON ags.servico_id = s.id
+          WHERE a.usuario_id = $1
+          GROUP BY a.id, b.nome
+          ORDER BY a.data_agendada DESC, a.hora_inicio DESC
+      `;
+      
+      const result = await pool.query(query, [usuario_id]);
+      return result.rows;
   }
 
   // MÉTODOS EXISTENTES (corrigidos)

@@ -1882,6 +1882,219 @@
             });
         }
 
+        // ADICIONE ESTA FUNÇÃO AO SEU cliente-home.html
+        async function cancelarAgendamento(agendamentoId) {
+            if (!confirm('Tem certeza que deseja cancelar este agendamento?')) {
+                return;
+            }
+            
+            try {
+                const token = localStorage.getItem('token');
+                
+                // Mostrar loading
+                const agendamentoBtn = document.querySelector(`button[onclick="cancelarAgendamento(${agendamentoId})"]`);
+                const originalText = agendamentoBtn.innerHTML;
+                agendamentoBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Cancelando...';
+                agendamentoBtn.disabled = true;
+                
+                // Usar DELETE em vez de PUT (conforme sua rota)
+                const response = await fetch(`${API_BASE_URL}/agendamentos/${agendamentoId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    showNotification('Agendamento cancelado com sucesso!', 'success');
+                    
+                    // Recarregar a lista de agendamentos após 1 segundo
+                    setTimeout(() => {
+                        loadAgendamentos();
+                    }, 1000);
+                    
+                } else {
+                    agendamentoBtn.innerHTML = originalText;
+                    agendamentoBtn.disabled = false;
+                    showNotification(data.message || 'Erro ao cancelar agendamento', 'error');
+                }
+                
+            } catch (error) {
+                console.error('Erro ao cancelar agendamento:', error);
+                showNotification('Erro de conexão. Tente novamente.', 'error');
+                
+                // Restaurar botão
+                const agendamentoBtn = document.querySelector(`button[onclick="cancelarAgendamento(${agendamentoId})"]`);
+                if (agendamentoBtn) {
+                    agendamentoBtn.innerHTML = '<i class="fas fa-times"></i> Cancelar';
+                    agendamentoBtn.disabled = false;
+                }
+            }
+        }
+
+        // Função para ver detalhes do agendamento
+        async function verDetalhesAgendamento(agendamentoId) {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_BASE_URL}/agendamentos/${agendamentoId}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    const agendamento = data.agendamento;
+                    
+                    // Formatar dados para exibição
+                    let detalhesHTML = `
+                        <div style="max-width: 600px;">
+                            <h3 style="margin-top: 0; color: var(--primary-color);">
+                                <i class="fas fa-calendar-check"></i> Detalhes do Agendamento #${agendamento.id}
+                            </h3>
+                            
+                            <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                                    <div>
+                                        <strong><i class="fas fa-user"></i> Barbeiro:</strong><br>
+                                        ${agendamento.barbeiro_nome || 'Não informado'}
+                                    </div>
+                                    <div>
+                                        <strong><i class="fas fa-calendar"></i> Data:</strong><br>
+                                        ${formatarData(agendamento.data_agendada)}
+                                    </div>
+                                </div>
+                                
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                                    <div>
+                                        <strong><i class="fas fa-clock"></i> Horário:</strong><br>
+                                        ${agendamento.hora_inicio} - ${agendamento.hora_fim}
+                                    </div>
+                                    <div>
+                                        <strong><i class="fas fa-info-circle"></i> Status:</strong><br>
+                                        <span class="badge ${getStatusClass(agendamento.status)}">
+                                            ${getStatusText(agendamento.status)}
+                                        </span>
+                                    </div>
+                                </div>
+                    `;
+                    
+                    // Adicionar serviços
+                    if (agendamento.servicos && agendamento.servicos.length > 0) {
+                        detalhesHTML += `
+                            <div style="margin-top: 15px;">
+                                <strong><i class="fas fa-cut"></i> Serviços:</strong>
+                                <div style="margin-top: 10px;">
+                                    ${agendamento.servicos.map(servico => `
+                                        <div style="display: flex; justify-content: space-between; padding: 8px; border-bottom: 1px solid #dee2e6;">
+                                            <span>${servico.nome_servico}</span>
+                                            <span style="color: #28a745; font-weight: bold;">
+                                                R$ ${parseFloat(servico.valor_servico || 0).toFixed(2)}
+                                            </span>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        `;
+                        
+                        // Calcular total
+                        const total = agendamento.servicos.reduce((sum, s) => sum + parseFloat(s.valor_servico || 0), 0);
+                        detalhesHTML += `
+                            <div style="margin-top: 15px; text-align: right; font-weight: bold; font-size: 1.1em;">
+                                <strong>Total:</strong> R$ ${total.toFixed(2)}
+                            </div>
+                        `;
+                    }
+                    
+                    detalhesHTML += `
+                            </div>
+                            
+                            <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                                <button onclick="fecharModalDetalhes()" 
+                                        style="padding: 10px 20px; border: 1px solid #ddd; border-radius: 8px; background: white; cursor: pointer;">
+                                    Fechar
+                                </button>
+                                ${agendamento.status === 'confirmado' ? `
+                                    <button onclick="cancelarAgendamento(${agendamento.id})" 
+                                            style="padding: 10px 20px; border: none; border-radius: 8px; background: #dc3545; color: white; cursor: pointer;">
+                                        <i class="fas fa-times"></i> Cancelar Agendamento
+                                    </button>
+                                ` : ''}
+                            </div>
+                        </div>
+                    `;
+                    
+                    // Criar modal para exibir detalhes
+                    const modalId = 'modal-detalhes-agendamento';
+                    let modal = document.getElementById(modalId);
+                    
+                    if (!modal) {
+                        modal = document.createElement('div');
+                        modal.id = modalId;
+                        modal.className = 'modal-overlay';
+                        modal.innerHTML = `
+                            <div class="modal-content" style="max-width: 700px;">
+                                <div class="modal-header">
+                                    <h2 class="modal-title">Detalhes do Agendamento</h2>
+                                    <button class="modal-close" onclick="fecharModalDetalhes()">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                                <div class="modal-body" id="${modalId}-body"></div>
+                            </div>
+                        `;
+                        document.body.appendChild(modal);
+                    }
+                    
+                    document.getElementById(`${modalId}-body`).innerHTML = detalhesHTML;
+                    modal.classList.add('active');
+                    document.body.style.overflow = 'hidden';
+                    
+                } else {
+                    showNotification(data.message || 'Erro ao carregar detalhes do agendamento', 'error');
+                }
+                
+            } catch (error) {
+                console.error('Erro ao buscar detalhes do agendamento:', error);
+                showNotification('Erro de conexão. Tente novamente.', 'error');
+            }
+        }
+
+        // Função para fechar modal de detalhes
+        function fecharModalDetalhes() {
+            const modal = document.getElementById('modal-detalhes-agendamento');
+            if (modal) {
+                modal.classList.remove('active');
+                document.body.style.overflow = 'auto';
+            }
+        }
+
+        // Funções auxiliares para status (adicione se não existirem)
+        function getStatusClass(status) {
+            const statusMap = {
+                'confirmado': 'status-active',
+                'pendente': 'status-pending',
+                'concluido': 'status-completed',
+                'cancelado': 'status-cancelled'
+            };
+            return statusMap[status] || 'status-inactive';
+        }
+
+        function getStatusText(status) {
+            const statusMap = {
+                'confirmado': 'Confirmado',
+                'pendente': 'Pendente',
+                'concluido': 'Concluído',
+                'cancelado': 'Cancelado'
+            };
+            return statusMap[status] || status;
+        }
+
         // Função auxiliar para formatar hora
         function formatarHora(horaString) {
             if (!horaString) return 'Hora não informada';

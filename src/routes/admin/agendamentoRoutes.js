@@ -1,29 +1,28 @@
 const express = require('express');
 const router = express.Router();
-const agendamentoController = require('../../controllers/admin/agendamentoController');
+const AdminAgendamentoController = require('../../controllers/admin/agendamentoController');
 
 // GET /admin/agendamentos - Listar todos os agendamentos
-router.get('/', agendamentoController.getAll);
+router.get('/', AdminAgendamentoController.getAll);
 
 // GET /admin/agendamentos/:id - Buscar agendamento por ID
-router.get('/:id', agendamentoController.getById);
+router.get('/:id', AdminAgendamentoController.getById);
 
 // POST /admin/agendamentos - Criar novo agendamento
-router.post('/', agendamentoController.create);
+router.post('/', AdminAgendamentoController.create);
 
 // PUT /admin/agendamentos/:id - Atualizar agendamento
-router.put('/:id', agendamentoController.update);
-
+router.put('/:id', AdminAgendamentoController.update);
 // PUT /admin/agendamentos/:id/status - Atualizar status do agendamento
-router.put('/:id/status', agendamentoController.updateStatus);
+router.put('/:id/status', AdminAgendamentoController.updateStatus);
 
 // DELETE /admin/agendamentos/:id - Excluir agendamento
-router.delete('/:id', agendamentoController.delete);
+router.delete('/:id', AdminAgendamentoController.delete);
 
 // GET /admin/agendamentos/horarios-disponiveis - Buscar horários disponíveis
-router.get('/horarios-disponiveis', agendamentoController.getHorariosDisponiveis);
+router.get('/horarios-disponiveis', AdminAgendamentoController.getHorariosDisponiveis);
 
 // GET /admin/agendamentos/resumo - Resumo de agendamentos
-router.get('/resumo', agendamentoController.getResumo);
+router.get('/resumo', AdminAgendamentoController.getResumo);
 
 module.exports = router;

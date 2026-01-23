@@ -1,7 +1,7 @@
-const Pagamento = require('../../models/Pagamento');
-const Assinatura = require('../../models/Assinatura');
-const Agendamento = require('../../models/Agendamento');
-const Usuario = require('../../models/Usuario');
+const Pagamento = require('../../models/Payment');
+const Assinatura = require('../../models/Subscription');
+const Agendamento = require('../../models/Appointment');
+const Usuario = require('../../models/User');
 
 class PagamentoService {
     async getAllPagamentos(filters = {}, limit = 100, offset = 0) {

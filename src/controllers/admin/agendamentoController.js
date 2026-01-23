@@ -1,10 +1,10 @@
-const agendamentoService = require('../../services/admin/agendamentoService');
+const AdminAgendamentoService = require('../../services/admin/agendamentoService');
 
-class AgendamentoController {
+class AdminAgendamentoController {
     async getAll(req, res) {
         try {
             const { limit = 100, offset = 0, ...filters } = req.query;
-            const agendamentos = await agendamentoService.getAllAgendamentos(
+            const agendamentos = await AdminAgendamentoService.getAllAgendamentos(
                 filters, 
                 parseInt(limit), 
                 parseInt(offset)
@@ -26,7 +26,7 @@ class AgendamentoController {
     async getById(req, res) {
         try {
             const { id } = req.params;
-            const agendamento = await agendamentoService.getAgendamentoById(id);
+            const agendamento = await AdminAgendamentoService.getAgendamentoById(id);
             
             res.json({
                 success: true,
@@ -49,7 +49,7 @@ class AgendamentoController {
 
     async create(req, res) {
         try {
-            const agendamento = await agendamentoService.createAgendamento(req.body);
+            const agendamento = await AdminAgendamentoService.createAgendamento(req.body);
             
             res.status(201).json({
                 success: true,
@@ -68,7 +68,7 @@ class AgendamentoController {
     async update(req, res) {
         try {
             const { id } = req.params;
-            const agendamento = await agendamentoService.updateAgendamento(id, req.body);
+            const agendamento = await AdminAgendamentoService.updateAgendamento(id, req.body);
             
             res.json({
                 success: true,
@@ -95,7 +95,7 @@ class AgendamentoController {
             const { id } = req.params;
             const { status } = req.body;
             
-            const agendamento = await agendamentoService.updateStatus(id, status);
+            const agendamento = await AdminAgendamentoService.updateStatus(id, status);
             
             res.json({
                 success: true,
@@ -114,7 +114,7 @@ class AgendamentoController {
     async delete(req, res) {
         try {
             const { id } = req.params;
-            await agendamentoService.deleteAgendamento(id);
+            await AdminAgendamentoService.deleteAgendamento(id);
             
             res.json({
                 success: true,
@@ -140,7 +140,7 @@ class AgendamentoController {
                 });
             }
             
-            const horarios = await agendamentoService.getHorariosDisponiveis(barbeiro_id, data);
+            const horarios = await AdminAgendamentoService.getHorariosDisponiveis(barbeiro_id, data);
             
             res.json({
                 success: true,
@@ -166,7 +166,7 @@ class AgendamentoController {
                 });
             }
             
-            const resumo = await agendamentoService.getResumoAgendamentos(data_inicio, data_fim);
+            const resumo = await AdminAgendamentoService.getResumoAgendamentos(data_inicio, data_fim);
             
             res.json({
                 success: true,
@@ -182,4 +182,4 @@ class AgendamentoController {
     }
 }
 
-module.exports = new AgendamentoController();
+module.exports = new AdminAgendamentoController();

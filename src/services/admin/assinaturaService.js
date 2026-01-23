@@ -1,6 +1,6 @@
-const Assinatura = require('../../models/Assinatura');
-const Plano = require('../../models/Plano');
-const Usuario = require('../../models/Usuario');
+const Assinatura = require('../../models/Subscription');
+const Plano = require('../../models/Plan');
+const Usuario = require('../../models/User');
 
 class AssinaturaService {
     async getAllAssinaturas(filters = {}) {

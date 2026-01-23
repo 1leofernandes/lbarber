@@ -1520,7 +1520,7 @@
         async function loadRecentAgendamentos() {
             try {
                 const token = localStorage.getItem('token');
-                const response = await fetch(`${API_BASE_URL}/admin/agendamentos/recentes`, {
+                const response = await fetch(`${API_BASE_URL}/admin/agendamentos`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 

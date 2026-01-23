@@ -1,13 +1,13 @@
-const Agendamento = require('../../models/Agendamento');
-const Usuario = require('../../models/Usuario');
-const Servico = require('../../models/Servico');
-const Barbeiro = require('../../models/Barbeiro');
-const Bloqueio = require('../../models/Bloqueio');
+const Appointment = require('../../models/Appointment');
+const User = require('../../models/User');
+const Service = require('../../models/Service');
+const Barber = require('../../models/Barber');
+const Block = require('../../models/Block');
 
-class AgendamentoService {
+class AdminAgendamentoService {
     async getAllAgendamentos(filters = {}, limit = 100, offset = 0) {
         try {
-            return await Agendamento.findAll(filters, limit, offset);
+            return await Appointment.findAll(filters, limit, offset);
         } catch (error) {
             console.error('Erro ao buscar agendamentos:', error);
             throw error;
@@ -16,7 +16,7 @@ class AgendamentoService {
 
     async getAgendamentoById(id) {
         try {
-            const agendamento = await Agendamento.findById(id);
+            const agendamento = await Appointment.findById(id);
             if (!agendamento) {
                 throw new Error('Agendamento não encontrado');
             }
@@ -45,7 +45,7 @@ class AgendamentoService {
             }
             
             // Criar agendamento
-            return await Agendamento.create(agendamentoData);
+            return await Appointment.create(agendamentoData);
         } catch (error) {
             console.error('Erro ao criar agendamento:', error);
             throw error;
@@ -55,7 +55,7 @@ class AgendamentoService {
     async updateAgendamento(id, agendamentoData) {
         try {
             // Buscar agendamento existente
-            const agendamentoExistente = await Agendamento.findById(id);
+            const agendamentoExistente = await Appointment.findById(id);
             if (!agendamentoExistente) {
                 throw new Error('Agendamento não encontrado');
             }
@@ -82,7 +82,7 @@ class AgendamentoService {
             }
             
             // Atualizar agendamento
-            return await Agendamento.update(id, agendamentoData);
+            return await Appointment.update(id, agendamentoData);
         } catch (error) {
             console.error('Erro ao atualizar agendamento:', error);
             throw error;
@@ -97,7 +97,7 @@ class AgendamentoService {
                 throw new Error('Status inválido');
             }
             
-            return await Agendamento.updateStatus(id, status);
+            return await Appointment.updateStatus(id, status);
         } catch (error) {
             console.error('Erro ao atualizar status do agendamento:', error);
             throw error;
@@ -106,7 +106,7 @@ class AgendamentoService {
 
     async deleteAgendamento(id) {
         try {
-            const agendamento = await Agendamento.findById(id);
+            const agendamento = await Appointment.findById(id);
             if (!agendamento) {
                 throw new Error('Agendamento não encontrado');
             }
@@ -115,8 +115,8 @@ class AgendamentoService {
             if (agendamento.status === 'finalizado') {
                 throw new Error('Não é possível excluir agendamentos finalizados');
             }
-            
-            return await Agendamento.delete(id);
+
+            return await Appointment.delete(id);
         } catch (error) {
             console.error('Erro ao excluir agendamento:', error);
             throw error;
@@ -126,7 +126,7 @@ class AgendamentoService {
     async verificarDisponibilidade(barbeiro_id, data, hora_inicio, hora_fim, excluir_agendamento_id = null) {
         try {
             // Verificar bloqueios
-            const semBloqueios = await Bloqueio.verificarDisponibilidade(
+            const semBloqueios = await Block.verificarDisponibilidade(
                 barbeiro_id,
                 data,
                 hora_inicio,
@@ -164,19 +164,19 @@ class AgendamentoService {
         const { usuario_id, barbeiro_id, servico_id, data_agendada, hora_inicio, hora_fim } = agendamentoData;
         
         // Validar usuário
-        const usuario = await Usuario.findById(usuario_id);
+        const usuario = await User.findById(usuario_id);
         if (!usuario) {
             throw new Error('Usuário não encontrado');
         }
         
         // Validar barbeiro
-        const barbeiro = await Barbeiro.findById(barbeiro_id);
+        const barbeiro = await Barber.findById(barbeiro_id);
         if (!barbeiro) {
             throw new Error('Barbeiro não encontrado');
         }
         
         // Validar serviço
-        const servico = await Servico.findById(servico_id);
+        const servico = await Service.findById(servico_id);
         if (!servico) {
             throw new Error('Serviço não encontrado');
         }
@@ -211,11 +211,11 @@ class AgendamentoService {
             const intervalo = 30; // 30 minutos
             
             // Buscar agendamentos existentes
-            const agendamentos = await Agendamento.getHorariosDisponiveis(barbeiro_id, data);
+            const agendamentos = await Appointment.getHorariosDisponiveis(barbeiro_id, data);
             const horariosOcupados = agendamentos.map(a => a.hora_inicio);
             
             // Buscar bloqueios
-            const bloqueios = await Bloqueio.findAll({
+            const bloqueios = await Block.findAll({
                 barbeiro_id: barbeiro_id,
                 data_inicio: data,
                 data_fim: data
@@ -287,4 +287,4 @@ class AgendamentoService {
     }
 }
 
-module.exports = new AgendamentoService();
+module.exports = new AdminAgendamentoService();

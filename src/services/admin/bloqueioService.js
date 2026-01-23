@@ -1,5 +1,5 @@
-const Bloqueio = require('../../models/Bloqueio');
-const Barbeiro = require('../../models/Barbeiro');
+const Bloqueio = require('../../models/Block');
+const Barbeiro = require('../../models/Barber');
 
 class BloqueioService {
     async getAllBloqueios(filters = {}) {

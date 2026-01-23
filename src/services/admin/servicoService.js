@@ -1,5 +1,5 @@
-const Servico = require('../../models/Servico');
-const Plano = require('../../models/Plano');
+const Servico = require('../../models/Service');
+const Plano = require('../../models/Plan');
 
 class ServicoService {
     async getAllServicos(ativosOnly = true) {

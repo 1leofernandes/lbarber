@@ -1,10 +1,10 @@
-const Usuario = require('../../models/Usuario');
-const Agendamento = require('../../models/Agendamento');
-const Servico = require('../../models/Servico');
-const Barbeiro = require('../../models/Barbeiro');
-const Assinatura = require('../../models/Assinatura');
-const Pagamento = require('../../models/Pagamento');
-const Plano = require('../../models/Plano');
+const Usuario = require('../../models/User');
+const Agendamento = require('../../models/Appointment');
+const Servico = require('../../models/Service');
+const Barbeiro = require('../../models/Barber');
+const Assinatura = require('../../models/Subscription');
+const Pagamento = require('../../models/Payment');
+const Plano = require('../../models/Plan');
 
 class AdminService {
     // Métricas gerais do dashboard

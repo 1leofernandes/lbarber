@@ -1,7 +1,7 @@
-const Agendamento = require('../../models/Agendamento');
-const Assinatura = require('../../models/Assinatura');
-const Pagamento = require('../../models/Pagamento');
-const Usuario = require('../../models/Usuario');
+const Agendamento = require('../../models/Appointment');
+const Assinatura = require('../../models/Subscription');
+const Pagamento = require('../../models/Payment');
+const Usuario = require('../../models/User');
 
 class DashboardService {
     async getResumoFinanceiro(mes, ano) {

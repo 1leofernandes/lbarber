@@ -1,6 +1,6 @@
-const Barbeiro = require('../../models/Barbeiro');
-const Usuario = require('../../models/Usuario');
-const Agendamento = require('../../models/Agendamento');
+const Barbeiro = require('../../models/Barber');
+const Usuario = require('../../models/User');
+const Agendamento = require('../../models/Appointment');
 const bcrypt = require('bcrypt');
 
 class BarbeiroService {

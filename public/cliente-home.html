@@ -1003,6 +1003,37 @@
                 justify-content: center;
             }
         }
+
+        .servicos-container {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            width: 100%;
+        }
+        
+        .service-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 10px;
+            background: rgba(0, 0, 0, 0.05);
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        
+        .service-name {
+            font-weight: 500;
+        }
+        
+        .service-price {
+            color: #22c55e;
+            font-weight: 600;
+        }
+        
+        .valor-total {
+            font-weight: 700;
+            color: #22c55e;
+        }
     </style>
 </head>
 <body>
@@ -1758,15 +1789,50 @@
                 
                 const statusClass = statusClassMap[agendamento.status] || 'status-inactive';
                 
-                // Formatar valor
-                const valorFormatado = parseFloat(agendamento.valor_servico || 0).toLocaleString('pt-BR', {
+                // Calcular valor total de todos os serviços
+                let valorTotal = 0;
+                let duracaoTotal = 0;
+                let servicosHtml = '';
+                
+                if (agendamento.servicos && agendamento.servicos.length > 0) {
+                    // Construir HTML dos serviços
+                    servicosHtml = agendamento.servicos.map(servico => {
+                        const valorServico = parseFloat(servico.valor_servico) || 0;
+                        const duracaoServico = parseInt(servico.duracao_servico) || 0;
+                        
+                        valorTotal += valorServico;
+                        duracaoTotal += duracaoServico;
+                        
+                        return `
+                            <div class="service-item">
+                                <span class="service-name">${servico.nome_servico || 'Serviço'}</span>
+                                <span class="service-price">R$ ${valorServico.toFixed(2)}</span>
+                            </div>
+                        `;
+                    }).join('');
+                } else {
+                    // Fallback para agendamentos antigos com apenas um serviço
+                    const valorServico = parseFloat(agendamento.valor_servico) || 0;
+                    valorTotal = valorServico;
+                    duracaoTotal = 60; // Default
+                    
+                    servicosHtml = `
+                        <div class="service-item">
+                            <span class="service-name">${agendamento.nome_servico || 'Serviço não informado'}</span>
+                            <span class="service-price">R$ ${valorServico.toFixed(2)}</span>
+                        </div>
+                    `;
+                }
+                
+                // Formatar valor total
+                const valorFormatado = valorTotal.toLocaleString('pt-BR', {
                     style: 'currency',
                     currency: 'BRL'
                 });
                 
                 agendamentoItem.innerHTML = `
                     <div class="agendamento-header">
-                        <div class="agendamento-id">${agendamento.id}</div>
+                        <div class="agendamento-id">#${agendamento.id}</div>
                         <span class="badge ${statusClass}">
                             ${statusTexto}
                         </span>
@@ -1779,7 +1845,9 @@
                         </div>
                         <div class="detail-item">
                             <i class="fas fa-cut"></i>
-                            <span>${agendamento.nome_servico || 'Serviço não informado'}</span>
+                            <div class="servicos-container">
+                                ${servicosHtml}
+                            </div>
                         </div>
                         <div class="detail-item">
                             <i class="far fa-calendar"></i>
@@ -1791,11 +1859,11 @@
                         </div>
                         <div class="detail-item">
                             <i class="fas fa-tag"></i>
-                            <span>${valorFormatado}</span>
+                            <span class="valor-total">${valorFormatado}</span>
                         </div>
                         <div class="detail-item">
                             <i class="fas fa-info-circle"></i>
-                            <span>Duração: 60 min</span>
+                            <span>Duração: ${duracaoTotal} min</span>
                         </div>
                     </div>
                     

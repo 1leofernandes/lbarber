@@ -11,7 +11,7 @@ class Service {
     }
 
     const query = `
-      SELECT id, nome_servico, duracao_servico, valor_servico, descricao
+      SELECT id, nome_servico, duracao_servico, valor_servico, descricao, assinatura_ids
       FROM servicos
       ORDER BY nome_servico ASC
     `;
@@ -25,7 +25,7 @@ class Service {
 
   static async getServiceById(id) {
     const query = `
-      SELECT id, nome_servico, duracao_servico, valor_servico, descricao
+      SELECT id, nome_servico, duracao_servico, valor_servico, descricao, assinatura_ids
       FROM servicos
       WHERE id = $1
       LIMIT 1
@@ -34,40 +34,45 @@ class Service {
     return result.rows[0] || null;
   }
 
-
   static async create(servicoData) {
     const { nome_servico, duracao_servico, valor_servico, descricao, assinatura_ids = [] } = servicoData;
     
     const query = `
         INSERT INTO servicos 
-        (nome_servico, duracao_servico, valor_servico, descricao, assinatura_ids, ativo)
-        VALUES ($1, $2, $3, $4, $5, true)
-        RETURNING *
+        (nome_servico, duracao_servico, valor_servico, descricao, assinatura_ids)
+        VALUES ($1, $2, $3, $4, $5)
+        RETURNING id, nome_servico, duracao_servico, valor_servico, descricao, assinatura_ids
     `;
     
     const result = await pool.query(query, [
         nome_servico, duracao_servico, valor_servico, descricao, assinatura_ids
     ]);
     
+    // Invalidar cache
+    await cache.delete('servicos:all');
+    
     return result.rows[0];
   }
 
   static async update(id, servicoData) {
-      const { nome_servico, duracao_servico, valor_servico, descricao, assinatura_ids, ativo } = servicoData;
+      const { nome_servico, duracao_servico, valor_servico, descricao, assinatura_ids = [] } = servicoData;
       
       const query = `
           UPDATE servicos 
           SET nome_servico = $1, duracao_servico = $2, valor_servico = $3,
-              descricao = $4, assinatura_ids = $5, ativo = $6,
+              descricao = $4, assinatura_ids = $5,
               updated_at = CURRENT_TIMESTAMP
-          WHERE id = $7
-          RETURNING *
+          WHERE id = $6
+          RETURNING id, nome_servico, duracao_servico, valor_servico, descricao, assinatura_ids
       `;
       
       const result = await pool.query(query, [
           nome_servico, duracao_servico, valor_servico, 
-          descricao, assinatura_ids, ativo, id
+          descricao, assinatura_ids, id
       ]);
+      
+      // Invalidar cache
+      await cache.delete('servicos:all');
       
       return result.rows[0];
   }
@@ -75,21 +80,24 @@ class Service {
   static async delete(id) {
       const query = 'DELETE FROM servicos WHERE id = $1 RETURNING id';
       const result = await pool.query(query, [id]);
+      
+      // Invalidar cache
+      await cache.delete('servicos:all');
+      
       return result.rows[0];
   }
 
   static async count() {
-      const query = 'SELECT COUNT(*) as total FROM servicos WHERE ativo = true';
+      const query = 'SELECT COUNT(*) as total FROM servicos';
       const result = await pool.query(query);
       return parseInt(result.rows[0].total);
   }
 
   static async getServicosPorAssinatura(assinatura_id) {
       const query = `
-          SELECT id, nome_servico, duracao_servico, valor_servico, descricao
+          SELECT id, nome_servico, duracao_servico, valor_servico, descricao, assinatura_ids
           FROM servicos
           WHERE $1 = ANY(assinatura_ids)
-          AND ativo = true
           ORDER BY nome_servico ASC
       `;
       
@@ -100,6 +108,26 @@ class Service {
   static async invalidateServiceCache() {
     await cache.delete('servicos:all');
   }
+
+  // Método adicional para buscar múltiplos serviços por IDs (útil para agendamentos)
+  static async getServicesByIds(ids) {
+    if (!ids || ids.length === 0) {
+      return [];
+    }
+    
+    const query = `
+      SELECT id, nome_servico, duracao_servico, valor_servico, descricao
+      FROM servicos
+      WHERE id = ANY($1)
+      ORDER BY nome_servico ASC
+    `;
+    
+    const result = await pool.query(query, [ids]);
+    return result.rows;
+  }
+
+  // Alias para compatibilidade com outros arquivos
+  static findById = Service.getServiceById;
 }
 
 module.exports = Service;

@@ -1545,30 +1545,28 @@
             loadingToast.showToast();
 
             try {
-                for (const servicoId of estado.selecionados.servicos) {
-                    const response = await fetch(`${API_BASE_URL}/agendamentos`, {
-                        method: 'POST',
-                        headers: {
-                            'Authorization': `Bearer ${estado.token}`,
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            barbeiro_id: estado.selecionados.barbeiro,
-                            servico_id: servicoId,
-                            data_agendada: estado.selecionados.data,
-                            hora_inicio: estado.selecionados.horaInicio,
-                            hora_fim: estado.selecionados.horaFim
-                        })
-                    });
+                // Enviar TODOS os serviços em uma única requisição
+                const response = await fetch(`${API_BASE_URL}/agendamentos`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${estado.token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        barbeiro_id: estado.selecionados.barbeiro,
+                        servicos_ids: estado.selecionados.servicos, // ARRAY de IDs
+                        data_agendada: estado.selecionados.data,
+                        hora_inicio: estado.selecionados.horaInicio,
+                        hora_fim: estado.selecionados.horaFim
+                    })
+                });
 
-                    if (!response.ok) {
-                        const error = await response.json();
-                        throw new Error(error.message || 'Erro ao criar agendamento');
-                    }
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.message || 'Erro ao criar agendamento');
                 }
 
                 loadingToast.hideToast();
-
                 toast('Agendamento realizado com sucesso!', 'success');
 
                 // Redirecionamento suave

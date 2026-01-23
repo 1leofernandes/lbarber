@@ -1,3 +1,4 @@
+// src/services/admin/agendamentoService.js
 const Appointment = require('../../models/Appointment');
 const User = require('../../models/User');
 const Service = require('../../models/Service');
@@ -16,7 +17,7 @@ class AdminAgendamentoService {
 
     async getAgendamentoById(id) {
         try {
-            const agendamento = await Appointment.findById(id);
+            const agendamento = await Appointment.findByIdWithServices(id);
             if (!agendamento) {
                 throw new Error('Agendamento não encontrado');
             }
@@ -27,6 +28,41 @@ class AdminAgendamentoService {
         }
     }
 
+    // NOVO: Criar agendamento com múltiplos serviços
+    async createAgendamentoComServicos(agendamentoData) {
+        try {
+            // Validar dados
+            await this.validarAgendamentoComServicos(agendamentoData);
+            
+            // Verificar disponibilidade
+            const disponivel = await this.verificarDisponibilidade(
+                agendamentoData.barbeiro_id,
+                agendamentoData.data_agendada,
+                agendamentoData.hora_inicio,
+                agendamentoData.hora_fim
+            );
+            
+            if (!disponivel) {
+                throw new Error('Horário indisponível para agendamento');
+            }
+            
+            // Criar agendamento com serviços
+            return await Appointment.createWithServices(
+                agendamentoData.usuario_id,
+                agendamentoData.barbeiro_id,
+                agendamentoData.servicos_ids,
+                agendamentoData.data_agendada,
+                agendamentoData.hora_inicio,
+                agendamentoData.hora_fim,
+                agendamentoData.observacoes
+            );
+        } catch (error) {
+            console.error('Erro ao criar agendamento:', error);
+            throw error;
+        }
+    }
+
+    // MÉTODO ORIGINAL (mantido para compatibilidade)
     async createAgendamento(agendamentoData) {
         try {
             // Validar dados
@@ -45,13 +81,59 @@ class AdminAgendamentoService {
             }
             
             // Criar agendamento
-            return await Appointment.create(agendamentoData);
+            return await Appointment.create(
+                agendamentoData.usuario_id,
+                agendamentoData.barbeiro_id,
+                agendamentoData.servico_id,
+                agendamentoData.data_agendada,
+                agendamentoData.hora_inicio,
+                agendamentoData.hora_fim
+            );
         } catch (error) {
             console.error('Erro ao criar agendamento:', error);
             throw error;
         }
     }
 
+    // NOVO: Atualizar agendamento com múltiplos serviços
+    async updateAgendamentoComServicos(id, agendamentoData) {
+        try {
+            // Buscar agendamento existente
+            const agendamentoExistente = await Appointment.findByIdWithServices(id);
+            if (!agendamentoExistente) {
+                throw new Error('Agendamento não encontrado');
+            }
+            
+            // Se houve alteração no horário, verificar disponibilidade
+            if (agendamentoData.data_agendada || agendamentoData.hora_inicio || agendamentoData.barbeiro_id) {
+                const data = agendamentoData.data_agendada || agendamentoExistente.data_agendada;
+                const horaInicio = agendamentoData.hora_inicio || agendamentoExistente.hora_inicio;
+                const horaFim = agendamentoData.hora_fim || agendamentoExistente.hora_fim;
+                const barbeiroId = agendamentoData.barbeiro_id || agendamentoExistente.barbeiro_id;
+                
+                // Verificar disponibilidade (excluindo o próprio agendamento)
+                const disponivel = await this.verificarDisponibilidade(
+                    barbeiroId,
+                    data,
+                    horaInicio,
+                    horaFim,
+                    id
+                );
+                
+                if (!disponivel) {
+                    throw new Error('Horário indisponível para agendamento');
+                }
+            }
+            
+            // Atualizar agendamento com serviços
+            return await Appointment.updateWithServices(id, agendamentoData);
+        } catch (error) {
+            console.error('Erro ao atualizar agendamento:', error);
+            throw error;
+        }
+    }
+
+    // MÉTODO ORIGINAL (mantido para compatibilidade)
     async updateAgendamento(id, agendamentoData) {
         try {
             // Buscar agendamento existente
@@ -160,6 +242,58 @@ class AdminAgendamentoService {
         }
     }
 
+    // NOVO: Validação para múltiplos serviços
+    async validarAgendamentoComServicos(agendamentoData) {
+        const { usuario_id, barbeiro_id, servicos_ids, data_agendada, hora_inicio, hora_fim } = agendamentoData;
+        
+        // Validar usuário
+        const usuario = await User.findById(usuario_id);
+        if (!usuario) {
+            throw new Error('Usuário não encontrado');
+        }
+        
+        // Validar barbeiro
+        if (barbeiro_id) {
+            const barbeiro = await Barber.findById(barbeiro_id);
+            if (!barbeiro) {
+                throw new Error('Barbeiro não encontrado');
+            }
+        }
+        
+        // Validar serviços
+        if (!servicos_ids || !Array.isArray(servicos_ids) || servicos_ids.length === 0) {
+            throw new Error('É necessário selecionar pelo menos um serviço');
+        }
+        
+        for (const servicoId of servicos_ids) {
+            const servico = await Service.findById(servicoId);
+            if (!servico) {
+                throw new Error(`Serviço com ID ${servicoId} não encontrado`);
+            }
+        }
+        
+        // Validar data e hora
+        const dataAgendamento = new Date(data_agendada);
+        const hoje = new Date();
+        hoje.setHours(0, 0, 0, 0);
+        
+        if (dataAgendamento < hoje) {
+            throw new Error('Não é possível agendar para datas passadas');
+        }
+        
+        // Validar horário de funcionamento
+        const horaInicioNum = parseInt(hora_inicio.split(':')[0]);
+        const minutoInicioNum = parseInt(hora_inicio.split(':')[1]);
+        
+        if (horaInicioNum < 8 || horaInicioNum > 19 || 
+            (horaInicioNum === 19 && minutoInicioNum > 0)) {
+            throw new Error('Horário fora do funcionamento da barbearia (8:00 - 19:00)');
+        }
+        
+        return true;
+    }
+
+    // MÉTODO ORIGINAL (mantido para compatibilidade)
     async validarAgendamento(agendamentoData) {
         const { usuario_id, barbeiro_id, servico_id, data_agendada, hora_inicio, hora_fim } = agendamentoData;
         
@@ -170,9 +304,11 @@ class AdminAgendamentoService {
         }
         
         // Validar barbeiro
-        const barbeiro = await Barber.findById(barbeiro_id);
-        if (!barbeiro) {
-            throw new Error('Barbeiro não encontrado');
+        if (barbeiro_id) {
+            const barbeiro = await Barber.findById(barbeiro_id);
+            if (!barbeiro) {
+                throw new Error('Barbeiro não encontrado');
+            }
         }
         
         // Validar serviço
@@ -211,14 +347,13 @@ class AdminAgendamentoService {
             const intervalo = 30; // 30 minutos
             
             // Buscar agendamentos existentes
-            const agendamentos = await Appointment.getHorariosDisponiveis(barbeiro_id, data);
-            const horariosOcupados = agendamentos.map(a => a.hora_inicio);
+            const agendamentos = await Appointment.getUnavailableHours(barbeiro_id, data);
+            const horariosOcupados = agendamentos;
             
             // Buscar bloqueios
             const bloqueios = await Block.findAll({
-                barbeiro_id: barbeiro_id,
-                data_inicio: data,
-                data_fim: data
+                id_barbeiro: barbeiro_id,
+                data: data
             });
             
             // Gerar todos os horários possíveis
@@ -231,19 +366,17 @@ class AdminAgendamentoService {
                         // Verificar se não está em um bloqueio
                         const estaBloqueado = bloqueios.some(bloqueio => {
                             if (bloqueio.tipo === 'dia') return true;
-                            if (bloqueio.tipo === 'horario') {
-                                const horaBloqueioInicio = parseInt(bloqueio.hora_inicio?.split(':')[0] || 0);
-                                const minutoBloqueioInicio = parseInt(bloqueio.hora_inicio?.split(':')[1] || 0);
-                                const horaBloqueioFim = parseInt(bloqueio.hora_fim?.split(':')[0] || 23);
-                                const minutoBloqueioFim = parseInt(bloqueio.hora_fim?.split(':')[1] || 59);
-                                
-                                const horaAtual = hora * 60 + minuto;
-                                const inicioBloqueio = horaBloqueioInicio * 60 + minutoBloqueioInicio;
-                                const fimBloqueio = horaBloqueioFim * 60 + minutoBloqueioFim;
-                                
-                                return horaAtual >= inicioBloqueio && horaAtual < fimBloqueio;
-                            }
-                            return false;
+                            
+                            const horaBloqueioInicio = parseInt(bloqueio.hora_inicio?.split(':')[0] || 0);
+                            const minutoBloqueioInicio = parseInt(bloqueio.hora_inicio?.split(':')[1] || 0);
+                            const horaBloqueioFim = parseInt(bloqueio.hora_fim?.split(':')[0] || 23);
+                            const minutoBloqueioFim = parseInt(bloqueio.hora_fim?.split(':')[1] || 59);
+                            
+                            const horaAtual = hora * 60 + minuto;
+                            const inicioBloqueio = horaBloqueioInicio * 60 + minutoBloqueioInicio;
+                            const fimBloqueio = horaBloqueioFim * 60 + minutoBloqueioFim;
+                            
+                            return horaAtual >= inicioBloqueio && horaAtual < fimBloqueio;
                         });
                         
                         if (!estaBloqueado) {
@@ -265,12 +398,22 @@ class AdminAgendamentoService {
             const query = `
                 SELECT 
                     DATE(a.data_agendada) as data,
-                    COUNT(*) as total,
+                    COUNT(DISTINCT a.id) as total_agendamentos,
                     COUNT(CASE WHEN a.status = 'finalizado' THEN 1 END) as finalizados,
                     COUNT(CASE WHEN a.status = 'cancelado' THEN 1 END) as cancelados,
-                    COALESCE(SUM(s.valor_servico), 0) as receita
+                    COALESCE(
+                        SUM(
+                            COALESCE(
+                                (SELECT SUM(s.valor_servico) 
+                                 FROM agendamento_servicos ags 
+                                 JOIN servicos s ON ags.servico_id = s.id 
+                                 WHERE ags.agendamento_id = a.id),
+                                s.valor_servico
+                            )
+                        ), 
+                    0) as receita
                 FROM agendamentos a
-                JOIN servicos s ON a.servico_id = s.id
+                LEFT JOIN servicos s ON a.servico_id = s.id
                 WHERE a.data_agendada BETWEEN $1 AND $2
                 GROUP BY DATE(a.data_agendada)
                 ORDER BY data ASC

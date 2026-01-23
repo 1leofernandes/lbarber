@@ -840,7 +840,7 @@
 <body>
     <!-- Overlay para mobile -->
     <div class="overlay" id="overlay"></div>
-    
+
     <!-- Sidebar -->
     <aside class="sidebar" id="sidebar">
         <div class="sidebar-header">
@@ -924,7 +924,7 @@
             </button>
         </div>
     </aside>
-    
+
     <!-- Main Content -->
     <main class="main-content" id="mainContent">
         <!-- Navbar -->
@@ -1095,10 +1095,10 @@
             <div id="page-conta" class="page-content"></div>
         </div>
     </main>
-    
+
     <!-- Modais -->
     <div class="modal-overlay" id="modal-novo-agendamento">
-        <div class="modal-content">
+        <div class="modal-content" style="max-width: 700px;">
             <div class="modal-header">
                 <h2 class="modal-title">
                     <i class="fas fa-calendar-plus"></i>
@@ -1116,20 +1116,32 @@
                             <option value="">Selecione um cliente...</option>
                         </select>
                     </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label class="form-label">Serviço</label>
-                            <select class="form-control" id="servico-select" required>
-                                <option value="">Selecione um serviço...</option>
-                            </select>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Serviços</label>
+                        <div id="servicos-container" style="max-height: 200px; overflow-y: auto; border: 1px solid #ddd; border-radius: 8px; padding: 10px; background: #f9f9f9;">
+                            <div class="loading" style="text-align: center; padding: 20px;">
+                                <i class="fas fa-spinner fa-spin"></i> Carregando serviços...
+                            </div>
                         </div>
-                        <div class="form-group">
-                            <label class="form-label">Barbeiro</label>
-                            <select class="form-control" id="barbeiro-select" required>
-                                <option value="">Selecione um barbeiro...</option>
+                        <small class="form-text">Selecione um ou mais serviços para este agendamento</small>
+                        
+                        <!-- Select único para compatibilidade -->
+                        <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #eee;">
+                            <label class="form-label" style="font-size: 0.9em;">Ou selecione apenas um serviço:</label>
+                            <select class="form-control" id="servico-select" style="margin-top: 5px;">
+                                <option value="">Selecione um serviço (apenas um)</option>
                             </select>
                         </div>
                     </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Barbeiro</label>
+                        <select class="form-control" id="barbeiro-select" required>
+                            <option value="">Selecione um barbeiro...</option>
+                        </select>
+                    </div>
+                    
                     <div class="form-row">
                         <div class="form-group">
                             <label class="form-label">Data</label>
@@ -1140,19 +1152,34 @@
                             <input type="time" class="form-control" id="agendamento-hora" required>
                         </div>
                     </div>
+                    
                     <div class="form-group">
                         <label class="form-label">Observações</label>
                         <textarea class="form-control" id="agendamento-obs" rows="3"></textarea>
                     </div>
-                    <button type="submit" class="btn btn-primary btn-block">
-                        <i class="fas fa-save"></i>
-                        Agendar
-                    </button>
+                    
+                    <div class="form-group" id="resumo-agendamento" style="display: none; background: #f0f8ff; padding: 15px; border-radius: 8px; border: 1px solid #d0e7ff;">
+                        <h4 style="margin-top: 0; margin-bottom: 10px;">
+                            <i class="fas fa-receipt"></i> Resumo do Agendamento
+                        </h4>
+                        <div id="resumo-servicos" style="margin-bottom: 10px;"></div>
+                        <div id="resumo-valor" style="font-weight: bold; color: #28a745;"></div>
+                        <div id="resumo-duracao" style="font-size: 0.9em; color: #666;"></div>
+                    </div>
+                    
+                    <div style="display: flex; gap: 10px; margin-top: 20px;">
+                        <button type="button" class="btn btn-secondary" style="flex: 1;" onclick="calcularResumoAgendamento()">
+                            <i class="fas fa-calculator"></i> Calcular Resumo
+                        </button>
+                        <button type="submit" class="btn btn-primary" style="flex: 2;">
+                            <i class="fas fa-save"></i> Confirmar Agendamento
+                        </button>
+                    </div>
                 </form>
             </div>
         </div>
     </div>
-    
+
     <div class="modal-overlay" id="modal-novo-bloqueio">
         <div class="modal-content">
             <div class="modal-header">
@@ -1223,7 +1250,7 @@
             </div>
         </div>
     </div>
-    
+
     <div class="modal-overlay" id="modal-editar-servico">
         <div class="modal-content">
             <div class="modal-header">
@@ -1277,24 +1304,6 @@
             ? 'http://localhost:3000' 
             : 'https://barbeariasilva.onrender.com';
 
-        // const API_BASE_URL = () => {
-        //     const hostname = window.location.hostname;
-        //     const port = window.location.port;
-            
-        //     // Se estiver rodando localmente (qualquer porta)
-        //     if (hostname === 'localhost' || hostname === '127.0.0.1') {
-        //         // Se o frontend está na porta 5500 (Live Server comum)
-        //         if (port === '5500' || port === '') {
-        //             return 'http://localhost:3000'; // Backend local
-        //         }
-        //         // Se estiver em outra porta
-        //         return 'http://localhost:3000';
-        //     }
-            
-        //     // Se estiver no Vercel/Render (produção)
-        //     return 'https://barbeariasilva.onrender.com';
-        // };
-        
         // Estado da aplicação
         const state = {
             currentPage: 'inicio',
@@ -1570,34 +1579,302 @@
                 return;
             }
             
-            tbody.innerHTML = agendamentos.map(agendamento => `
-                <tr>
-                    <td>${agendamento.cliente_nome || 'Cliente'}</td>
-                    <td>${agendamento.servico_nome || 'Serviço'}</td>
-                    <td>${agendamento.barbeiro_nome || 'Barbeiro'}</td>
-                    <td>${formatDateTime(agendamento.data_agendada, agendamento.hora_inicio)}</td>
-                    <td>
-                        <span class="status-badge ${getStatusClass(agendamento.status)}">
-                            ${getStatusText(agendamento.status)}
-                        </span>
-                    </td>
-                    <td>
-                        <button class="btn-table btn-view" onclick="verAgendamento(${agendamento.id})">
-                            <i class="fas fa-eye"></i>
-                        </button>
-                        <button class="btn-table btn-edit" onclick="editarAgendamento(${agendamento.id})">
-                            <i class="fas fa-edit"></i>
-                        </button>
-                    </td>
-                </tr>
-            `).join('');
+            tbody.innerHTML = agendamentos.map(agendamento => {
+                // Tratar múltiplos serviços
+                let servicosTexto = 'Nenhum serviço';
+                if (agendamento.servicos && Array.isArray(agendamento.servicos) && agendamento.servicos.length > 0) {
+                    servicosTexto = agendamento.servicos.map(s => s.nome_servico).join(', ');
+                } else if (agendamento.servico_nome) {
+                    servicosTexto = agendamento.servico_nome; // Fallback para antigo
+                }
+                
+                return `
+                    <tr>
+                        <td>${agendamento.cliente_nome || 'Cliente'}</td>
+                        <td>${servicosTexto}</td>
+                        <td>${agendamento.barbeiro_nome || 'Barbeiro'}</td>
+                        <td>${formatDateTime(agendamento.data_agendada, agendamento.hora_inicio)}</td>
+                        <td>
+                            <span class="status-badge ${getStatusClass(agendamento.status)}">
+                                ${getStatusText(agendamento.status)}
+                            </span>
+                        </td>
+                        <td>
+                            <button class="btn-table btn-view" onclick="verAgendamento(${agendamento.id})">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button class="btn-table btn-edit" onclick="editarAgendamento(${agendamento.id})">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        async function renderTodosAgendamentos(agendamentos) {
+            const tbody = document.getElementById('todos-agendamentos');
+            
+            if (!agendamentos || agendamentos.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="8" style="text-align: center; padding: 3rem;">
+                            <i class="fas fa-calendar-times"></i>
+                            <p style="margin-top: 1rem;">Nenhum agendamento encontrado</p>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            // Carregar todos os serviços para calcular valores
+            const servicos = await carregarTodosServicos();
+            
+            tbody.innerHTML = agendamentos.map(agendamento => {
+                // Calcular valor total do agendamento
+                let valorTotal = 0;
+                let servicosTexto = 'Nenhum serviço';
+                
+                if (agendamento.servicos && Array.isArray(agendamento.servicos) && agendamento.servicos.length > 0) {
+                    servicosTexto = agendamento.servicos.map(s => s.nome_servico).join(', ');
+                    valorTotal = agendamento.servicos.reduce((total, servico) => {
+                        return total + (parseFloat(servico.valor_servico) || 0);
+                    }, 0);
+                } else if (agendamento.servico_nome) {
+                    servicosTexto = agendamento.servico_nome;
+                    valorTotal = parseFloat(agendamento.valor_servico || 0);
+                }
+                
+                // Calcular valor se não estiver nos dados
+                if (valorTotal === 0 && servicos.length > 0) {
+                    // Fallback: calcular baseado nos serviços do agendamento
+                    const servicosAgendamento = servicos.filter(s => 
+                        agendamento.servico_id === s.id || 
+                        (agendamento.servicos_ids && agendamento.servicos_ids.includes(s.id))
+                    );
+                    valorTotal = servicosAgendamento.reduce((total, s) => total + (parseFloat(s.valor_servico) || 0), 0);
+                }
+                
+                return `
+                    <tr>
+                        <td>${agendamento.id || ''}</td>
+                        <td>${agendamento.cliente_nome || 'Cliente'}</td>
+                        <td>${servicosTexto}</td>
+                        <td>${agendamento.barbeiro_nome || 'Barbeiro'}</td>
+                        <td>${formatDateTime(agendamento.data_agendada, agendamento.hora_inicio)}</td>
+                        <td>R$ ${valorTotal.toFixed(2)}</td>
+                        <td>
+                            <select class="form-control" style="width: 120px; padding: 0.3rem;" 
+                                    onchange="atualizarStatusAgendamento(${agendamento.id}, this.value)">
+                                <option value="pendente" ${agendamento.status === 'pendente' ? 'selected' : ''}>Pendente</option>
+                                <option value="confirmado" ${agendamento.status === 'confirmado' ? 'selected' : ''}>Confirmado</option>
+                                <option value="finalizado" ${agendamento.status === 'finalizado' ? 'selected' : ''}>Finalizado</option>
+                                <option value="cancelado" ${agendamento.status === 'cancelado' ? 'selected' : ''}>Cancelado</option>
+                            </select>
+                        </td>
+                        <td>
+                            <button class="btn-table btn-view" onclick="verAgendamento(${agendamento.id})">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button class="btn-table btn-edit" onclick="editarAgendamento(${agendamento.id})">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn-table btn-delete" onclick="excluirAgendamento(${agendamento.id})">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        async function carregarTodosServicos() {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_BASE_URL}/servicos`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    return data || [];
+                }
+                return [];
+            } catch (error) {
+                console.error('Erro ao carregar serviços:', error);
+                return [];
+            }
+        }
+
+        // Adicione estas funções ao seu JavaScript existente
+
+        async function carregarServicosParaModal() {
+            try {
+                const container = document.getElementById('servicos-container');
+                const selectSingle = document.getElementById('servico-select');
+                if (!container || !selectSingle) return;
+                
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_BASE_URL}/servicos`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (response.ok) {
+                    const servicos = await response.json();
+                    
+                    // Criar checkboxes para múltipla seleção
+                    container.innerHTML = servicos.map(servico => `
+                        <div style="display: flex; align-items: center; padding: 8px; border-bottom: 1px solid #f0f0f0; transition: background 0.2s;" 
+                            onmouseover="this.style.background='#f8f9fa'" 
+                            onmouseout="this.style.background=''">
+                            <input type="checkbox" name="servicos" value="${servico.id}" 
+                                id="servico-cb-${servico.id}" 
+                                style="margin-right: 10px; cursor: pointer;"
+                                onchange="atualizarSelectSingle()">
+                            <label for="servico-cb-${servico.id}" style="flex: 1; cursor: pointer;">
+                                <div><strong>${servico.nome_servico}</strong></div>
+                                <div style="font-size: 0.9em; color: #666;">
+                                    ${servico.duracao_servico || 30} min • R$ ${parseFloat(servico.valor_servico || 0).toFixed(2)}
+                                </div>
+                            </label>
+                        </div>
+                    `).join('');
+                    
+                    // Popular select único
+                    selectSingle.innerHTML = '<option value="">Selecione um serviço (apenas um)</option>' +
+                        servicos.map(s => `<option value="${s.id}">${s.nome_servico} - R$ ${parseFloat(s.valor_servico || 0).toFixed(2)}</option>`).join('');
+                        
+                } else {
+                    container.innerHTML = '<div style="color: #dc3545; text-align: center; padding: 20px;">Erro ao carregar serviços</div>';
+                }
+            } catch (error) {
+                console.error('Erro ao carregar serviços:', error);
+                document.getElementById('servicos-container').innerHTML = 
+                    '<div style="color: #dc3545; text-align: center; padding: 20px;">Erro ao carregar serviços</div>';
+            }
+        }
+
+        function atualizarSelectSingle() {
+            const checkboxes = document.querySelectorAll('input[name="servicos"]:checked');
+            const selectSingle = document.getElementById('servico-select');
+            
+            if (checkboxes.length > 0) {
+                // Se houver checkboxes selecionados, desabilitar select único
+                selectSingle.disabled = true;
+                selectSingle.value = checkboxes.length === 1 ? checkboxes[0].value : '';
+            } else {
+                // Se não houver checkboxes selecionados, habilitar select único
+                selectSingle.disabled = false;
+            }
+        }
+
+        async function carregarClientesParaModal() {
+            try {
+                const select = document.getElementById('cliente-select');
+                if (!select) return;
+                
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_BASE_URL}/admin/clientes`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (response.ok) {
+                    const clientes = await response.json();
+                    select.innerHTML = '<option value="">Selecione um cliente...</option>' +
+                        clientes.map(c => `<option value="${c.id}">${c.nome} - ${c.email}</option>`).join('');
+                }
+            } catch (error) {
+                console.error('Erro ao carregar clientes:', error);
+            }
+        }
+
+        async function carregarBarbeirosParaModal() {
+            try {
+                const select = document.getElementById('barbeiro-select');
+                const selectBloqueio = document.getElementById('barbeiro-bloqueio');
+                if (!select && !selectBloqueio) return;
+                
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_BASE_URL}/barbeiros`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (response.ok) {
+                    const barbeiros = await response.json();
+                    const options = barbeiros.map(b => `<option value="${b.id}">${b.nome}</option>`).join('');
+                    
+                    if (select) {
+                        select.innerHTML = '<option value="">Selecione um barbeiro...</option>' + options;
+                    }
+                    if (selectBloqueio) {
+                        selectBloqueio.innerHTML = '<option value="">Selecione um barbeiro...</option>' + options;
+                    }
+                }
+            } catch (error) {
+                console.error('Erro ao carregar barbeiros:', error);
+            }
+        }
+
+        function calcularResumoAgendamento() {
+            const checkboxes = document.querySelectorAll('input[name="servicos"]:checked');
+            const selectSingle = document.getElementById('servico-select');
+            const resumoDiv = document.getElementById('resumo-agendamento');
+            const resumoServicos = document.getElementById('resumo-servicos');
+            const resumoValor = document.getElementById('resumo-valor');
+            const resumoDuracao = document.getElementById('resumo-duracao');
+            
+            let servicosSelecionados = [];
+            
+            // Obter serviços dos checkboxes
+            checkboxes.forEach(cb => {
+                const servicoId = cb.value;
+                const label = document.querySelector(`label[for="servico-cb-${servicoId}"]`);
+                if (label) {
+                    const nome = label.querySelector('strong').textContent;
+                    const info = label.querySelector('div:nth-child(2)').textContent;
+                    const [duracaoStr, valorStr] = info.split('•');
+                    const duracao = parseInt(duracaoStr.replace('min', '').trim()) || 0;
+                    const valor = parseFloat(valorStr.replace('R$', '').trim()) || 0;
+                    
+                    servicosSelecionados.push({ id: servicoId, nome, duracao, valor });
+                }
+            });
+            
+            // Se não houver checkboxes, verificar select único
+            if (servicosSelecionados.length === 0 && selectSingle && selectSingle.value) {
+                const option = selectSingle.options[selectSingle.selectedIndex];
+                if (option.value) {
+                    const nome = option.text.split(' - ')[0];
+                    const valorStr = option.text.split(' - ')[1];
+                    const valor = parseFloat(valorStr.replace('R$', '').trim()) || 0;
+                    servicosSelecionados.push({ id: selectSingle.value, nome, duracao: 30, valor });
+                }
+            }
+            
+            if (servicosSelecionados.length === 0) {
+                alert('Selecione pelo menos um serviço!');
+                return;
+            }
+            
+            // Calcular totais
+            const valorTotal = servicosSelecionados.reduce((total, s) => total + s.valor, 0);
+            const duracaoTotal = servicosSelecionados.reduce((total, s) => total + s.duracao, 0);
+            
+            // Atualizar resumo
+            resumoServicos.innerHTML = `
+                <strong>Serviços selecionados:</strong><br>
+                ${servicosSelecionados.map(s => `• ${s.nome}`).join('<br>')}
+            `;
+            resumoValor.textContent = `Valor total: R$ ${valorTotal.toFixed(2)}`;
+            resumoDuracao.textContent = `Duração total: ${duracaoTotal} minutos`;
+            resumoDiv.style.display = 'block';
         }
         
         function renderMockAgendamentos() {
             const mockData = [
-                { id: 1, cliente_nome: 'João Silva', servico_nome: 'Corte Social', barbeiro_nome: 'Carlos', data_agendada: '2024-01-22', hora_inicio: '14:00', status: 'confirmado' },
-                { id: 2, cliente_nome: 'Maria Santos', servico_nome: 'Barba Completa', barbeiro_nome: 'Pedro', data_agendada: '2024-01-22', hora_inicio: '15:30', status: 'pendente' },
-                { id: 3, cliente_nome: 'José Oliveira', servico_nome: 'Corte + Barba', barbeiro_nome: 'Carlos', data_agendada: '2024-01-23', hora_inicio: '10:00', status: 'finalizado' }
+                // { id: 1, cliente_nome: 'João Silva', servico_nome: 'Corte Social', barbeiro_nome: 'Carlos', data_agendada: '2024-01-22', hora_inicio: '14:00', status: 'confirmado' },
+                // { id: 2, cliente_nome: 'Maria Santos', servico_nome: 'Barba Completa', barbeiro_nome: 'Pedro', data_agendada: '2024-01-22', hora_inicio: '15:30', status: 'pendente' },
+                // { id: 3, cliente_nome: 'José Oliveira', servico_nome: 'Corte + Barba', barbeiro_nome: 'Carlos', data_agendada: '2024-01-23', hora_inicio: '10:00', status: 'finalizado' }
             ];
             
             renderRecentAgendamentos(mockData);
@@ -1839,12 +2116,26 @@
             // Carregar agendamentos
             setTimeout(() => {
                 // Simular dados
-                const agendamentos = [
-                    { id: 1, cliente: 'João Silva', servico: 'Corte Social', barbeiro: 'Carlos', data: '22/01/2024 14:00', valor: 45.00, status: 'confirmado' },
-                    { id: 2, cliente: 'Maria Santos', servico: 'Barba Completa', barbeiro: 'Pedro', data: '22/01/2024 15:30', valor: 35.00, status: 'pendente' },
-                    { id: 3, cliente: 'José Oliveira', servico: 'Corte + Barba', barbeiro: 'Carlos', data: '23/01/2024 10:00', valor: 70.00, status: 'finalizado' },
-                    { id: 4, cliente: 'Ana Costa', servico: 'Sobrancelha', barbeiro: 'Pedro', data: '23/01/2024 11:00', valor: 30.00, status: 'cancelado' }
-                ];
+                async function carregarAgendamentos() {
+                    try {
+                        const token = localStorage.getItem('token');
+                        const response = await fetch(`${API_BASE_URL}/admin/agendamentos`, {
+                            headers: { 'Authorization': `Bearer ${token}` }
+                        });
+                        
+                        if (response.ok) {
+                            const data = await response.json();
+                            renderTodosAgendamentos(data.data || []);
+                        } else {
+                            renderTodosAgendamentos([]);
+                        }
+                    } catch (error) {
+                        console.error('Erro ao carregar agendamentos:', error);
+                        renderTodosAgendamentos([]);
+                    }
+                }
+                
+                carregarAgendamentos();
                 
                 const tbody = document.getElementById('todos-agendamentos');
                 tbody.innerHTML = agendamentos.map(ag => `
@@ -2605,6 +2896,15 @@
             if (modal) {
                 modal.classList.add('active');
                 document.body.style.overflow = 'hidden';
+                
+                // Carregar serviços se for o modal de agendamento
+                if (modalId === 'novo-agendamento') {
+                    setTimeout(() => {
+                        carregarServicosParaModal();
+                        carregarClientesParaModal();
+                        carregarBarbeirosParaModal();
+                    }, 100);
+                }
             }
         }
         
@@ -2628,9 +2928,27 @@
         async function handleNovoAgendamento(e) {
             e.preventDefault();
             
+            // Obter serviços selecionados (checkbox ou select múltiplo)
+            const servicosSelecionados = Array.from(
+                document.querySelectorAll('input[name="servicos"]:checked')
+            ).map(cb => cb.value);
+            
+            // Se não houver checkboxes, usar select único para compatibilidade
+            if (servicosSelecionados.length === 0) {
+                const selectSingle = document.getElementById('servico-select');
+                if (selectSingle && selectSingle.value) {
+                    servicosSelecionados.push(selectSingle.value);
+                }
+            }
+            
+            if (servicosSelecionados.length === 0) {
+                alert('Selecione pelo menos um serviço!');
+                return;
+            }
+            
             const agendamentoData = {
                 cliente_id: document.getElementById('cliente-select').value,
-                servico_id: document.getElementById('servico-select').value,
+                servicos_ids: servicosSelecionados, // Array de IDs
                 barbeiro_id: document.getElementById('barbeiro-select').value,
                 data_agendada: document.getElementById('agendamento-data').value,
                 hora_inicio: document.getElementById('agendamento-hora').value,
@@ -2654,8 +2972,12 @@
                     if (state.currentPage === 'agendamentos') {
                         loadAgendamentosPage();
                     }
+                    if (state.currentPage === 'inicio') {
+                        loadRecentAgendamentos();
+                    }
                 } else {
-                    alert('Erro ao criar agendamento');
+                    const error = await response.json();
+                    alert(error.message || 'Erro ao criar agendamento');
                 }
             } catch (error) {
                 console.error('Erro:', error);

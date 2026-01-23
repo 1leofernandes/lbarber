@@ -49,7 +49,27 @@ class AdminAgendamentoController {
 
     async create(req, res) {
         try {
-            const agendamento = await AdminAgendamentoService.createAgendamento(req.body);
+            // Extrair dados do corpo da requisição
+            const { servicos_ids, servico_id, ...agendamentoData } = req.body;
+            
+            // Determinar quais serviços usar (preferência para o novo formato com array)
+            const servicosParaAgendar = servicos_ids || (servico_id ? [servico_id] : []);
+            
+            // Verificar se há serviços selecionados
+            if (!servicosParaAgendar || servicosParaAgendar.length === 0) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Pelo menos um serviço deve ser selecionado'
+                });
+            }
+            
+            // Adicionar os serviços aos dados do agendamento
+            const dadosComServicos = {
+                ...agendamentoData,
+                servicos_ids: servicosParaAgendar
+            };
+            
+            const agendamento = await AdminAgendamentoService.createAgendamento(dadosComServicos);
             
             res.status(201).json({
                 success: true,
@@ -68,7 +88,28 @@ class AdminAgendamentoController {
     async update(req, res) {
         try {
             const { id } = req.params;
-            const agendamento = await AdminAgendamentoService.updateAgendamento(id, req.body);
+            
+            // Extrair dados do corpo da requisição
+            const { servicos_ids, servico_id, ...agendamentoData } = req.body;
+            
+            // Determinar quais serviços usar
+            let servicosParaAtualizar = null;
+            
+            if (servicos_ids !== undefined) {
+                // Se servicos_ids foi enviado explicitamente (pode ser array vazio)
+                servicosParaAtualizar = servicos_ids;
+            } else if (servico_id !== undefined) {
+                // Se servico_id foi enviado (backward compatibility)
+                servicosParaAtualizar = servico_id ? [servico_id] : [];
+            }
+            
+            // Preparar dados para atualização
+            const dadosAtualizacao = { ...agendamentoData };
+            if (servicosParaAtualizar !== null) {
+                dadosAtualizacao.servicos_ids = servicosParaAtualizar;
+            }
+            
+            const agendamento = await AdminAgendamentoService.updateAgendamento(id, dadosAtualizacao);
             
             res.json({
                 success: true,
@@ -131,7 +172,7 @@ class AdminAgendamentoController {
 
     async getHorariosDisponiveis(req, res) {
         try {
-            const { barbeiro_id, data } = req.query;
+            const { barbeiro_id, data, servicos_ids, servico_id } = req.query;
             
             if (!barbeiro_id || !data) {
                 return res.status(400).json({
@@ -140,7 +181,19 @@ class AdminAgendamentoController {
                 });
             }
             
-            const horarios = await AdminAgendamentoService.getHorariosDisponiveis(barbeiro_id, data);
+            // Determinar quais serviços usar para calcular duração
+            let servicosParaConsulta = [];
+            if (servicos_ids) {
+                servicosParaConsulta = Array.isArray(servicos_ids) ? servicos_ids : [servicos_ids];
+            } else if (servico_id) {
+                servicosParaConsulta = [servico_id];
+            }
+            
+            const horarios = await AdminAgendamentoService.getHorariosDisponiveis(
+                barbeiro_id, 
+                data,
+                servicosParaConsulta
+            );
             
             res.json({
                 success: true,

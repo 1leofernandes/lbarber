@@ -1720,7 +1720,7 @@
                             <select class="form-control" style="width: 120px; padding: 0.3rem;" 
                                     onchange="atualizarStatusAgendamento(${agendamento.id}, this.value)">
                                 <option value="confirmado" ${agendamento.status === 'confirmado' ? 'selected' : ''}>Confirmado</option>
-                                <option value="finalizado" ${agendamento.status === 'finalizado' ? 'selected' : ''}>Finalizado</option>
+                                <option value="concluido" ${agendamento.status === 'concluido' ? 'selected' : ''}>Concluido</option>
                                 <option value="cancelado" ${agendamento.status === 'cancelado' ? 'selected' : ''}>Cancelado</option>
                             </select>
                         </td>
@@ -2024,7 +2024,7 @@
         function getStatusClass(status) {
             const statusMap = {
                 'confirmado': 'status-active',
-                'finalizado': 'status-success',
+                'concluido': 'status-success',
                 'cancelado': 'status-inactive'
             };
             return statusMap[status] || 'status-inactive';
@@ -2033,7 +2033,7 @@
         function getStatusText(status) {
             const statusMap = {
                 'confirmado': 'Confirmado',
-                'finalizado': 'Finalizado',
+                'concluido': 'Concluído',
                 'cancelado': 'Cancelado'
             };
             return statusMap[status] || status;
@@ -3503,7 +3503,7 @@
         async function atualizarStatusAgendamento(id, status) {
             try {
                 // Validar status (de acordo com o banco)
-                const statusValidos = ['confirmado', 'finalizado', 'cancelado'];
+                const statusValidos = ['confirmado', 'concluido', 'cancelado'];
                 if (!statusValidos.includes(status)) {
                     alert('Status inválido. Use: Confirmado, Concluído ou Cancelado');
                     return;

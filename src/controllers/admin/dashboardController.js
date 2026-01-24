@@ -1,6 +1,44 @@
 const dashboardService = require('../../services/admin/dashboardService');
 
 class DashboardController {
+    async getResumoGeral(req, res) {
+        try {
+            const hoje = new Date();
+            const mesAtual = hoje.getMonth() + 1;
+            const anoAtual = hoje.getFullYear();
+            
+            const resumo = await dashboardService.getResumoFinanceiro(mesAtual, anoAtual);
+            
+            res.json({
+                success: true,
+                data: resumo
+            });
+        } catch (error) {
+            console.error('Erro ao buscar resumo geral:', error);
+            res.status(500).json({
+                success: false,
+                message: 'Erro ao buscar resumo geral'
+            });
+        }
+    }
+
+    async getResumoHoje(req, res) {
+        try {
+            const resumo = await dashboardService.getResumoHoje();
+            
+            res.json({
+                success: true,
+                data: resumo
+            });
+        } catch (error) {
+            console.error('Erro ao buscar resumo do dia:', error);
+            res.status(500).json({
+                success: false,
+                message: 'Erro ao buscar resumo do dia'
+            });
+        }
+    }
+
     async getResumoFinanceiro(req, res) {
         try {
             const { mes, ano } = req.query;
@@ -42,7 +80,7 @@ class DashboardController {
 
     async getTopServicos(req, res) {
         try {
-            const { limit = 5 } = req.query;
+            const { limit = 10 } = req.query;
             const servicos = await dashboardService.getTopServicos(parseInt(limit));
             
             res.json({

@@ -1605,19 +1605,19 @@
             }
 
             // VALIDAÇÃO FINAL: Verificar se não está agendando no passado
-            const agora = new Date();
-            const dataAgendamento = new Date(estado.selecionados.data);
-            const [horaAgendamento, minutoAgendamento] = estado.selecionados.horaInicio.split(':').map(Number);
+            // const agora = new Date();
+            // const dataAgendamento = new Date(estado.selecionados.data);
+            // const [horaAgendamento, minutoAgendamento] = estado.selecionados.horaInicio.split(':').map(Number);
             
             // Criar objeto Date para o horário do agendamento
-            const horarioAgendamento = new Date(dataAgendamento);
-            horarioAgendamento.setHours(horaAgendamento, minutoAgendamento, 0, 0);
+            // const horarioAgendamento = new Date(dataAgendamento);
+            // horarioAgendamento.setHours(horaAgendamento, minutoAgendamento, 0, 0);
             
-            // Se o agendamento for no passado
-            if (horarioAgendamento < agora) {
-                toast('Não é possível agendar para um horário no passado. Por favor, escolha um horário futuro.', 'error');
-                return;
-            }
+            // // Se o agendamento for no passado
+            // if (horarioAgendamento < agora) {
+            //     toast('Não é possível agendar para um horário no passado. Por favor, escolha um horário futuro.', 'error');
+            //     return;
+            // }
 
             // Toast de carregamento
             const loadingToast = Toastify({

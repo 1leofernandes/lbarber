@@ -1312,12 +1312,11 @@
             
             // VALIDAÇÃO: Verificar se não está agendando no passado
             const agora = new Date();
-            const dataAgendamento = new Date(estado.selecionados.data);
+            const [ano, mes, dia] = estado.selecionados.data.split('-').map(Number);
             const [horaAgendamento, minutoAgendamento] = estado.selecionados.horaInicio.split(':').map(Number);
             
-            // Criar objeto Date para o horário do agendamento
-            const horarioAgendamento = new Date(dataAgendamento);
-            horarioAgendamento.setHours(horaAgendamento, minutoAgendamento, 0, 0);
+            // Criar objeto Date para o horário do agendamento (fuso local)
+            const horarioAgendamento = new Date(ano, mes - 1, dia, horaAgendamento, minutoAgendamento, 0);
             
             // Se o agendamento for no passado
             if (horarioAgendamento < agora) {
@@ -1325,8 +1324,8 @@
                 return;
             }
             
-            // Formatar data e hora para exibição
-            const dataObj = new Date(estado.selecionados.data);
+            // CORREÇÃO: Formatar data no fuso local
+            const dataObj = new Date(ano, mes - 1, dia);
             const dataFormatada = dataObj.toLocaleDateString('pt-BR');
             const horaFormatada = `${estado.selecionados.horaInicio} - ${estado.selecionados.horaFim}`;
             
@@ -1363,7 +1362,12 @@
                 const diaSemana = data.toLocaleDateString('pt-BR', { weekday: 'short' });
                 const dia = data.getDate();
                 const mes = data.toLocaleDateString('pt-BR', { month: 'short' });
-                const dataISO = data.toISOString().split('T')[0];
+                
+                // CORREÇÃO: Usar formato YYYY-MM-DD sem conversão UTC
+                const ano = data.getFullYear();
+                const mesNum = String(data.getMonth() + 1).padStart(2, '0');
+                const diaNum = String(data.getDate()).padStart(2, '0');
+                const dataISO = `${ano}-${mesNum}-${diaNum}`; // Formato local, não UTC
                 
                 const dateCard = document.createElement('div');
                 dateCard.className = `date-card ${estado.dataSelecionada === dataISO ? 'selected' : ''}`;
@@ -1380,7 +1384,10 @@
             // Selecionar primeira data por padrão (HOJE)
             if (!estado.dataSelecionada) {
                 const primeiraData = new Date(hoje);
-                const dataISO = primeiraData.toISOString().split('T')[0];
+                const ano = primeiraData.getFullYear();
+                const mesNum = String(primeiraData.getMonth() + 1).padStart(2, '0');
+                const diaNum = String(primeiraData.getDate()).padStart(2, '0');
+                const dataISO = `${ano}-${mesNum}-${diaNum}`;
                 
                 const primeiroCard = elementos.dateCarousel.querySelector('.date-card');
                 if (primeiroCard) {
@@ -1400,8 +1407,11 @@
             estado.dataSelecionada = dataISO;
             estado.selecionados.data = dataISO;
             
-            // Atualizar texto da data selecionada
-            const dataObj = new Date(dataISO);
+            // CORREÇÃO: Criar data no fuso horário local
+            const [ano, mes, dia] = dataISO.split('-').map(Number);
+            const dataObj = new Date(ano, mes - 1, dia); // mês é 0-indexed
+            
+            // Atualizar texto da data selecionada (usando fuso local)
             elementos.selectedDateText.textContent = dataObj.toLocaleDateString('pt-BR', {
                 weekday: 'long',
                 day: 'numeric',
@@ -1441,7 +1451,10 @@
                     
                     // FILTRAR HORÁRIOS PASSADOS se for HOJE
                     const agora = new Date();
-                    const dataSelecionada = new Date(dataISO);
+                    const [ano, mes, dia] = dataISO.split('-').map(Number);
+                    const dataSelecionada = new Date(ano, mes - 1, dia);
+                    
+                    // Verificar se é hoje (comparando apenas dia, mês e ano)
                     const hoje = new Date();
                     hoje.setHours(0, 0, 0, 0);
                     dataSelecionada.setHours(0, 0, 0, 0);

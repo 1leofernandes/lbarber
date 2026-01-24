@@ -274,7 +274,7 @@ class BarbeiroService {
                 JOIN servicos s ON a.servico_id = s.id
                 WHERE a.barbeiro_id = $1
                 AND a.data_agendada BETWEEN $2 AND $3
-                AND a.status = 'finalizado'
+                AND a.status = 'concluido'
             `;
             
             const pool = require('../../config/database');

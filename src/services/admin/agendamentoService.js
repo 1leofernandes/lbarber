@@ -173,7 +173,7 @@ class AdminAgendamentoService {
 
     async updateStatus(id, status) {
         try {
-            const statusValidos = ['pendente', 'confirmado', 'finalizado', 'cancelado'];
+            const statusValidos = ['pendente', 'confirmado', 'concluido', 'cancelado'];
             
             if (!statusValidos.includes(status)) {
                 throw new Error('Status inválido');
@@ -193,9 +193,9 @@ class AdminAgendamentoService {
                 throw new Error('Agendamento não encontrado');
             }
             
-            // Verificar se pode ser excluído (não pode excluir agendamentos finalizados)
-            if (agendamento.status === 'finalizado') {
-                throw new Error('Não é possível excluir agendamentos finalizados');
+            // Verificar se pode ser excluído (não pode excluir agendamentos concluídos)
+            if (agendamento.status === 'concluido') {
+                throw new Error('Não é possível excluir agendamentos concluídos');
             }
 
             return await Appointment.delete(id);
@@ -399,7 +399,7 @@ class AdminAgendamentoService {
                 SELECT 
                     DATE(a.data_agendada) as data,
                     COUNT(DISTINCT a.id) as total_agendamentos,
-                    COUNT(CASE WHEN a.status = 'finalizado' THEN 1 END) as finalizados,
+                    COUNT(CASE WHEN a.status = 'concluido' THEN 1 END) as concluidos,
                     COUNT(CASE WHEN a.status = 'cancelado' THEN 1 END) as cancelados,
                     COALESCE(
                         SUM(

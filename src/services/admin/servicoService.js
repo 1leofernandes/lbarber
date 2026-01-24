@@ -174,7 +174,7 @@ class ServicoService {
                     AVG(EXTRACT(EPOCH FROM (a.updated_at - a.created_at)) / 60) as tempo_medio_servico
                 FROM servicos s
                 LEFT JOIN agendamentos a ON s.id = a.servico_id
-                WHERE a.status = 'finalizado'
+                WHERE a.status = 'concluido'
                 AND a.data_agendada >= CURRENT_DATE - INTERVAL '30 days'
                 GROUP BY s.id, s.nome_servico
                 ORDER BY total_agendamentos DESC

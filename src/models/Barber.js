@@ -77,11 +77,10 @@ class Barbeiro {
     static async rebaixarParaCliente(usuario_id) {
         const query = `
             UPDATE usuarios 
-            SET roles = array_remove(roles, 'barbeiro'),
-                especialidades = NULL,
+            SET role = array_remove(role, 'barbeiro'),
                 updated_at = CURRENT_TIMESTAMP
             WHERE id = $1
-            RETURNING id, nome, email, telefone, roles
+            RETURNING id, nome, email, telefone, role
         `;
         
         const result = await pool.query(query, [usuario_id]);
@@ -91,7 +90,7 @@ class Barbeiro {
     static async delete(id) {
         const query = `
             DELETE FROM usuarios 
-            WHERE id = $1 AND 'barbeiro' = ANY(roles)
+            WHERE id = $1 AND 'barbeiro' = ANY(role)
             RETURNING id
         `;
         const result = await pool.query(query, [id]);
@@ -102,7 +101,7 @@ class Barbeiro {
         const query = `
             SELECT COUNT(*) as total 
             FROM usuarios 
-            WHERE 'barbeiro' = ANY(roles)
+            WHERE 'barbeiro' = ANY(role)
         `;
         const result = await pool.query(query);
         return parseInt(result.rows[0].total);
@@ -114,7 +113,6 @@ class Barbeiro {
             FROM agendamentos
             WHERE barbeiro_id = $1
             AND DATE(data_agendada) = CURRENT_DATE
-            AND status NOT IN ('cancelado')
         `;
         
         const result = await pool.query(query, [barbeiro_id]);

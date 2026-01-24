@@ -24,6 +24,12 @@ class User {
     return result.rows[0] || null;
   }
 
+  static async findByRole(role) {
+    const query = 'SELECT id, nome, email, telefone, role FROM usuarios WHERE role = $1 ORDER BY nome';
+    const result = await pool.query(query, [role]);
+    return result.rows;
+  }
+
   static async create(nome, email, telefone, senhaHash, role = 'cliente', roles = null) {
     const query = `
       INSERT INTO usuarios (nome, email, telefone, senha, role, roles, created_at, updated_at)

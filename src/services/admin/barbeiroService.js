@@ -107,7 +107,7 @@ class BarbeiroService {
             }
             
             // Verificar se já é barbeiro
-            if (usuario.roles && usuario.roles.includes('barbeiro')) {
+            if (usuario.role && usuario.role.includes('barbeiro')) {
                 throw new Error('Usuário já é barbeiro');
             }
             
@@ -159,7 +159,7 @@ class BarbeiroService {
     }
 
     async validarBarbeiro(barbeiroData, isUpdate = false) {
-        const { nome, email, telefone, cpf, data_nascimento } = barbeiroData;
+        const { nome, email, telefone} = barbeiroData;
         
         if (!isUpdate || nome !== undefined) {
             if (!nome || nome.trim().length < 3) {
@@ -179,37 +179,7 @@ class BarbeiroService {
             }
         }
         
-        if (!isUpdate || cpf !== undefined) {
-            if (!cpf || !/^\d{3}\.\d{3}\.\d{3}-\d{2}$/.test(cpf)) {
-                throw new Error('CPF inválido. Use o formato 999.999.999-99');
-            }
-        }
-        
-        if (!isUpdate || data_nascimento !== undefined) {
-            if (!data_nascimento || isNaN(new Date(data_nascimento).getTime())) {
-                throw new Error('Data de nascimento inválida');
-            }
-            
-            const idade = this.calcularIdade(data_nascimento);
-            if (idade < 18) {
-                throw new Error('Barbeiro deve ter pelo menos 18 anos');
-            }
-        }
-        
         return true;
-    }
-
-    calcularIdade(dataNascimento) {
-        const hoje = new Date();
-        const nascimento = new Date(dataNascimento);
-        let idade = hoje.getFullYear() - nascimento.getFullYear();
-        const mes = hoje.getMonth() - nascimento.getMonth();
-        
-        if (mes < 0 || (mes === 0 && hoje.getDate() < nascimento.getDate())) {
-            idade--;
-        }
-        
-        return idade;
     }
 
     async verificarAgendamentosFuturos(barbeiro_id) {
@@ -220,7 +190,6 @@ class BarbeiroService {
                 FROM agendamentos
                 WHERE barbeiro_id = $1
                 AND data_agendada >= $2
-                AND status NOT IN ('cancelado')
             `;
             
             const pool = require('../../config/database');
@@ -277,7 +246,6 @@ class BarbeiroService {
                 FROM agendamentos
                 WHERE barbeiro_id = $1
                 AND data_agendada BETWEEN $2 AND $3
-                AND status NOT IN ('cancelado')
             `;
             
             const pool = require('../../config/database');
@@ -323,33 +291,32 @@ class BarbeiroService {
         }
     }
 
-    async getAvaliacaoMedia(barbeiro_id) {
-        try {
-            const query = `
-                SELECT COALESCE(AVG(avaliacao), 0) as media
-                FROM avaliacoes
-                WHERE barbeiro_id = $1
-            `;
+    // async getAvaliacaoMedia(barbeiro_id) {
+    //     try {
+    //         const query = `
+    //             SELECT COALESCE(AVG(avaliacao), 0) as media
+    //             FROM avaliacoes
+    //             WHERE barbeiro_id = $1
+    //         `;
             
-            const pool = require('../../config/database');
-            const result = await pool.query(query, [barbeiro_id]);
+    //         const pool = require('../../config/database');
+    //         const result = await pool.query(query, [barbeiro_id]);
             
-            return parseFloat(result.rows[0].media);
-        } catch (error) {
-            console.error('Erro ao buscar avaliação média:', error);
-            return 0;
-        }
-    }
+    //         return parseFloat(result.rows[0].media);
+    //     } catch (error) {
+    //         console.error('Erro ao buscar avaliação média:', error);
+    //         return 0;
+    //     }
+    // }
 
     async getClientesParaPromover() {
         try {
             const query = `
                 SELECT id, nome, email, telefone, created_at
                 FROM usuarios
-                WHERE 'cliente' = ANY(roles)
-                AND NOT 'barbeiro' = ANY(roles)
+                WHERE 'cliente' = ANY(role)
+                AND NOT 'barbeiro' = ANY(role)
                 AND NOT 'admin' = ANY(roles)
-                AND ativo = true
                 ORDER BY nome ASC
             `;
             

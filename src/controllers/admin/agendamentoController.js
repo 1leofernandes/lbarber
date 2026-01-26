@@ -233,6 +233,24 @@ class AdminAgendamentoController {
             });
         }
     }
+
+    // NOVO: Método para buscar barbeiros
+    async getBarbeiros(req, res) {
+        try {
+            const barbeiros = await AdminAgendamentoService.getBarbeirosParaFiltro();
+            
+            res.json({
+                success: true,
+                data: barbeiros
+            });
+        } catch (error) {
+            console.error('Erro ao buscar barbeiros:', error);
+            res.status(500).json({
+                success: false,
+                message: 'Erro ao buscar barbeiros'
+            });
+        }
+    }
 }
 
 module.exports = new AdminAgendamentoController();

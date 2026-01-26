@@ -428,6 +428,25 @@ class AdminAgendamentoService {
             throw error;
         }
     }
+
+    // NOVO: Método para buscar barbeiros para filtro
+    async getBarbeirosParaFiltro() {
+        try {
+            const query = `
+                SELECT id, nome 
+                FROM usuarios 
+                WHERE role = 'barbeiro' OR 'barbeiro' = ANY(roles)
+                ORDER BY nome ASC
+            `;
+            
+            const pool = require('../../config/database');
+            const result = await pool.query(query);
+            return result.rows;
+        } catch (error) {
+            console.error('Erro ao buscar barbeiros para filtro:', error);
+            throw error;
+        }
+    }
 }
 
 module.exports = new AdminAgendamentoService();

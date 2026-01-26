@@ -2175,6 +2175,7 @@
                         </select>
                         <select class="form-control" style="width: 200px;" id="filter-barbeiro">
                             <option value="">Todos os barbeiros</option>
+                            <!-- Os barbeiros serão carregados dinamicamente -->
                         </select>
                         <button class="btn btn-primary" onclick="filtrarAgendamentos()">
                             <i class="fas fa-search"></i>
@@ -2191,7 +2192,7 @@
                     <div class="table-header">
                         <div class="table-title">Todos os Agendamentos</div>
                         <div style="display: flex; gap: 10px;">
-                            <input type="text" class="table-search" placeholder="Buscar por cliente..." id="search-agendamentos">
+                            <input type="text" class="table-search" placeholder="Buscar por cliente..." id="search-agendamentos" onkeyup="buscarPorCliente(event)">
                             <!-- <button class="btn btn-primary" onclick="openModal('novo-agendamento')">
                                 <i class="fas fa-plus"></i>
                                 Novo Agendamento
@@ -2227,24 +2228,29 @@
             `;
             
             // Carregar agendamentos
-            setTimeout(async () => {
-                try {
-                    const token = localStorage.getItem('token');
-                    const response = await fetch(`${API_BASE_URL}/admin/agendamentos`, {
-                        headers: { 'Authorization': `Bearer ${token}` }
-                    });
+            // setTimeout(async () => {
+            //     try {
+            //         const token = localStorage.getItem('token');
+            //         const response = await fetch(`${API_BASE_URL}/admin/agendamentos`, {
+            //             headers: { 'Authorization': `Bearer ${token}` }
+            //         });
                     
-                    if (response.ok) {
-                        const data = await response.json();
-                        renderTodosAgendamentos(data.data || []);
-                    } else {
-                        renderTodosAgendamentos([]);
-                    }
-                } catch (error) {
-                    console.error('Erro ao carregar agendamentos:', error);
-                    renderTodosAgendamentos([]);
-                }
-            }, 100);
+            //         if (response.ok) {
+            //             const data = await response.json();
+            //             renderTodosAgendamentos(data.data || []);
+            //         } else {
+            //             renderTodosAgendamentos([]);
+            //         }
+            //     } catch (error) {
+            //         console.error('Erro ao carregar agendamentos:', error);
+            //         renderTodosAgendamentos([]);
+            //     }
+            // }, 100);
+
+            await carregarBarbeirosParaFiltro();
+    
+            // Carregar agendamentos
+            await carregarAgendamentosComFiltro();
         }
         
         async function loadServicosPage() {
@@ -3260,6 +3266,242 @@
                 }
             }
         }
+
+        async function carregarBarbeirosParaFiltro() {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_BASE_URL}/admin/agendamentos/barbeiros/filtro`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    const barbeiros = result.data || [];
+                    const select = document.getElementById('filter-barbeiro');
+                    
+                    if (select) {
+                        // Manter a opção padrão e adicionar os barbeiros
+                        barbeiros.forEach(barbeiro => {
+                            const option = document.createElement('option');
+                            option.value = barbeiro.id;
+                            option.textContent = barbeiro.nome;
+                            select.appendChild(option);
+                        });
+                    }
+                }
+            } catch (error) {
+                console.error('Erro ao carregar barbeiros para filtro:', error);
+            }
+        }
+
+        // Função para carregar agendamentos com filtros
+        async function carregarAgendamentosComFiltro(filtros = {}) {
+            try {
+                const token = localStorage.getItem('token');
+                
+                // Construir query string com filtros
+                const queryParams = new URLSearchParams();
+                
+                // Adicionar filtros à query string
+                if (filtros.data) queryParams.append('data', filtros.data);
+                if (filtros.status) queryParams.append('status', filtros.status);
+                if (filtros.barbeiro_id) queryParams.append('barbeiro_id', filtros.barbeiro_id);
+                if (filtros.cliente) queryParams.append('cliente', filtros.cliente);
+                
+                // Limitar a 200 resultados para performance
+                queryParams.append('limit', 200);
+                
+                const url = `${API_BASE_URL}/admin/agendamentos?${queryParams.toString()}`;
+                const response = await fetch(url, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    renderTodosAgendamentos(data.data || []);
+                } else {
+                    console.error('Erro ao carregar agendamentos:', response.status);
+                    renderTodosAgendamentos([]);
+                }
+            } catch (error) {
+                console.error('Erro ao carregar agendamentos:', error);
+                renderTodosAgendamentos([]);
+            }
+        }
+
+        // Função para aplicar filtros
+        async function filtrarAgendamentos() {
+            try {
+                // Coletar valores dos filtros
+                const filtros = {};
+                
+                const dataFiltro = document.getElementById('filter-data').value;
+                const statusFiltro = document.getElementById('filter-status').value;
+                const barbeiroFiltro = document.getElementById('filter-barbeiro').value;
+                
+                if (dataFiltro) filtros.data = dataFiltro;
+                if (statusFiltro) filtros.status = statusFiltro;
+                if (barbeiroFiltro) filtros.barbeiro_id = barbeiroFiltro;
+                
+                // Mostrar loading
+                const tbody = document.getElementById('todos-agendamentos');
+                if (tbody) {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="8" style="text-align: center; padding: 3rem;">
+                                <i class="fas fa-spinner fa-spin"></i> Aplicando filtros...
+                            </td>
+                        </tr>
+                    `;
+                }
+                
+                // Carregar agendamentos com filtros
+                await carregarAgendamentosComFiltro(filtros);
+                
+                // Mostrar mensagem de sucesso
+                showNotification('Filtros aplicados com sucesso!', 'success');
+                
+            } catch (error) {
+                console.error('Erro ao aplicar filtros:', error);
+                showNotification('Erro ao aplicar filtros', 'error');
+            }
+        }
+
+        // Função para limpar filtros
+        async function limparFiltros() {
+            try {
+                // Limpar campos dos filtros
+                document.getElementById('filter-data').value = '';
+                document.getElementById('filter-status').value = '';
+                document.getElementById('filter-barbeiro').value = '';
+                document.getElementById('search-agendamentos').value = '';
+                
+                // Mostrar loading
+                const tbody = document.getElementById('todos-agendamentos');
+                if (tbody) {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="8" style="text-align: center; padding: 3rem;">
+                                <i class="fas fa-spinner fa-spin"></i> Limpando filtros...
+                            </td>
+                        </tr>
+                    `;
+                }
+                
+                // Carregar todos os agendamentos (sem filtros)
+                await carregarAgendamentosComFiltro({});
+                
+                // Mostrar mensagem de sucesso
+                showNotification('Filtros limpos com sucesso!', 'success');
+                
+            } catch (error) {
+                console.error('Erro ao limpar filtros:', error);
+                showNotification('Erro ao limpar filtros', 'error');
+            }
+        }
+
+        // Função para buscar por cliente (com debounce)
+        let buscaTimeout;
+        function buscarPorCliente(event) {
+            // Se for tecla Enter ou mudança no campo
+            const termoBusca = event.target.value.trim();
+            
+            // Limpar timeout anterior
+            clearTimeout(buscaTimeout);
+            
+            // Se o campo estiver vazio, recarregar todos os agendamentos
+            if (!termoBusca) {
+                limparFiltros();
+                return;
+            }
+            
+            // Aguardar 500ms após a última digitação para fazer a busca
+            buscaTimeout = setTimeout(async () => {
+                try {
+                    // Mostrar loading
+                    const tbody = document.getElementById('todos-agendamentos');
+                    if (tbody) {
+                        tbody.innerHTML = `
+                            <tr>
+                                <td colspan="8" style="text-align: center; padding: 3rem;">
+                                    <i class="fas fa-spinner fa-spin"></i> Buscando por "${termoBusca}"...
+                                </td>
+                            </tr>
+                        `;
+                    }
+                    
+                    // Buscar agendamentos com filtro de cliente
+                    await carregarAgendamentosComFiltro({ cliente: termoBusca });
+                    
+                } catch (error) {
+                    console.error('Erro na busca:', error);
+                    showNotification('Erro ao realizar busca', 'error');
+                }
+            }, 500);
+        }
+
+        // Função auxiliar para mostrar notificações
+        function showNotification(message, type = 'info') {
+            // Remover notificações existentes
+            const existing = document.querySelector('.notification');
+            if (existing) existing.remove();
+            
+            const notification = document.createElement('div');
+            notification.className = `notification notification-${type}`;
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 15px 20px;
+                border-radius: 8px;
+                color: white;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                min-width: 300px;
+                max-width: 500px;
+                z-index: 9999;
+                animation: slideIn 0.3s ease;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            `;
+            
+            if (type === 'success') {
+                notification.style.background = '#28a745';
+            } else if (type === 'error') {
+                notification.style.background = '#dc3545';
+            } else {
+                notification.style.background = '#17a2b8';
+            }
+            
+            notification.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i>
+                    <span>${message}</span>
+                </div>
+                <button onclick="this.parentElement.remove()" style="background: none; border: none; color: inherit; cursor: pointer;">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            // Auto-remover após 3 segundos
+            setTimeout(() => {
+                if (notification.parentElement) {
+                    notification.remove();
+                }
+            }, 3000);
+        }
+
+        // Adicionar animação CSS para as notificações
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideIn {
+                from { transform: translateX(100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+        `;
+        document.head.appendChild(style);
 
         function usarDadosSimulados() {
             // Dados simulados para fallback

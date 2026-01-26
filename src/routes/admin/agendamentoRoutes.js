@@ -25,4 +25,7 @@ router.get('/horarios-disponiveis', AdminAgendamentoController.getHorariosDispon
 // GET /admin/agendamentos/resumo - Resumo de agendamentos
 router.get('/resumo', AdminAgendamentoController.getResumo);
 
+// GET /admin/agendamentos/barbeiros - Buscar barbeiros para filtro
+router.get('/barbeiros/filtro', AdminAgendamentoController.getBarbeiros);
+
 module.exports = router;

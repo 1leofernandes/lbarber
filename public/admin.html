@@ -1334,6 +1334,87 @@
         </div>
     </div>
 
+
+    <!-- Modal para Novo Bloqueio -->
+    <div id="modal-novo-bloqueio" class="modal-overlay">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h2>Novo Bloqueio</h2>
+                <button class="modal-close" onclick="closeModal('novo-bloqueio')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form id="form-novo-bloqueio">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label class="form-label">Tipo de Bloqueio *</label>
+                        <div style="display: flex; gap: 20px; margin-top: 10px;">
+                            <label style="display: flex; align-items: center; gap: 5px;">
+                                <input type="radio" name="tipo" value="horario" checked 
+                                    onchange="atualizarCamposBloqueio('horario')">
+                                Horário Específico
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 5px;">
+                                <input type="radio" name="tipo" value="dia"
+                                    onchange="atualizarCamposBloqueio('dia')">
+                                Dia Inteiro
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 5px;">
+                                <input type="radio" name="tipo" value="periodo"
+                                    onchange="atualizarCamposBloqueio('periodo')">
+                                Período
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="bloqueio-data-inicio" class="form-label">Data de Início *</label>
+                            <input type="date" class="form-control" id="bloqueio-data-inicio" name="data_inicio" required>
+                        </div>
+                        <div class="form-group" id="bloqueio-data-fim-container">
+                            <label for="bloqueio-data-fim" class="form-label">Data de Fim</label>
+                            <input type="date" class="form-control" id="bloqueio-data-fim" name="data_fim">
+                            <small class="form-text">Deixe em branco para um único dia</small>
+                        </div>
+                    </div>
+
+                    <div id="bloqueio-horario-container" class="form-row">
+                        <div class="form-group">
+                            <label for="bloqueio-hora-inicio" class="form-label">Horário de Início</label>
+                            <input type="time" class="form-control" id="bloqueio-hora-inicio" name="hora_inicio" value="09:00">
+                        </div>
+                        <div class="form-group">
+                            <label for="bloqueio-hora-fim" class="form-label">Horário de Fim</label>
+                            <input type="time" class="form-control" id="bloqueio-hora-fim" name="hora_fim" value="18:00">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="barbeiro-bloqueio" class="form-label">Aplicar para</label>
+                        <select class="form-control" id="barbeiro-bloqueio" name="barbeiro_id">
+                            <option value="">Todos os barbeiros</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="bloqueio-motivo" class="form-label">Motivo</label>
+                        <textarea class="form-control" id="bloqueio-motivo" name="motivo" rows="3" placeholder="Ex: Reunião, Manutenção, Feriado..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('novo-bloqueio')">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i>
+                        Salvar Bloqueio
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script>
         // Configurações iniciais
         const API_BASE_URL = window.location.hostname === 'localhost' 
@@ -2720,19 +2801,19 @@
                         Tipos de Bloqueio
                     </h2>
                     <div class="actions-grid">
-                        <button class="action-btn" onclick="criarBloqueioHorario()">
+                        <button class="action-btn" onclick="abrirModalBloqueio('horario')">
                             <div class="action-icon">
                                 <i class="fas fa-clock"></i>
                             </div>
                             <span class="action-text">Horário Específico</span>
                         </button>
-                        <button class="action-btn" onclick="criarBloqueioDia()">
+                        <button class="action-btn" onclick="abrirModalBloqueio('dia')">
                             <div class="action-icon">
                                 <i class="fas fa-calendar-day"></i>
                             </div>
                             <span class="action-text">Dia Inteiro</span>
                         </button>
-                        <button class="action-btn" onclick="criarBloqueioPeriodo()">
+                        <button class="action-btn" onclick="abrirModalBloqueio('periodo')">
                             <div class="action-icon">
                                 <i class="fas fa-calendar-week"></i>
                             </div>
@@ -2745,7 +2826,7 @@
                     <div class="table-header">
                         <div class="table-title">Bloqueios Ativos</div>
                         <div>
-                            <button class="btn btn-primary" onclick="openModal('novo-bloqueio')">
+                            <button class="btn btn-primary" onclick="abrirModalBloqueio('')">
                                 <i class="fas fa-plus"></i>
                                 Novo Bloqueio
                             </button>
@@ -2759,12 +2840,13 @@
                                 <th>Horário</th>
                                 <th>Aplicado para</th>
                                 <th>Motivo</th>
+                                <th>Status</th>
                                 <th>Ações</th>
                             </tr>
                         </thead>
                         <tbody id="lista-bloqueios">
                             <tr>
-                                <td colspan="6" style="text-align: center; padding: 3rem;">
+                                <td colspan="7" style="text-align: center; padding: 3rem;">
                                     <i class="fas fa-spinner fa-spin"></i> Carregando bloqueios...
                                 </td>
                             </tr>
@@ -2772,33 +2854,9 @@
                     </table>
                 </div>
             `;
-            
-            // Carregar bloqueios
-            setTimeout(() => {
-                const bloqueios = [
-                    { id: 1, tipo: 'Dia Inteiro', periodo: '25/01/2024', horario: '00:00 - 23:59', aplicacao: 'Todos', motivo: 'Feriado' },
-                    { id: 2, tipo: 'Horário', periodo: '22/01/2024', horario: '12:00 - 14:00', aplicacao: 'Carlos', motivo: 'Almoço' },
-                    { id: 3, tipo: 'Período', periodo: '01/02 - 05/02/2024', horario: '00:00 - 23:59', aplicacao: 'Todos', motivo: 'Férias Coletivas' }
-                ];
-                
-                const tbody = document.getElementById('lista-bloqueios');
-                if (tbody) {
-                    tbody.innerHTML = bloqueios.map(bloqueio => `
-                        <tr>
-                            <td>${bloqueio.tipo}</td>
-                            <td>${bloqueio.periodo}</td>
-                            <td>${bloqueio.horario}</td>
-                            <td>${bloqueio.aplicacao}</td>
-                            <td>${bloqueio.motivo}</td>
-                            <td>
-                                <button class="btn-table btn-delete" onclick="removerBloqueio(${bloqueio.id})">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </td>
-                        </tr>
-                    `).join('');
-                }
-            }, 1000);
+
+            // Carregar bloqueios do backend
+            await carregarTodosBloqueios();
         }
         
         async function loadInformacoesPage() {
@@ -3811,7 +3869,380 @@
                 alert('Erro ao excluir agendamento');
             }
         }
+
+        // Função para carregar todos os bloqueios
+        async function carregarTodosBloqueios() {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_BASE_URL}/admin/bloqueios`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    renderListaBloqueios(result.data || []);
+                } else {
+                    console.error('Erro ao carregar bloqueios:', response.status);
+                    renderListaBloqueios([]);
+                }
+            } catch (error) {
+                console.error('Erro ao carregar bloqueios:', error);
+                renderListaBloqueios([]);
+            }
+        }
+
+        // Função para renderizar a lista de bloqueios
+        function renderListaBloqueios(bloqueios) {
+            const tbody = document.getElementById('lista-bloqueios');
+            if (!tbody) return;
+            
+            if (!bloqueios || bloqueios.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="7" style="text-align: center; padding: 3rem;">
+                            <i class="fas fa-calendar-check"></i>
+                            <p style="margin-top: 1rem;">Nenhum bloqueio cadastrado</p>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            tbody.innerHTML = bloqueios.map(bloqueio => {
+                // Formatar tipo
+                let tipoTexto = 'Horário Específico';
+                if (bloqueio.tipo === 'dia') {
+                    tipoTexto = 'Dia Inteiro';
+                } else if (bloqueio.tipo === 'periodo') {
+                    tipoTexto = 'Período';
+                }
+                
+                // Formatar período
+                let periodoTexto = new Date(bloqueio.data_inicio).toLocaleDateString('pt-BR');
+                if (bloqueio.data_fim && bloqueio.data_fim !== bloqueio.data_inicio) {
+                    periodoTexto += ` a ${new Date(bloqueio.data_fim).toLocaleDateString('pt-BR')}`;
+                }
+                
+                // Formatar horário
+                let horarioTexto = '00:00 - 23:59';
+                if (bloqueio.tipo === 'horario' && bloqueio.hora_inicio && bloqueio.hora_fim) {
+                    horarioTexto = `${bloqueio.hora_inicio} - ${bloqueio.hora_fim}`;
+                }
+                
+                // Aplicado para
+                let aplicadoPara = 'Todos os barbeiros';
+                if (bloqueio.barbeiro_id) {
+                    aplicadoPara = bloqueio.barbeiro_nome || `Barbeiro #${bloqueio.barbeiro_id}`;
+                }
+                
+                // Status
+                const statusClass = bloqueio.ativo ? 'status-active' : 'status-inactive';
+                const statusText = bloqueio.ativo ? 'Ativo' : 'Inativo';
+                
+                return `
+                    <tr>
+                        <td>${tipoTexto}</td>
+                        <td>${periodoTexto}</td>
+                        <td>${horarioTexto}</td>
+                        <td>${aplicadoPara}</td>
+                        <td>${bloqueio.motivo || 'Sem motivo especificado'}</td>
+                        <td>
+                            <span class="status-badge ${statusClass}">
+                                ${statusText}
+                            </span>
+                        </td>
+                        <td>
+                            <div style="display: flex; gap: 5px;">
+                                <button class="btn-table btn-edit" onclick="editarBloqueio(${bloqueio.id})">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn-table btn-delete" onclick="excluirBloqueio(${bloqueio.id})">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
         
+
+        // Função para abrir modal de bloqueio
+        function abrirModalBloqueio(tipo = '') {
+            openModal('novo-bloqueio');
+            
+            // Configurar modal baseado no tipo
+            setTimeout(() => {
+                const form = document.getElementById('form-novo-bloqueio');
+                if (form) form.reset();
+                
+                // Configurar tipo
+                const tipoRadios = document.querySelectorAll('input[name="tipo"]');
+                if (tipo && tipoRadios.length > 0) {
+                    tipoRadios.forEach(radio => {
+                        radio.checked = radio.value === tipo;
+                    });
+                    // Atualizar campos visíveis
+                    atualizarCamposBloqueio(tipo);
+                }
+                
+                // Carregar barbeiros
+                carregarBarbeirosParaBloqueio();
+                
+                // Configurar datas mínimas
+                const hoje = new Date().toISOString().split('T')[0];
+                const dataInicioInput = document.getElementById('bloqueio-data-inicio');
+                const dataFimInput = document.getElementById('bloqueio-data-fim');
+                
+                if (dataInicioInput) dataInicioInput.min = hoje;
+                if (dataFimInput) dataFimInput.min = hoje;
+                
+            }, 100);
+        }
+
+        // Atualizar campos visíveis baseado no tipo
+        function atualizarCamposBloqueio(tipo) {
+            const horarioContainer = document.getElementById('bloqueio-horario-container');
+            const dataFimContainer = document.getElementById('bloqueio-data-fim-container');
+            
+            if (!horarioContainer || !dataFimContainer) return;
+            
+            switch(tipo) {
+                case 'horario':
+                    horarioContainer.style.display = 'flex';
+                    dataFimContainer.style.display = 'block';
+                    break;
+                case 'dia':
+                    horarioContainer.style.display = 'none';
+                    dataFimContainer.style.display = 'none';
+                    break;
+                case 'periodo':
+                    horarioContainer.style.display = 'none';
+                    dataFimContainer.style.display = 'block';
+                    break;
+                default:
+                    horarioContainer.style.display = 'flex';
+                    dataFimContainer.style.display = 'block';
+            }
+        }
+
+        // Carregar barbeiros para o select
+        async function carregarBarbeirosParaBloqueio() {
+            try {
+                const select = document.getElementById('barbeiro-bloqueio');
+                if (!select) return;
+                
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_BASE_URL}/admin/agendamentos/barbeiros/filtro`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    const barbeiros = result.data || [];
+                    
+                    // Limpar e adicionar opções
+                    select.innerHTML = '<option value="">Todos os barbeiros</option>';
+                    barbeiros.forEach(barbeiro => {
+                        const option = document.createElement('option');
+                        option.value = barbeiro.id;
+                        option.textContent = barbeiro.nome;
+                        select.appendChild(option);
+                    });
+                }
+            } catch (error) {
+                console.error('Erro ao carregar barbeiros:', error);
+            }
+        }
+
+        // Função para criar/atualizar bloqueio
+        async function handleNovoBloqueio(e) {
+            e.preventDefault();
+            
+            // Coletar dados do formulário
+            const formData = new FormData(e.target);
+            const bloqueioData = {
+                tipo: formData.get('tipo') || 'horario',
+                data_inicio: formData.get('data_inicio'),
+                data_fim: formData.get('data_fim') || formData.get('data_inicio'),
+                hora_inicio: formData.get('hora_inicio') || '00:00',
+                hora_fim: formData.get('hora_fim') || '23:59',
+                barbeiro_id: formData.get('barbeiro_id') || null,
+                motivo: formData.get('motivo') || '',
+                ativo: true
+            };
+            
+            // Validar dados
+            if (!bloqueioData.data_inicio) {
+                alert('Data de início é obrigatória');
+                return;
+            }
+            
+            // Se for horário, validar horários
+            if (bloqueioData.tipo === 'horario') {
+                if (!bloqueioData.hora_inicio || !bloqueioData.hora_fim) {
+                    alert('Para bloqueio de horário, informe o início e fim');
+                    return;
+                }
+                
+                // Converter para minutos para comparar
+                const inicio = converterParaMinutos(bloqueioData.hora_inicio);
+                const fim = converterParaMinutos(bloqueioData.hora_fim);
+                
+                if (fim <= inicio) {
+                    alert('Horário de fim deve ser após o horário de início');
+                    return;
+                }
+            }
+            
+            // Desabilitar botão para evitar duplo clique
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
+            }
+            
+            try {
+                const token = localStorage.getItem('token');
+                const metodo = formData.get('bloqueio_id') ? 'PUT' : 'POST';
+                const url = formData.get('bloqueio_id') 
+                    ? `${API_BASE_URL}/admin/bloqueios/${formData.get('bloqueio_id')}`
+                    : `${API_BASE_URL}/admin/bloqueios`;
+                
+                const response = await fetch(url, {
+                    method: metodo,
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(bloqueioData)
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    alert(result.message || 'Bloqueio salvo com sucesso!');
+                    closeModal('novo-bloqueio');
+                    
+                    // Recarregar lista de bloqueios
+                    await carregarTodosBloqueios();
+                } else {
+                    const error = await response.json();
+                    alert(error.message || 'Erro ao salvar bloqueio');
+                }
+            } catch (error) {
+                console.error('Erro:', error);
+                alert('Erro ao salvar bloqueio');
+            } finally {
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '<i class="fas fa-save"></i> Salvar Bloqueio';
+                }
+            }
+        }
+
+        // Função auxiliar para converter horário para minutos
+        function converterParaMinutos(horario) {
+            const [horas, minutos] = horario.split(':').map(Number);
+            return horas * 60 + minutos;
+        }
+
+        // Função para editar bloqueio
+        async function editarBloqueio(id) {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_BASE_URL}/admin/bloqueios/${id}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    const bloqueio = result.data;
+                    
+                    // Abrir modal e preencher formulário
+                    openModal('novo-bloqueio');
+                    
+                    setTimeout(() => {
+                        const form = document.getElementById('form-novo-bloqueio');
+                        if (form) {
+                            // Resetar form
+                            form.reset();
+                            
+                            // Adicionar campo hidden para ID
+                            const idInput = document.createElement('input');
+                            idInput.type = 'hidden';
+                            idInput.name = 'bloqueio_id';
+                            idInput.value = bloqueio.id;
+                            form.appendChild(idInput);
+                            
+                            // Preencher campos
+                            document.querySelector(`input[name="tipo"][value="${bloqueio.tipo}"]`).checked = true;
+                            document.getElementById('bloqueio-data-inicio').value = bloqueio.data_inicio;
+                            
+                            if (bloqueio.data_fim && bloqueio.data_fim !== bloqueio.data_inicio) {
+                                document.getElementById('bloqueio-data-fim').value = bloqueio.data_fim;
+                            }
+                            
+                            if (bloqueio.hora_inicio) {
+                                document.getElementById('bloqueio-hora-inicio').value = bloqueio.hora_inicio;
+                            }
+                            
+                            if (bloqueio.hora_fim) {
+                                document.getElementById('bloqueio-hora-fim').value = bloqueio.hora_fim;
+                            }
+                            
+                            if (bloqueio.barbeiro_id) {
+                                document.getElementById('barbeiro-bloqueio').value = bloqueio.barbeiro_id;
+                            }
+                            
+                            if (bloqueio.motivo) {
+                                document.getElementById('bloqueio-motivo').value = bloqueio.motivo;
+                            }
+                            
+                            // Atualizar campos visíveis
+                            atualizarCamposBloqueio(bloqueio.tipo);
+                            
+                            // Carregar barbeiros
+                            carregarBarbeirosParaBloqueio().then(() => {
+                                if (bloqueio.barbeiro_id) {
+                                    document.getElementById('barbeiro-bloqueio').value = bloqueio.barbeiro_id;
+                                }
+                            });
+                        }
+                    }, 100);
+                } else {
+                    alert('Erro ao carregar bloqueio para edição');
+                }
+            } catch (error) {
+                console.error('Erro:', error);
+                alert('Erro ao carregar bloqueio');
+            }
+        }
+
+        // Função para excluir bloqueio
+        async function excluirBloqueio(id) {
+            if (!confirm('Tem certeza que deseja excluir este bloqueio?')) return;
+            
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_BASE_URL}/admin/bloqueios/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (response.ok) {
+                    alert('Bloqueio excluído com sucesso!');
+                    // Recarregar lista
+                    await carregarTodosBloqueios();
+                } else {
+                    alert('Erro ao excluir bloqueio');
+                }
+            } catch (error) {
+                console.error('Erro:', error);
+                alert('Erro ao excluir bloqueio');
+            }
+        }
+
+
         function editarServico(id) {
             // Carregar dados do serviço e abrir modal
             openModal('editar-servico');
@@ -4082,46 +4513,49 @@
         });
 
         async function testarFiltrosBackend() {
-        try {
-            const token = localStorage.getItem('token');
-            
-            // Teste 1: Sem filtros
-            console.log('Teste 1: Buscar todos (sem filtros)');
-            const response1 = await fetch(`${API_BASE_URL}/admin/agendamentos?limit=5`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            const result1 = await response1.json();
-            console.log('Resultado sem filtros:', result1);
-            
-            // Teste 2: Com filtro de data
-            const hoje = new Date().toISOString().split('T')[0];
-            console.log('Teste 2: Com filtro de data =', hoje);
-            const response2 = await fetch(`${API_BASE_URL}/admin/agendamentos?data=${hoje}`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            const result2 = await response2.json();
-            console.log('Resultado com data:', result2);
-            
-            // Teste 3: Com filtro de status
-            console.log('Teste 3: Com filtro de status = confirmado');
-            const response3 = await fetch(`${API_BASE_URL}/admin/agendamentos?status=confirmado&limit=3`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            const result3 = await response3.json();
-            console.log('Resultado com status:', result3);
-            
-            // Teste 4: Debug endpoint
-            console.log('Teste 4: Endpoint de debug');
-            const response4 = await fetch(`${API_BASE_URL}/admin/agendamentos/debug/filtros?data=${hoje}&status=confirmado`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            const result4 = await response4.json();
-            console.log('Debug resultado:', result4);
-            
-        } catch (error) {
-            console.error('Erro nos testes:', error);
+            try {
+                const token = localStorage.getItem('token');
+                
+                // Teste 1: Sem filtros
+                console.log('Teste 1: Buscar todos (sem filtros)');
+                const response1 = await fetch(`${API_BASE_URL}/admin/agendamentos?limit=5`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const result1 = await response1.json();
+                console.log('Resultado sem filtros:', result1);
+                
+                // Teste 2: Com filtro de data
+                const hoje = new Date().toISOString().split('T')[0];
+                console.log('Teste 2: Com filtro de data =', hoje);
+                const response2 = await fetch(`${API_BASE_URL}/admin/agendamentos?data=${hoje}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const result2 = await response2.json();
+                console.log('Resultado com data:', result2);
+                
+                // Teste 3: Com filtro de status
+                console.log('Teste 3: Com filtro de status = confirmado');
+                const response3 = await fetch(`${API_BASE_URL}/admin/agendamentos?status=confirmado&limit=3`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const result3 = await response3.json();
+                console.log('Resultado com status:', result3);
+                
+                // Teste 4: Debug endpoint
+                console.log('Teste 4: Endpoint de debug');
+                const response4 = await fetch(`${API_BASE_URL}/admin/agendamentos/debug/filtros?data=${hoje}&status=confirmado`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const result4 = await response4.json();
+                console.log('Debug resultado:', result4);
+                
+            } catch (error) {
+                console.error('Erro nos testes:', error);
+            }
         }
-    }
+
+        // No setupEventListeners, adicione:
+        document.getElementById('form-novo-bloqueio')?.addEventListener('submit', handleNovoBloqueio);
     </script>
 </body>
 </html>

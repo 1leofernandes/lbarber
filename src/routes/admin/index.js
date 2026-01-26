@@ -5,7 +5,7 @@ const router = express.Router();
 // Importar todas as rotas de admin
 const dashboardRoutes = require('./dashboardRoutes');
 const agendamentoRoutes = require('./agendamentoRoutes');
-// const bloqueioRoutes = require('./bloqueioRoutes');
+const bloqueioRoutes = require('./bloqueioRoutes');
 // const servicoRoutes = require('./servicoRoutes');
 const barbeiroRoutes = require('./barbeiroRoutes');
 // const assinaturaRoutes = require('./assinaturaRoutes');
@@ -24,7 +24,7 @@ router.use(adminMiddleware);
 // Montar rotas
 router.use('/dashboard', dashboardRoutes);
 router.use('/agendamentos', agendamentoRoutes);
-// router.use('/bloqueios', bloqueioRoutes);
+router.use('/bloqueios', bloqueioRoutes);
 // router.use('/servicos', servicoRoutes);
 router.use('/barbeiros', barbeiroRoutes);
 // router.use('/assinaturas', assinaturaRoutes);

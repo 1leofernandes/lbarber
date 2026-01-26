@@ -98,25 +98,37 @@ class Bloqueio {
 
     static async verificarDisponibilidade(barbeiro_id, data, hora_inicio, hora_fim) {
         const query = `
-            SELECT COUNT(*) as total
-            FROM bloqueios
-            WHERE ativo = true
-            AND (
-                (barbeiro_id = $1 OR barbeiro_id IS NULL)
-            )
-            AND (
-                (tipo = 'dia' AND $2 BETWEEN data_inicio AND data_fim)
-                OR
-                (tipo = 'horario' AND $2 BETWEEN data_inicio AND data_fim
-                 AND NOT ($4 <= hora_inicio OR $3 >= hora_fim))
-            )
+            SELECT EXISTS (
+                SELECT 1 
+                FROM bloqueios 
+                WHERE ativo = true
+                AND (
+                    barbeiro_id = $1 
+                    OR barbeiro_id IS NULL
+                )
+                AND (
+                    -- Bloqueios de dia inteiro
+                    (tipo = 'dia' AND $2 BETWEEN data_inicio AND COALESCE(data_fim, data_inicio))
+                    OR
+                    -- Bloqueios de período
+                    (tipo = 'periodo' AND $2 BETWEEN data_inicio AND data_fim)
+                    OR
+                    -- Bloqueios de horário específico
+                    (tipo = 'horario' 
+                    AND $2 BETWEEN data_inicio AND COALESCE(data_fim, data_inicio)
+                    AND NOT ($4 <= hora_inicio OR $3 >= hora_fim))
+                )
+            ) as bloqueado
         `;
         
         const result = await pool.query(query, [
-            barbeiro_id, data, hora_inicio, hora_fim
+            barbeiro_id, 
+            data, 
+            hora_inicio || '00:00', 
+            hora_fim || '23:59'
         ]);
         
-        return parseInt(result.rows[0].total) === 0;
+        return !result.rows[0].bloqueado;
     }
 }
 

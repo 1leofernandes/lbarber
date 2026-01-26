@@ -100,26 +100,49 @@ class AgendamentoController {
         }
     }
     
-    // Buscar horários disponíveis (MANTÉM IGUAL)
+    // Buscar horários disponíveis (ATUALIZADO PARA CONSIDERAR BLOQUEIOS)
     async getHorariosDisponiveis(req, res) {
         try {
-            const { data, duracao, barbeiro_id } = req.query;
+            const { data, duracao, barbeiro_id, servicos_ids } = req.query;
             
-            if (!data || !duracao) {
+            if (!data) {
                 return res.status(400).json({
                     success: false,
-                    message: 'Data e duração são obrigatórios'
+                    message: 'Data é obrigatória'
                 });
             }
             
-            const horarios = await agendamentoService.getHorariosDisponiveis(data, duracao, barbeiro_id);
+            // Processar servicos_ids (pode ser string ou array)
+            let servicosArray = [];
+            if (servicos_ids) {
+                if (Array.isArray(servicos_ids)) {
+                    servicosArray = servicos_ids.map(id => parseInt(id));
+                } else {
+                    servicosArray = servicos_ids.split(',').map(id => parseInt(id.trim()));
+                }
+            }
             
-            res.json(horarios);
+            // Converter duração para número (se não fornecida, usar 30 minutos como padrão)
+            const duracaoMinutos = duracao ? parseInt(duracao) : 30;
+            
+            const horarios = await agendamentoService.getHorariosDisponiveis(
+                barbeiro_id, 
+                data,
+                servicosArray,
+                duracaoMinutos
+            );
+            
+            // Formatar resposta para o frontend
+            const horariosFormatados = horarios.map(horario => ({
+                inicio: horario
+            }));
+            
+            res.json(horariosFormatados);
         } catch (error) {
             console.error('Erro ao buscar horários disponíveis:', error);
             res.status(500).json({
                 success: false,
-                message: 'Erro interno do servidor'
+                message: 'Erro ao buscar horários disponíveis'
             });
         }
     }
@@ -143,7 +166,7 @@ class AgendamentoController {
         }
     }
     
-    // NOVO: Buscar detalhes de um agendamento específico
+    // Buscar detalhes de um agendamento específico
     async getById(req, res) {
         try {
             const { id } = req.params;
@@ -171,7 +194,7 @@ class AgendamentoController {
         }
     }
     
-    // NOVO: Cancelar agendamento
+    // Cancelar agendamento
     async cancel(req, res) {
         try {
             const { id } = req.params;

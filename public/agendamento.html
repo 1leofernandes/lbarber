@@ -1433,14 +1433,22 @@
                 // Calcular duração total dos serviços selecionados
                 const duracaoTotal = estado.servicos
                     .filter(s => estado.selecionados.servicos.includes(s.id))
-                    .reduce((total, servico) => total + servico.duracao_servico, 0);
+                    .reduce((total, servico) => total + (servico.duracao_servico || 30), 0);
                 
-                // Construir URL da API
+                // Construir URL da API - IMPORTANTE: mudar para rota correta
                 let url = `${API_BASE_URL}/agendamentos/horarios-disponiveis?data=${dataISO}&duracao=${duracaoTotal}`;
                 
+                // Adicionar barbeiro se selecionado
                 if (estado.selecionados.barbeiro !== null) {
                     url += `&barbeiro_id=${estado.selecionados.barbeiro}`;
                 }
+                
+                // Adicionar serviços selecionados para cálculo de duração
+                if (estado.selecionados.servicos.length > 0) {
+                    url += `&servicos_ids=${estado.selecionados.servicos.join(',')}`;
+                }
+                
+                console.log('URL da requisição:', url);
                 
                 const response = await fetch(url, {
                     headers: { 'Authorization': `Bearer ${estado.token}` }
@@ -1448,6 +1456,7 @@
                 
                 if (response.ok) {
                     let horarios = await response.json();
+                    console.log('Horários recebidos:', horarios);
                     
                     // FILTRAR HORÁRIOS PASSADOS se for HOJE
                     const agora = new Date();
@@ -1477,11 +1486,20 @@
                     
                     estado.horariosDisponiveis = horarios;
                     renderizarHorarios(horarios, duracaoTotal);
+                } else {
+                    const error = await response.text();
+                    console.error('Erro na resposta:', error);
+                    throw new Error('Erro ao buscar horários');
                 }
             } catch (error) {
                 console.error('Erro ao carregar horários:', error);
                 elementos.timeSlotsGrid.innerHTML = '';
                 elementos.noSlotsMessage.style.display = 'block';
+                elementos.noSlotsMessage.innerHTML = `
+                    <i class="fas fa-calendar-times" style="font-size: 3rem; margin-bottom: 1rem;"></i>
+                    <p>Não foi possível carregar os horários disponíveis.</p>
+                    <p style="font-size: 0.9rem;">Verifique sua conexão ou tente novamente.</p>
+                `;
             }
         }
         

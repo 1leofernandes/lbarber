@@ -10,7 +10,7 @@ class AgendamentoService {
             
             await client.query('BEGIN');
             
-            // 1. Verificar disponibilidade do horário
+            // 1. Verificar disponibilidade do horário (INCLUINDO BLOQUEIOS)
             const disponivel = await this.verificarDisponibilidadeCompleta(
                 barbeiro_id, 
                 data_agendada, 
@@ -148,7 +148,6 @@ class AgendamentoService {
     }
     
     // Buscar um agendamento específico com serviços
-    // NO SEU services/agendamentoService.js - MÉTODO getAgendamentoComServicosById
     async getAgendamentoComServicosById(agendamentoId, usuarioId = null) {
         try {
             let query;
@@ -282,55 +281,213 @@ class AgendamentoService {
         }
     }
     
-    // Métodos existentes (mantidos sem alteração)
-    async getHorariosDisponiveis(data, duracao, barbeiroId = null) {
+    // MÉTODO ATUALIZADO: Buscar horários disponíveis (AGORA COM BLOQUEIOS)
+    async getHorariosDisponiveis(barbeiro_id, data, servicosIds = [], duracaoMinutos = 30) {
         try {
-            // ... (código mantido igual) ...
-            const dataObj = new Date(data);
-            const diaSemana = dataObj.getDay();
+            console.log(`Buscando horários para barbeiro: ${barbeiro_id}, data: ${data}, duração: ${duracaoMinutos}min`);
             
-            if (diaSemana === 0) { // Domingo
-                return [];
+            // 1. Primeiro verificar se há bloqueios para esta data/barbeiro
+            const bloqueios = await this.verificarBloqueios(barbeiro_id, data);
+            
+            if (bloqueios.todoDiaBloqueado) {
+                console.log('Dia inteiro bloqueado para este barbeiro');
+                return []; // Retorna array vazio - dia inteiro bloqueado
             }
             
-            let horaInicioFunc, horaFimFunc;
-            if (diaSemana === 6) { // Sábado
-                horaInicioFunc = '08:30';
-                horaFimFunc = '18:30';
-            } else { // Segunda a Sexta
-                horaInicioFunc = '08:30';
-                horaFimFunc = '19:00';
-            }
+            // 2. Obter horários padrão da barbearia para este dia
+            const horariosPadrao = this.gerarHorariosPadrao(data);
             
-            const slotsDisponiveis = [];
-            const [inicioHora, inicioMin] = horaInicioFunc.split(':').map(Number);
-            const [fimHora, fimMin] = horaFimFunc.split(':').map(Number);
+            // 3. Obter horários ocupados por agendamentos
+            const horariosOcupados = await this.getHorariosOcupados(barbeiro_id, data);
             
-            let horaAtual = inicioHora;
-            let minAtual = inicioMin;
+            // 4. Filtrar horários disponíveis considerando bloqueios
+            const horariosDisponiveis = this.filtrarHorariosDisponiveis(
+                horariosPadrao, 
+                horariosOcupados, 
+                bloqueios.horariosBloqueados,
+                duracaoMinutos
+            );
             
-            while (horaAtual < fimHora || (horaAtual === fimHora && minAtual < fimMin)) {
-                const inicio = `${String(horaAtual).padStart(2, '0')}:${String(minAtual).padStart(2, '0')}`;
-                
-                const disponivel = await this.verificarSlotDisponivel(data, inicio, duracao, barbeiroId);
-                if (disponivel) {
-                    slotsDisponiveis.push({ inicio });
-                }
-                
-                minAtual += 30;
-                if (minAtual >= 60) {
-                    horaAtual += 1;
-                    minAtual = minAtual % 60;
-                }
-            }
-            
-            return slotsDisponiveis;
+            console.log(`Horários disponíveis encontrados: ${horariosDisponiveis.length}`);
+            return horariosDisponiveis;
         } catch (error) {
-            console.error('Erro no getHorariosDisponiveis:', error);
+            console.error('Erro ao buscar horários disponíveis:', error);
             throw error;
         }
     }
     
+    // NOVO: Método para verificar bloqueios
+    async verificarBloqueios(barbeiro_id, data) {
+        try {
+            const query = `
+                SELECT 
+                    tipo,
+                    hora_inicio,
+                    hora_fim
+                FROM bloqueios
+                WHERE ativo = true
+                AND (
+                    barbeiro_id = $1 
+                    OR barbeiro_id IS NULL  -- Bloqueios para todos os barbeiros
+                )
+                AND (
+                    (tipo = 'dia' AND $2 BETWEEN data_inicio AND COALESCE(data_fim, data_inicio))
+                    OR
+                    (tipo = 'periodo' AND $2 BETWEEN data_inicio AND data_fim)
+                    OR
+                    (tipo = 'horario' AND $2 BETWEEN data_inicio AND COALESCE(data_fim, data_inicio))
+                )
+                ORDER BY hora_inicio ASC
+            `;
+            
+            const result = await pool.query(query, [barbeiro_id, data]);
+            
+            const bloqueios = result.rows;
+            const resultado = {
+                todoDiaBloqueado: false,
+                horariosBloqueados: []
+            };
+            
+            // Verificar se há bloqueio de dia inteiro
+            resultado.todoDiaBloqueado = bloqueios.some(b => b.tipo === 'dia' || b.tipo === 'periodo');
+            
+            if (!resultado.todoDiaBloqueado) {
+                // Coletar horários bloqueados específicos
+                bloqueios.forEach(bloqueio => {
+                    if (bloqueio.tipo === 'horario' && bloqueio.hora_inicio && bloqueio.hora_fim) {
+                        resultado.horariosBloqueados.push({
+                            inicio: bloqueio.hora_inicio,
+                            fim: bloqueio.hora_fim
+                        });
+                    }
+                });
+            }
+            
+            console.log(`Bloqueios encontrados: ${JSON.stringify(resultado)}`);
+            return resultado;
+        } catch (error) {
+            console.error('Erro ao verificar bloqueios:', error);
+            return { todoDiaBloqueado: false, horariosBloqueados: [] };
+        }
+    }
+    
+    // Método para gerar horários padrão
+    gerarHorariosPadrao(dataStr) {
+        const data = new Date(dataStr);
+        const diaSemana = data.getDay(); // 0 = domingo, 1 = segunda, etc.
+        
+        // Definir horário de funcionamento baseado no dia da semana
+        let inicioExpediente, fimExpediente, intervalo;
+        
+        if (diaSemana === 0) { // Domingo - fechado
+            return [];
+        } else if (diaSemana === 6) { // Sábado
+            inicioExpediente = 8; // 8:00
+            fimExpediente = 17; // 17:00 (5:00 PM)
+        } else { // Segunda a Sexta
+            inicioExpediente = 8; // 8:00
+            fimExpediente = 19; // 19:00 (7:00 PM)
+        }
+        
+        intervalo = 30; // 30 minutos
+        
+        const horarios = [];
+        for (let hora = inicioExpediente; hora < fimExpediente; hora++) {
+            for (let minuto = 0; minuto < 60; minuto += intervalo) {
+                const horaFormatada = `${hora.toString().padStart(2, '0')}:${minuto.toString().padStart(2, '0')}`;
+                
+                // Não adicionar horários muito próximos do fim do expediente
+                if (hora === fimExpediente - 1 && minuto + intervalo > 60) {
+                    continue;
+                }
+                
+                horarios.push(horaFormatada);
+            }
+        }
+        
+        return horarios;
+    }
+    
+    // Método para obter horários ocupados
+    async getHorariosOcupados(barbeiro_id, data) {
+        try {
+            let query;
+            let params;
+            
+            if (barbeiro_id) {
+                // Para barbeiro específico
+                query = `
+                    SELECT hora_inicio
+                    FROM agendamentos
+                    WHERE barbeiro_id = $1
+                    AND data_agendada = $2
+                    AND status NOT IN ('cancelado')
+                `;
+                params = [barbeiro_id, data];
+            } else {
+                // Para "sem preferência" - ver todos os barbeiros
+                query = `
+                    SELECT hora_inicio
+                    FROM agendamentos
+                    WHERE data_agendada = $1
+                    AND status NOT IN ('cancelado')
+                `;
+                params = [data];
+            }
+            
+            const result = await pool.query(query, params);
+            
+            const horariosOcupados = result.rows.map(row => row.hora_inicio);
+            console.log(`Horários ocupados encontrados: ${horariosOcupados.length}`);
+            return horariosOcupados;
+        } catch (error) {
+            console.error('Erro ao buscar horários ocupados:', error);
+            return [];
+        }
+    }
+    
+    // Método para filtrar horários disponíveis
+    filtrarHorariosDisponiveis(horariosPadrao, horariosOcupados, horariosBloqueados, duracaoMinutos) {
+        if (!horariosPadrao || horariosPadrao.length === 0) {
+            return [];
+        }
+        
+        return horariosPadrao.filter(horario => {
+            // Verificar se não está ocupado
+            if (horariosOcupados.includes(horario)) {
+                return false;
+            }
+            
+            // Verificar se não está em um horário bloqueado
+            const estaBloqueado = horariosBloqueados.some(bloqueio => {
+                const horarioMinutos = this.converterParaMinutos(horario);
+                const inicioBloqueio = this.converterParaMinutos(bloqueio.inicio);
+                const fimBloqueio = this.converterParaMinutos(bloqueio.fim);
+                
+                // Verificar se o horário começa durante o bloqueio
+                // OU se o horário (com duração) se sobrepõe ao bloqueio
+                const horarioComDuracao = horarioMinutos + duracaoMinutos;
+                return (horarioMinutos >= inicioBloqueio && horarioMinutos < fimBloqueio) ||
+                       (horarioComDuracao > inicioBloqueio && horarioComDuracao <= fimBloqueio) ||
+                       (horarioMinutos <= inicioBloqueio && horarioComDuracao >= fimBloqueio);
+            });
+            
+            if (estaBloqueado) {
+                return false;
+            }
+            
+            return true;
+        });
+    }
+    
+    // Método auxiliar para converter horário para minutos
+    converterParaMinutos(horario) {
+        if (!horario) return 0;
+        const [horas, minutos] = horario.split(':').map(Number);
+        return horas * 60 + minutos;
+    }
+    
+    // MÉTODO ORIGINAL (mantido para compatibilidade)
     async verificarSlotDisponivel(data, inicio, duracao, barbeiroId) {
         try {
             // ... (código mantido igual) ...

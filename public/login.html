@@ -455,44 +455,39 @@
     </footer>
 
     <script>
-        function redirectByRole() {
+
+        // REDIRECIONAMENTO AUTOMÁTICO SE JÁ EXISTIR TOKEN ATIVO
+        (function () {
             const token = localStorage.getItem('token');
+            if (!token) return;
+
             const role = localStorage.getItem('role');
             const roles = localStorage.getItem('roles');
 
-            if (!token) return;
-
-            // PRIORIDADE TOTAL PARA ADMIN
+            // ADMIN TEM PRIORIDADE TOTAL
             if (roles === 'admin') {
                 window.location.href = 'admin.html';
                 return;
             }
 
-            // ROLES = CLIENTE
-            if (roles === 'cliente') {
-                if (role === 'cliente') {
-                    window.location.href = 'cliente-home.html';
-                    return;
-                }
-
-                if (role === 'barbeiro') {
-                    window.location.href = 'barbeiro.html';
-                    return;
-                }
+            // USUÁRIOS COMUNS
+            if (role === 'cliente') {
+                window.location.href = 'cliente-home.html';
+                return;
             }
-        }
 
-        // REDIRECIONA AUTOMATICAMENTE SE JÁ EXISTIR TOKEN
-        redirectByRole();
-
+            if (role === 'barbeiro') {
+                window.location.href = 'barbeiro.html';
+                return;
+            }
+        })();
         const API_BASE_URL = window.location.hostname === 'localhost' 
             ? 'http://localhost:3000' 
             : 'https://barbeariasilva.onrender.com';
-
         // Toggle password visibility
         const togglePassword = document.querySelector('#togglePassword');
         const password = document.querySelector('#password');
-
+        
         togglePassword.addEventListener('click', function() {
             const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
             password.setAttribute('type', type);
@@ -502,19 +497,18 @@
 
         // Form submission
         const form = document.getElementById('loginForm');
-
+    
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
-
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
-
+    
+            // Simulate API call with loading effect
             const loginBtn = document.querySelector('.btn-login');
             const originalBtnText = loginBtn.innerHTML;
-
             loginBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Autenticando...';
             loginBtn.disabled = true;
-
+            
             try {
                 const response = await fetch(`${API_BASE_URL}/auth/login`, {
                     method: 'POST',
@@ -523,39 +517,42 @@
                     },
                     body: JSON.stringify({ email, senha: password })
                 });
-
+    
                 const data = await response.json();
-
+    
                 if (response.ok) {
                     localStorage.setItem('token', data.token);
                     localStorage.setItem('nome', data.nome);
                     localStorage.setItem('role', data.role);
                     localStorage.setItem('roles', data.roles);
-
+    
+                    // Visual feedback before redirect
                     loginBtn.innerHTML = '<i class="fas fa-check"></i> Autenticado!';
                     loginBtn.style.background = 'linear-gradient(to right, #2ecc71, #27ae60)';
-
+                    
                     setTimeout(() => {
-                        redirectByRole();
+                        // Redirecionar usando a página retornada pelo backend
+                        window.location.href = data.redirectPage;
                     }, 1000);
                 } else {
                     loginBtn.innerHTML = originalBtnText;
                     loginBtn.disabled = false;
-
+                    
+                    // Visual feedback for error
                     loginBtn.classList.add('shake');
                     setTimeout(() => loginBtn.classList.remove('shake'), 500);
-
+                    
                     alert(data.message || 'Credenciais inválidas. Tente novamente.');
                 }
             } catch (error) {
                 console.error('Erro ao fazer login:', error);
-
                 loginBtn.innerHTML = originalBtnText;
                 loginBtn.disabled = false;
-
+                
+                // Visual feedback for error
                 loginBtn.classList.add('shake');
                 setTimeout(() => loginBtn.classList.remove('shake'), 500);
-
+                
                 alert('Erro ao conectar ao servidor. Verifique sua conexão.');
             }
         });

@@ -2175,13 +2175,12 @@
                         </select>
                         <select class="form-control" style="width: 200px;" id="filter-barbeiro">
                             <option value="">Todos os barbeiros</option>
-                            <!-- Os barbeiros serão carregados dinamicamente -->
                         </select>
-                        <button class="btn btn-primary" onclick="filtrarAgendamentos()">
+                        <button class="btn btn-primary" id="btn-filtrar">
                             <i class="fas fa-search"></i>
                             Filtrar
                         </button>
-                        <button class="btn btn-secondary" onclick="limparFiltros()">
+                        <button class="btn btn-secondary" id="btn-limpar-filtros">
                             <i class="fas fa-times"></i>
                             Limpar
                         </button>
@@ -2192,11 +2191,7 @@
                     <div class="table-header">
                         <div class="table-title">Todos os Agendamentos</div>
                         <div style="display: flex; gap: 10px;">
-                            <input type="text" class="table-search" placeholder="Buscar por cliente..." id="search-agendamentos" onkeyup="buscarPorCliente(event)">
-                            <!-- <button class="btn btn-primary" onclick="openModal('novo-agendamento')">
-                                <i class="fas fa-plus"></i>
-                                Novo Agendamento
-                            </button> -->
+                            <input type="text" class="table-search" placeholder="Buscar por cliente..." id="search-agendamentos">
                             <a class="btn btn-primary" href="./agendamento.html" target="_blank">
                                 <i class="fas fa-plus"></i>
                                 Novo Agendamento
@@ -2226,30 +2221,24 @@
                     </table>
                 </div>
             `;
-            
-            // Carregar agendamentos
-            // setTimeout(async () => {
-            //     try {
-            //         const token = localStorage.getItem('token');
-            //         const response = await fetch(`${API_BASE_URL}/admin/agendamentos`, {
-            //             headers: { 'Authorization': `Bearer ${token}` }
-            //         });
-                    
-            //         if (response.ok) {
-            //             const data = await response.json();
-            //             renderTodosAgendamentos(data.data || []);
-            //         } else {
-            //             renderTodosAgendamentos([]);
-            //         }
-            //     } catch (error) {
-            //         console.error('Erro ao carregar agendamentos:', error);
-            //         renderTodosAgendamentos([]);
-            //     }
-            // }, 100);
+
+            // Configurar event listeners após o HTML ser carregado
+            setTimeout(() => {
+                document.getElementById('btn-filtrar').addEventListener('click', filtrarAgendamentos);
+                document.getElementById('btn-limpar-filtros').addEventListener('click', limparFiltros);
+                
+                const searchInput = document.getElementById('search-agendamentos');
+                searchInput.addEventListener('input', (e) => buscarPorCliente(e.target.value));
+                
+                // Configurar busca com Enter também
+                searchInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        buscarPorCliente(e.target.value);
+                    }
+                });
+            }, 100);
 
             await carregarBarbeirosParaFiltro();
-    
-            // Carregar agendamentos
             await carregarAgendamentosComFiltro();
         }
         
@@ -3308,23 +3297,40 @@
                 if (filtros.barbeiro_id) queryParams.append('barbeiro_id', filtros.barbeiro_id);
                 if (filtros.cliente) queryParams.append('cliente', filtros.cliente);
                 
-                // Limitar a 200 resultados para performance
+                // Adicionar parâmetros de paginação
                 queryParams.append('limit', 200);
                 
                 const url = `${API_BASE_URL}/admin/agendamentos?${queryParams.toString()}`;
+                console.log('URL da requisição:', url);
+                
                 const response = await fetch(url, {
-                    headers: { 'Authorization': `Bearer ${token}` }
+                    headers: { 
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
                 });
                 
                 if (response.ok) {
                     const data = await response.json();
-                    renderTodosAgendamentos(data.data || []);
+                    console.log('Dados recebidos:', data);
+                    
+                    // Verifique se a resposta tem a estrutura esperada
+                    if (data.success && data.data) {
+                        renderTodosAgendamentos(data.data);
+                    } else {
+                        console.error('Estrutura de resposta inesperada:', data);
+                        showNotification('Erro: estrutura de resposta inesperada', 'error');
+                        renderTodosAgendamentos([]);
+                    }
                 } else {
-                    console.error('Erro ao carregar agendamentos:', response.status);
+                    const errorText = await response.text();
+                    console.error('Erro na resposta:', response.status, errorText);
+                    showNotification(`Erro ${response.status}: ${errorText}`, 'error');
                     renderTodosAgendamentos([]);
                 }
             } catch (error) {
                 console.error('Erro ao carregar agendamentos:', error);
+                showNotification('Erro de conexão: ' + error.message, 'error');
                 renderTodosAgendamentos([]);
             }
         }
@@ -3402,42 +3408,35 @@
 
         // Função para buscar por cliente (com debounce)
         let buscaTimeout;
-        function buscarPorCliente(event) {
-            // Se for tecla Enter ou mudança no campo
-            const termoBusca = event.target.value.trim();
+
+        function buscarPorCliente(termo) {
+            const termoBusca = termo.trim();
             
             // Limpar timeout anterior
             clearTimeout(buscaTimeout);
             
             // Se o campo estiver vazio, recarregar todos os agendamentos
             if (!termoBusca) {
-                limparFiltros();
+                carregarAgendamentosComFiltro({});
                 return;
             }
             
-            // Aguardar 500ms após a última digitação para fazer a busca
+            // Mostrar loading
+            const tbody = document.getElementById('todos-agendamentos');
+            if (tbody) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="8" style="text-align: center; padding: 3rem;">
+                            <i class="fas fa-spinner fa-spin"></i> Buscando por "${termoBusca}"...
+                        </td>
+                    </tr>
+                `;
+            }
+            
+            // Aguardar 300ms após a última digitação para fazer a busca
             buscaTimeout = setTimeout(async () => {
-                try {
-                    // Mostrar loading
-                    const tbody = document.getElementById('todos-agendamentos');
-                    if (tbody) {
-                        tbody.innerHTML = `
-                            <tr>
-                                <td colspan="8" style="text-align: center; padding: 3rem;">
-                                    <i class="fas fa-spinner fa-spin"></i> Buscando por "${termoBusca}"...
-                                </td>
-                            </tr>
-                        `;
-                    }
-                    
-                    // Buscar agendamentos com filtro de cliente
-                    await carregarAgendamentosComFiltro({ cliente: termoBusca });
-                    
-                } catch (error) {
-                    console.error('Erro na busca:', error);
-                    showNotification('Erro ao realizar busca', 'error');
-                }
-            }, 500);
+                await carregarAgendamentosComFiltro({ cliente: termoBusca });
+            }, 300);
         }
 
         // Função auxiliar para mostrar notificações
@@ -3734,13 +3733,13 @@
         
         // ============ FUNÇÕES DE AÇÃO ============
         
-        function filtrarAgendamentos() {
-            alert('Filtro aplicado! (Funcionalidade em desenvolvimento)');
-        }
+        // function filtrarAgendamentos() {
+        //     alert('Filtro aplicado! (Funcionalidade em desenvolvimento)');
+        // }
         
-        function limparFiltros() {
-            alert('Filtros limpos! (Funcionalidade em desenvolvimento)');
-        }
+        // function limparFiltros() {
+        //     alert('Filtros limpos! (Funcionalidade em desenvolvimento)');
+        // }
         
         async function atualizarStatusAgendamento(id, status) {
             try {
@@ -3869,6 +3868,64 @@
                 alert('Erro ao excluir barbeiro');
             }
         }
+
+
+        function mostrarNotificacao(mensagem, tipo = 'info') {
+        // Remover notificações anteriores
+        const notificacaoAnterior = document.querySelector('.notificacao-flutuante');
+        if (notificacaoAnterior) notificacaoAnterior.remove();
+        
+        const notificacao = document.createElement('div');
+        notificacao.className = `notificacao-flutuante notificacao-${tipo}`;
+        notificacao.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 12px 20px;
+            background: ${tipo === 'erro' ? '#dc3545' : tipo === 'sucesso' ? '#28a745' : '#17a2b8'};
+            color: white;
+            border-radius: 6px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 9999;
+            animation: slideIn 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        `;
+        
+        notificacao.innerHTML = `
+            <i class="fas fa-${tipo === 'erro' ? 'exclamation-circle' : tipo === 'sucesso' ? 'check-circle' : 'info-circle'}"></i>
+            <span>${mensagem}</span>
+        `;
+        
+        document.body.appendChild(notificacao);
+        
+        // Remover após 3 segundos
+        setTimeout(() => {
+            if (notificacao.parentElement) {
+                notificacao.remove();
+            }
+        }, 3000);
+    }
+
+    // Adicionar animação CSS
+    if (!document.querySelector('#animacao-notificacao')) {
+        const style = document.createElement('style');
+        style.id = 'animacao-notificacao';
+        style.textContent = `
+            @keyframes slideIn {
+                from {
+                    transform: translateX(100%);
+                    opacity: 0;
+                }
+                to {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+    }
         
         function editarPlano(id) {
             alert(`Editar plano ${id} (Funcionalidade em desenvolvimento)`);
@@ -4023,6 +4080,48 @@
             initAdmin();
             addModalStyles();
         });
+
+        async function testarFiltrosBackend() {
+        try {
+            const token = localStorage.getItem('token');
+            
+            // Teste 1: Sem filtros
+            console.log('Teste 1: Buscar todos (sem filtros)');
+            const response1 = await fetch(`${API_BASE_URL}/admin/agendamentos?limit=5`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const result1 = await response1.json();
+            console.log('Resultado sem filtros:', result1);
+            
+            // Teste 2: Com filtro de data
+            const hoje = new Date().toISOString().split('T')[0];
+            console.log('Teste 2: Com filtro de data =', hoje);
+            const response2 = await fetch(`${API_BASE_URL}/admin/agendamentos?data=${hoje}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const result2 = await response2.json();
+            console.log('Resultado com data:', result2);
+            
+            // Teste 3: Com filtro de status
+            console.log('Teste 3: Com filtro de status = confirmado');
+            const response3 = await fetch(`${API_BASE_URL}/admin/agendamentos?status=confirmado&limit=3`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const result3 = await response3.json();
+            console.log('Resultado com status:', result3);
+            
+            // Teste 4: Debug endpoint
+            console.log('Teste 4: Endpoint de debug');
+            const response4 = await fetch(`${API_BASE_URL}/admin/agendamentos/debug/filtros?data=${hoje}&status=confirmado`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const result4 = await response4.json();
+            console.log('Debug resultado:', result4);
+            
+        } catch (error) {
+            console.error('Erro nos testes:', error);
+        }
+    }
     </script>
 </body>
 </html>

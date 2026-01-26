@@ -2,96 +2,118 @@
 const pool = require('../config/database');
 
 class Appointment {
-  // ATUALIZADO: findAll agora inclui múltiplos serviços
+  //MÉTODO findAll ATUALIZADO
   static async findAll(filters = {}, limit = 100, offset = 0) {
-    let query = `
-      SELECT 
-        a.id,
-        a.usuario_id,
-        a.barbeiro_id,
-        a.servico_id,
-        a.data_agendada,
-        a.hora_inicio,
-        a.hora_fim,
-        a.status,
-        a.created_at,
-        a.updated_at,
-        c.nome AS cliente_nome,
-        b.nome AS barbeiro_nome,
-        COALESCE(
-          json_agg(
-            json_build_object(
-              'id', s.id,
-              'nome_servico', s.nome_servico,
-              'valor_servico', s.valor_servico,
-              'duracao_servico', s.duracao_servico
-            )
-          ) FILTER (WHERE s.id IS NOT NULL),
-          '[]'::json
-        ) as servicos
-      FROM agendamentos a
-      INNER JOIN usuarios c ON a.usuario_id = c.id
-      INNER JOIN usuarios b ON a.barbeiro_id = b.id
-      LEFT JOIN agendamento_servicos ags ON a.id = ags.agendamento_id
-      LEFT JOIN servicos s ON ags.servico_id = s.id
-      WHERE 1=1
-    `;
-    
-    const params = [];
-    let paramCount = 0;
+      let query = `
+        SELECT 
+          a.id,
+          a.usuario_id,
+          a.barbeiro_id,
+          a.servico_id,
+          a.data_agendada,
+          a.hora_inicio,
+          a.hora_fim,
+          a.status,
+          a.created_at,
+          a.updated_at,
+          a.observacoes,
+          c.nome AS cliente_nome,
+          c.email AS cliente_email,
+          b.nome AS barbeiro_nome,
+          COALESCE(
+            json_agg(
+              DISTINCT jsonb_build_object(
+                'id', s.id,
+                'nome_servico', s.nome_servico,
+                'valor_servico', s.valor_servico,
+                'duracao_servico', s.duracao_servico
+              )
+            ) FILTER (WHERE s.id IS NOT NULL),
+            '[]'::json
+          ) as servicos
+        FROM agendamentos a
+        INNER JOIN usuarios c ON a.usuario_id = c.id
+        INNER JOIN usuarios b ON a.barbeiro_id = b.id
+        LEFT JOIN agendamento_servicos ags ON a.id = ags.agendamento_id
+        LEFT JOIN servicos s ON ags.servico_id = s.id
+        WHERE 1=1
+      `;
+      
+      const params = [];
+      let paramCount = 0;
 
-    // Filtros
-    if (filters.barbeiro_id) {
-      paramCount++;
-      query += ` AND a.barbeiro_id = $${paramCount}`;
-      params.push(filters.barbeiro_id);
-    }
+      // Filtro por ID do barbeiro
+      if (filters.barbeiro_id) {
+        paramCount++;
+        query += ` AND a.barbeiro_id = $${paramCount}`;
+        params.push(filters.barbeiro_id);
+      }
 
-    if (filters.data_agendada) {
-      paramCount++;
-      query += ` AND a.data_agendada = $${paramCount}`;
-      params.push(filters.data_agendada);
-    }
+      // Filtro por data (vem como "data" do frontend)
+      if (filters.data) {
+        paramCount++;
+        query += ` AND a.data_agendada = $${paramCount}`;
+        params.push(filters.data);
+      }
 
-    if (filters.data_inicio) {
-      paramCount++;
-      query += ` AND a.data_agendada >= $${paramCount}`;
-      params.push(filters.data_inicio);
-    }
+      // Filtro por status
+      if (filters.status) {
+        paramCount++;
+        query += ` AND a.status = $${paramCount}`;
+        params.push(filters.status);
+      }
 
-    if (filters.data_fim) {
-      paramCount++;
-      query += ` AND a.data_agendada <= $${paramCount}`;
-      params.push(filters.data_fim);
-    }
+      // Filtro por nome do cliente (busca parcial case-insensitive)
+      if (filters.cliente) {
+        paramCount++;
+        query += ` AND c.nome ILIKE $${paramCount}`;
+        params.push(`%${filters.cliente}%`);
+      }
 
-    if (filters.status) {
-      paramCount++;
-      query += ` AND a.status = $${paramCount}`;
-      params.push(filters.status);
-    }
+      // Filtro por ID do cliente
+      if (filters.usuario_id) {
+        paramCount++;
+        query += ` AND a.usuario_id = $${paramCount}`;
+        params.push(filters.usuario_id);
+      }
 
-    // Agrupamento necessário por causa do json_agg
-    query += ` GROUP BY a.id, c.nome, b.nome `;
-    
-    // Ordenação
-    query += ` ORDER BY a.data_agendada DESC, a.hora_inicio DESC`;
+      // Filtro por período de datas (data_inicio e data_fim)
+      if (filters.data_inicio) {
+        paramCount++;
+        query += ` AND a.data_agendada >= $${paramCount}`;
+        params.push(filters.data_inicio);
+      }
 
-    // Paginação (após GROUP BY)
-    if (limit) {
-      paramCount++;
-      query += ` LIMIT $${paramCount}`;
-      params.push(limit);
-    }
+      if (filters.data_fim) {
+        paramCount++;
+        query += ` AND a.data_agendada <= $${paramCount}`;
+        params.push(filters.data_fim);
+      }
 
-    if (offset) {
-      paramCount++;
-      query += ` OFFSET $${paramCount}`;
-      params.push(offset);
-    }
+      // Agrupamento necessário por causa do json_agg
+      query += ` GROUP BY a.id, c.nome, c.email, b.nome `;
+      
+      // Ordenação
+      query += ` ORDER BY a.data_agendada DESC, a.hora_inicio DESC`;
 
-    const result = await pool.query(query, params);
-    return result.rows;
+      // Paginação (após GROUP BY)
+      if (limit && limit > 0) {
+        paramCount++;
+        query += ` LIMIT $${paramCount}`;
+        params.push(limit);
+      }
+
+      if (offset && offset > 0) {
+        paramCount++;
+        query += ` OFFSET $${paramCount}`;
+        params.push(offset);
+      }
+
+      console.log('Query executada:', query);
+      console.log('Parâmetros:', params);
+
+      const result = await pool.query(query, params);
+      return result.rows;
   }
 
   // CORREÇÃO: Adicionar método findById que estava faltando

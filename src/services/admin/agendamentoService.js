@@ -6,9 +6,47 @@ const Barber = require('../../models/Barber');
 const Block = require('../../models/Block');
 
 class AdminAgendamentoService {
+    // NO services/admin/agendamentoService.js - MÉTODO getAllAgendamentos ATUALIZADO
     async getAllAgendamentos(filters = {}, limit = 100, offset = 0) {
         try {
-            return await Appointment.findAll(filters, limit, offset);
+            console.log('Filtros recebidos no service:', filters);
+            
+            // Transformar filtros para os nomes corretos
+            const filtrosTransformados = {};
+            
+            // Mapear 'data' para 'data_agendada'
+            if (filters.data) {
+                filtrosTransformados.data = filters.data;
+            }
+            
+            // Manter outros filtros
+            if (filters.status) {
+                filtrosTransformados.status = filters.status;
+            }
+            
+            if (filters.barbeiro_id) {
+                filtrosTransformados.barbeiro_id = filters.barbeiro_id;
+            }
+            
+            if (filters.cliente) {
+                filtrosTransformados.cliente = filters.cliente;
+            }
+            
+            if (filters.usuario_id) {
+                filtrosTransformados.usuario_id = filters.usuario_id;
+            }
+            
+            if (filters.data_inicio) {
+                filtrosTransformados.data_inicio = filters.data_inicio;
+            }
+            
+            if (filters.data_fim) {
+                filtrosTransformados.data_fim = filters.data_fim;
+            }
+            
+            console.log('Filtros transformados:', filtrosTransformados);
+            
+            return await Appointment.findAll(filtrosTransformados, limit, offset);
         } catch (error) {
             console.error('Erro ao buscar agendamentos:', error);
             throw error;

@@ -251,6 +251,43 @@ class AdminAgendamentoController {
             });
         }
     }
+
+    // NO controllers/admin/agendamentoController.js - ADICIONE ESTE MÉTODO
+    async getFiltrosDebug(req, res) {
+        try {
+            console.log('Query params recebidos:', req.query);
+            console.log('Headers recebidos:', req.headers);
+            
+            const { limit = 100, offset = 0, ...filters } = req.query;
+            
+            // Log detalhado dos filtros
+            Object.keys(filters).forEach(key => {
+                console.log(`Filtro ${key}:`, filters[key], 'Tipo:', typeof filters[key]);
+            });
+            
+            const agendamentos = await AdminAgendamentoService.getAllAgendamentos(
+                filters, 
+                parseInt(limit), 
+                parseInt(offset)
+            );
+            
+            res.json({
+                success: true,
+                data: {
+                    filtros_recebidos: filters,
+                    total_agendamentos: agendamentos.length,
+                    agendamentos: agendamentos
+                }
+            });
+        } catch (error) {
+            console.error('Erro no debug de filtros:', error);
+            res.status(500).json({
+                success: false,
+                message: 'Erro no debug de filtros',
+                error: error.message
+            });
+        }
+    }
 }
 
 module.exports = new AdminAgendamentoController();

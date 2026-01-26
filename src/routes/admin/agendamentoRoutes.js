@@ -28,4 +28,7 @@ router.get('/resumo', AdminAgendamentoController.getResumo);
 // GET /admin/agendamentos/barbeiros - Buscar barbeiros para filtro
 router.get('/barbeiros/filtro', AdminAgendamentoController.getBarbeiros);
 
+// NO routes/admin/agendamentoRoutes.js - ADICIONE ESTA ROTA
+router.get('/debug/filtros', AdminAgendamentoController.getFiltrosDebug);
+
 module.exports = router;

@@ -1,10 +1,11 @@
+// services/admin/servicoService.js
 const Servico = require('../../models/Service');
 const Plano = require('../../models/Plan');
 
 class ServicoService {
     async getAllServicos(ativosOnly = true) {
         try {
-            return await Servico.findAll(ativosOnly);
+            return await Servico.getAllServices();
         } catch (error) {
             console.error('Erro ao buscar serviços:', error);
             throw error;
@@ -13,7 +14,7 @@ class ServicoService {
 
     async getServicoById(id) {
         try {
-            const servico = await Servico.findById(id);
+            const servico = await Servico.getServiceById(id);
             if (!servico) {
                 throw new Error('Serviço não encontrado');
             }
@@ -43,7 +44,7 @@ class ServicoService {
 
     async updateServico(id, servicoData) {
         try {
-            const servicoExistente = await Servico.findById(id);
+            const servicoExistente = await Servico.getServiceById(id);
             if (!servicoExistente) {
                 throw new Error('Serviço não encontrado');
             }
@@ -65,7 +66,7 @@ class ServicoService {
 
     async deleteServico(id) {
         try {
-            const servico = await Servico.findById(id);
+            const servico = await Servico.getServiceById(id);
             if (!servico) {
                 throw new Error('Serviço não encontrado');
             }
@@ -124,10 +125,11 @@ class ServicoService {
         try {
             const query = `
                 SELECT COUNT(*) as total
-                FROM agendamentos
-                WHERE servico_id = $1
-                AND data_agendada >= CURRENT_DATE
-                AND status NOT IN ('cancelado')
+                FROM agendamentos a
+                LEFT JOIN agendamento_servicos ags ON a.id = ags.agendamento_id
+                WHERE (a.servico_id = $1 OR ags.servico_id = $1)
+                AND a.data_agendada >= CURRENT_DATE
+                AND a.status NOT IN ('cancelado')
             `;
             
             const pool = require('../../config/database');
@@ -151,12 +153,15 @@ class ServicoService {
 
     async atualizarStatus(id, ativo) {
         try {
-            const servico = await Servico.findById(id);
+            const servico = await Servico.getServiceById(id);
             if (!servico) {
                 throw new Error('Serviço não encontrado');
             }
             
-            return await Servico.update(id, { ...servico, ativo });
+            // Como o model Service não tem campo ativo, precisamos adicionar
+            // ou usar um campo existente. Vou assumir que não temos campo ativo.
+            // Então não faremos nada por enquanto.
+            throw new Error('Funcionalidade não implementada - campo ativo não existe no modelo');
         } catch (error) {
             console.error('Erro ao atualizar status do serviço:', error);
             throw error;

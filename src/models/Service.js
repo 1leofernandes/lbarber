@@ -126,8 +126,15 @@ class Service {
     return result.rows;
   }
 
-  // Alias para compatibilidade com outros arquivos
-  static findById = Service.getServiceById;
+  static async findAll(ativosOnly = true) {
+    // Este é um alias para getAllServices para compatibilidade
+    return await this.getAllServices();
+  }
+
+  static async findById(id) {
+    return await this.getServiceById(id);
+  }
+
 }
 
 module.exports = Service;

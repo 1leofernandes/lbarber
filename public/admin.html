@@ -1322,7 +1322,7 @@
                     <div class="form-group">
                         <label class="form-label">Coberto por Assinaturas</label>
                         <div id="assinaturas-checkboxes">
-                            <!-- Checkboxes serão gerados dinamicamente -->
+                             Checkboxes serão gerados dinamicamente 
                         </div>
                     </div>
                     <button type="submit" class="btn btn-primary btn-block">
@@ -1409,6 +1409,67 @@
                     <button type="submit" class="btn btn-primary">
                         <i class="fas fa-save"></i>
                         Salvar Bloqueio
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal para Novo Serviço -->
+    <div id="modal-novo-servico" class="modal-overlay">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h2>Novo Serviço</h2>
+                <button class="modal-close" onclick="closeModal('novo-servico')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form id="form-novo-servico">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="servico-nome" class="form-label">Nome do Serviço *</label>
+                        <input type="text" class="form-control" id="servico-nome" name="nome_servico" required 
+                            placeholder="Ex: Corte Social, Barba Completa, etc.">
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="servico-duracao" class="form-label">Duração (minutos) *</label>
+                            <input type="number" class="form-control" id="servico-duracao" name="duracao_servico" 
+                                min="15" step="15" value="30" required>
+                            <small class="form-text">Múltiplo de 15 minutos</small>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="servico-valor" class="form-label">Valor (R$) *</label>
+                            <input type="number" class="form-control" id="servico-valor" name="valor_servico" 
+                                min="0" step="0.01" value="0.00" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="servico-descricao" class="form-label">Descrição</label>
+                        <textarea class="form-control" id="servico-descricao" name="descricao" 
+                                rows="3" placeholder="Descreva o serviço..."></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Planos de Assinatura</label>
+                        <div style="max-height: 200px; overflow-y: auto; border: 1px solid #ddd; border-radius: 5px; padding: 10px;">
+                            <div id="planos-container">
+                                <div class="loading" style="margin: 20px auto;"></div>
+                            </div>
+                        </div>
+                        <small class="form-text">Selecione os planos que incluem este serviço</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('novo-servico')">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i>
+                        Salvar Serviço
                     </button>
                 </div>
             </form>
@@ -1563,6 +1624,7 @@
             document.getElementById('form-novo-agendamento')?.addEventListener('submit', handleNovoAgendamento);
             document.getElementById('form-novo-bloqueio')?.addEventListener('submit', handleNovoBloqueio);
             document.getElementById('form-editar-servico')?.addEventListener('submit', handleEditarServico);
+            document.getElementById('form-novo-servico')?.addEventListener('submit', handleNovoServico);
             
             // Radio buttons para bloqueio
             document.querySelectorAll('input[name="aplicacao"]').forEach(radio => {
@@ -2339,7 +2401,7 @@
                     <p style="color: var(--medium-gray); margin-bottom: 1rem;">
                         Aqui você pode adicionar, editar ou remover serviços. Cada serviço pode estar associado a um ou mais planos de assinatura.
                     </p>
-                    <button class="btn btn-primary" onclick="openModal('novo-servico')">
+                    <button class="btn btn-primary" onclick="abrirModalNovoServico()">
                         <i class="fas fa-plus"></i>
                         Adicionar Novo Serviço
                     </button>
@@ -2348,7 +2410,7 @@
                 <div class="table-container fade-in">
                     <div class="table-header">
                         <div class="table-title">Todos os Serviços</div>
-                        <input type="text" class="table-search" placeholder="Buscar serviços..." id="search-servicos">
+                        <input type="text" class="table-search" placeholder="Buscar serviços..." id="search-servicos" onkeyup="filtrarServicos()">
                     </div>
                     <table class="table">
                         <thead>
@@ -2357,7 +2419,7 @@
                                 <th>Duração</th>
                                 <th>Valor</th>
                                 <th>Descrição</th>
-                                <th>Coberto por</th>
+                                <th>Planos Inclusos</th>
                                 <th>Ações</th>
                             </tr>
                         </thead>
@@ -2372,37 +2434,8 @@
                 </div>
             `;
             
-            // Carregar serviços
-            setTimeout(() => {
-                // Simular dados
-                const servicos = [
-                    { id: 1, nome: 'Corte Social', duracao: '45 min', valor: 45.00, descricao: 'Corte clássico masculino', cobertura: 'Plano Premium' },
-                    { id: 2, nome: 'Barba Completa', duracao: '30 min', valor: 35.00, descricao: 'Aparação e modelagem completa', cobertura: 'Todos os planos' },
-                    { id: 3, nome: 'Corte + Barba', duracao: '60 min', valor: 70.00, descricao: 'Combo completo', cobertura: 'Plano Premium' },
-                    { id: 4, nome: 'Sobrancelha', duracao: '15 min', valor: 30.00, descricao: 'Design e manutenção', cobertura: 'Nenhum' }
-                ];
-                
-                const tbody = document.getElementById('lista-servicos');
-                if (tbody) {
-                    tbody.innerHTML = servicos.map(servico => `
-                        <tr>
-                            <td><strong>${servico.nome}</strong></td>
-                            <td>${servico.duracao}</td>
-                            <td>R$ ${servico.valor.toFixed(2)}</td>
-                            <td>${servico.descricao}</td>
-                            <td>${servico.cobertura}</td>
-                            <td>
-                                <button class="btn-table btn-edit" onclick="editarServico(${servico.id})">
-                                    <i class="fas fa-edit"></i>
-                                </button>
-                                <button class="btn-table btn-delete" onclick="excluirServico(${servico.id})">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </td>
-                        </tr>
-                    `).join('');
-                }
-            }, 1000);
+            // Carregar serviços do backend
+            await carregarServicos();
         }
         
         async function loadBarbeirosPage() {
@@ -4297,6 +4330,237 @@
             } catch (error) {
                 console.error('Erro:', error);
                 alert('Erro ao excluir barbeiro');
+            }
+        }
+
+        // Variável global para armazenar serviços
+        let servicosCache = [];
+
+        // Função para carregar serviços do backend
+        async function carregarServicos() {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_BASE_URL}/admin/servicos`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    servicosCache = result.data || [];
+                    renderizarServicos(servicosCache);
+                } else {
+                    console.error('Erro ao carregar serviços:', response.status);
+                    renderizarServicos([]);
+                }
+            } catch (error) {
+                console.error('Erro ao carregar serviços:', error);
+                renderizarServicos([]);
+            }
+        }
+
+        // Função para renderizar a lista de serviços
+        function renderizarServicos(servicos) {
+            const tbody = document.getElementById('lista-servicos');
+            if (!tbody) return;
+            
+            if (!servicos || servicos.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" style="text-align: center; padding: 3rem;">
+                            <i class="fas fa-cut"></i>
+                            <p style="margin-top: 1rem;">Nenhum serviço cadastrado</p>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            tbody.innerHTML = servicos.map(servico => {
+                // Formatar valor monetário
+                const valorFormatado = parseFloat(servico.valor_servico || 0).toFixed(2);
+                
+                // Formatar planos incluídos
+                let planosTexto = 'Nenhum';
+                if (servico.assinatura_ids && Array.isArray(servico.assinatura_ids) && servico.assinatura_ids.length > 0) {
+                    planosTexto = `${servico.assinatura_ids.length} plano(s)`;
+                }
+                
+                return `
+                    <tr>
+                        <td><strong>${servico.nome_servico}</strong></td>
+                        <td>${servico.duracao_servico} min</td>
+                        <td>R$ ${valorFormatado}</td>
+                        <td>${servico.descricao || 'Sem descrição'}</td>
+                        <td>${planosTexto}</td>
+                        <td>
+                            <div style="display: flex; gap: 5px;">
+                                <button class="btn-table btn-edit" onclick="editarServico(${servico.id})">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn-table btn-delete" onclick="excluirServico(${servico.id})">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // Função para filtrar serviços
+        function filtrarServicos() {
+            const termo = document.getElementById('search-servicos').value.toLowerCase();
+            if (!termo) {
+                renderizarServicos(servicosCache);
+                return;
+            }
+            
+            const servicosFiltrados = servicosCache.filter(servico => 
+                servico.nome_servico.toLowerCase().includes(termo) ||
+                (servico.descricao && servico.descricao.toLowerCase().includes(termo))
+            );
+            
+            renderizarServicos(servicosFiltrados);
+        }
+
+        // Função para abrir modal de novo serviço
+        function abrirModalNovoServico() {
+            openModal('novo-servico');
+            
+            // Limpar formulário
+            setTimeout(() => {
+                const form = document.getElementById('form-novo-servico');
+                if (form) form.reset();
+                
+                // Remover campo hidden de ID se existir
+                const idInput = form.querySelector('input[name="servico_id"]');
+                if (idInput) idInput.remove();
+                
+                // Carregar planos de assinatura para o select
+                carregarPlanosParaServico();
+            }, 100);
+        }
+
+        // Função para carregar planos de assinatura para o select
+        async function carregarPlanosParaServico() {
+            try {
+                const container = document.getElementById('planos-container');
+                if (!container) return;
+                
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_BASE_URL}/assinatura`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    // A resposta pode estar em result.data ou result.assinaturas
+                    const planos = result.data || result.assinaturas || [];
+                    
+                    // Criar checkboxes para seleção múltipla
+                    container.innerHTML = planos.map(plano => `
+                        <div style="display: flex; align-items: center; padding: 8px; border-bottom: 1px solid #f0f0f0; transition: background 0.2s;" 
+                            onmouseover="this.style.background='#f8f9fa'" 
+                            onmouseout="this.style.background=''">
+                            <input type="checkbox" name="assinaturas" value="${plano.id}" 
+                                id="plano-cb-${plano.id}" 
+                                style="margin-right: 10px; cursor: pointer;">
+                            <label for="plano-cb-${plano.id}" style="flex: 1; cursor: pointer;">
+                                <div><strong>${plano.nome || `Plano ${plano.id}`}</strong></div>
+                                <div style="font-size: 0.9em; color: #666;">
+                                    R$ ${parseFloat(plano.valor || 0).toFixed(2)}/mês
+                                </div>
+                            </label>
+                        </div>
+                    `).join('');
+                } else {
+                    container.innerHTML = '<div style="color: #dc3545; text-align: center; padding: 20px;">Erro ao carregar planos</div>';
+                }
+            } catch (error) {
+                console.error('Erro ao carregar planos:', error);
+                const container = document.getElementById('planos-container');
+                if (container) {
+                    container.innerHTML = '<div style="color: #dc3545; text-align: center; padding: 20px;">Erro ao carregar planos</div>';
+                }
+            }
+        }
+
+        // Função para editar serviço
+        async function editarServico(id) {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_BASE_URL}/admin/servicos/${id}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    const servico = result.data;
+                    
+                    // Abrir modal e preencher formulário
+                    openModal('novo-servico');
+                    
+                    setTimeout(() => {
+                        const form = document.getElementById('form-novo-servico');
+                        if (form) {
+                            // Resetar form
+                            form.reset();
+                            
+                            // Adicionar campo hidden para ID
+                            const idInput = document.createElement('input');
+                            idInput.type = 'hidden';
+                            idInput.name = 'servico_id';
+                            idInput.value = servico.id;
+                            form.appendChild(idInput);
+                            
+                            // Preencher campos
+                            document.getElementById('servico-nome').value = servico.nome_servico;
+                            document.getElementById('servico-duracao').value = servico.duracao_servico;
+                            document.getElementById('servico-valor').value = servico.valor_servico;
+                            document.getElementById('servico-descricao').value = servico.descricao || '';
+                            
+                            // Carregar planos e selecionar os vinculados
+                            carregarPlanosParaServico().then(() => {
+                                if (servico.assinatura_ids && Array.isArray(servico.assinatura_ids)) {
+                                    const checkboxes = document.querySelectorAll('input[name="assinaturas"]');
+                                    checkboxes.forEach(cb => {
+                                        cb.checked = servico.assinatura_ids.includes(parseInt(cb.value));
+                                    });
+                                }
+                            });
+                        }
+                    }, 100);
+                } else {
+                    alert('Erro ao carregar serviço para edição');
+                }
+            } catch (error) {
+                console.error('Erro:', error);
+                alert('Erro ao carregar serviço');
+            }
+        }
+
+        // Função para excluir serviço
+        async function excluirServico(id) {
+            if (!confirm('Tem certeza que deseja excluir este serviço?')) return;
+            
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_BASE_URL}/admin/servicos/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (response.ok) {
+                    alert('Serviço excluído com sucesso!');
+                    // Recarregar lista
+                    await carregarServicos();
+                } else {
+                    const errorData = await response.json();
+                    alert(errorData.message || 'Erro ao excluir serviço');
+                }
+            } catch (error) {
+                console.error('Erro:', error);
+                alert('Erro ao excluir serviço');
             }
         }
 

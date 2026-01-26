@@ -5,7 +5,7 @@ class Barbeiro {
         const query = `
             SELECT id, nome, email, telefone,  created_at, updated_at
             FROM usuarios 
-            WHERE id = $1 AND 'barbeiro' = ANY(role)
+            WHERE id = $1 AND role = 'barbeiro'
         `;
         const result = await pool.query(query, [id]);
         return result.rows[0];
@@ -16,7 +16,7 @@ class Barbeiro {
             SELECT id, nome, email, telefone, 
                     created_at
             FROM usuarios 
-            WHERE 'barbeiro' = ANY(role)
+            WHERE role = 'barbeiro'
         `;
         
         query += ' ORDER BY nome ASC';
@@ -50,7 +50,7 @@ class Barbeiro {
             UPDATE usuarios 
             SET nome = $1, email = $2, telefone = $3,
                 updated_at = CURRENT_TIMESTAMP
-            WHERE id = $4 AND 'barbeiro' = ANY(role)
+            WHERE id = $4 AND role = 'barbeiro'
             RETURNING id, nome, email, telefone
         `;
         
@@ -61,15 +61,14 @@ class Barbeiro {
         return result.rows[0];
     }
 
-    static async promoverParaBarbeiro(usuario_id, especialidades = []) {
+    static async promoverParaBarbeiro(usuario_id) {
         const query = `
-            UPDATE usuarios 
-            SET role = array_append(role, 'barbeiro'),
+            UPDATE usuarios
+            SET role = 'barbeiro',
                 updated_at = CURRENT_TIMESTAMP
-            WHERE id = $2
+            WHERE id = $1
             RETURNING id, nome, email, telefone, role
         `;
-        
         const result = await pool.query(query, [usuario_id]);
         return result.rows[0];
     }
@@ -77,7 +76,7 @@ class Barbeiro {
     static async rebaixarParaCliente(usuario_id) {
         const query = `
             UPDATE usuarios 
-            SET role = array_remove(role, 'barbeiro'),
+            SET role = 'cliente',
                 updated_at = CURRENT_TIMESTAMP
             WHERE id = $1
             RETURNING id, nome, email, telefone, role
@@ -90,7 +89,7 @@ class Barbeiro {
     static async delete(id) {
         const query = `
             DELETE FROM usuarios 
-            WHERE id = $1 AND 'barbeiro' = ANY(role)
+            WHERE id = $1 AND role = 'barbeiro'
             RETURNING id
         `;
         const result = await pool.query(query, [id]);
@@ -101,7 +100,7 @@ class Barbeiro {
         const query = `
             SELECT COUNT(*) as total 
             FROM usuarios 
-            WHERE 'barbeiro' = ANY(role)
+            WHERE role = 'barbeiro'
         `;
         const result = await pool.query(query);
         return parseInt(result.rows[0].total);

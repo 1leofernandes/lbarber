@@ -2538,9 +2538,9 @@
                             <div class="admin-card-title">Adicionar Barbeiro</div>
                         </div>
                         <div class="admin-card-content">
-                            Crie uma nova conta de barbeiro ou promova um usuário existente.
+                            Crie uma nova conta de barbeiro com todos os dados necessários.
                         </div>
-                        <button class="btn btn-primary" style="width: 100%; margin-top: 1rem;" onclick="openModal('novo-barbeiro')">
+                        <button class="btn btn-primary" style="width: 100%; margin-top: 1rem;" onclick="abrirModalNovoBarbeiro()">
                             <i class="fas fa-plus"></i>
                             Adicionar Barbeiro
                         </button>
@@ -2556,7 +2556,7 @@
                         <div class="admin-card-content">
                             Transforme um cliente comum em barbeiro mantendo seus dados.
                         </div>
-                        <button class="btn btn-secondary" style="width: 100%; margin-top: 1rem;" onclick="openModal('promover-usuario')">
+                        <button class="btn btn-secondary" style="width: 100%; margin-top: 1rem;" onclick="abrirModalPromoverUsuario()">
                             <i class="fas fa-user-shield"></i>
                             Promover Usuário
                         </button>
@@ -2566,7 +2566,7 @@
                 <div class="table-container fade-in">
                     <div class="table-header">
                         <div class="table-title">Barbeiros Cadastrados</div>
-                        <input type="text" class="table-search" placeholder="Buscar barbeiros..." id="search-barbeiros">
+                        <input type="text" class="table-search" placeholder="Buscar barbeiros..." id="search-barbeiros" onkeyup="filtrarBarbeiros()">
                     </div>
                     <table class="table">
                         <thead>
@@ -2588,42 +2588,93 @@
                         </tbody>
                     </table>
                 </div>
+                
+                <!-- Modal para novo barbeiro -->
+                <div class="modal-overlay" id="modal-novo-barbeiro">
+                    <div class="modal">
+                        <div class="modal-header">
+                            <h3>Adicionar Barbeiro</h3>
+                            <button class="modal-close" onclick="closeModal('novo-barbeiro')">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <div class="modal-content">
+                            <form id="form-novo-barbeiro">
+                                <div class="form-group">
+                                    <label class="form-label">Nome Completo *</label>
+                                    <input type="text" class="form-control" name="nome" required placeholder="Digite o nome completo">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">E-mail *</label>
+                                    <input type="email" class="form-control" name="email" required placeholder="email@exemplo.com">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Telefone *</label>
+                                    <input type="tel" class="form-control" name="telefone" required placeholder="(11) 99999-9999">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Senha *</label>
+                                    <input type="password" class="form-control" name="senha" required minlength="6" placeholder="Mínimo 6 caracteres">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Confirmar Senha *</label>
+                                    <input type="password" class="form-control" name="confirmar_senha" required minlength="6" placeholder="Digite novamente a senha">
+                                </div>
+                                <button type="submit" class="btn btn-primary btn-block">
+                                    <i class="fas fa-save"></i>
+                                    Salvar Barbeiro
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Modal para promover usuário -->
+                <div class="modal-overlay" id="modal-promover-usuario">
+                    <div class="modal">
+                        <div class="modal-header">
+                            <h3>Promover Cliente a Barbeiro</h3>
+                            <button class="modal-close" onclick="closeModal('promover-usuario')">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <div class="modal-content">
+                            <div id="lista-clientes-promover">
+                                <div style="text-align: center; padding: 2rem;">
+                                    <i class="fas fa-spinner fa-spin"></i> Carregando clientes...
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             `;
             
-            // Carregar barbeiros
+            // Configurar event listener para o formulário
             setTimeout(() => {
-                // Simular dados
-                const barbeiros = [
-                    { id: 1, nome: 'Carlos Silva', email: 'carlos@barbearia.com', telefone: '(11) 99999-8888', agendamentos: 5, status: 'ativo' },
-                    { id: 2, nome: 'Pedro Santos', email: 'pedro@barbearia.com', telefone: '(11) 98888-7777', agendamentos: 3, status: 'ativo' },
-                    { id: 3, nome: 'João Oliveira', email: 'joao@barbearia.com', telefone: '(11) 97777-6666', agendamentos: 0, status: 'inativo' }
-                ];
-                
-                const tbody = document.getElementById('lista-barbeiros');
-                if (tbody) {
-                    tbody.innerHTML = barbeiros.map(barbeiro => `
-                        <tr>
-                            <td><strong>${barbeiro.nome}</strong></td>
-                            <td>${barbeiro.email}</td>
-                            <td>${barbeiro.telefone}</td>
-                            <td>${barbeiro.agendamentos}</td>
-                            <td>
-                                <span class="status-badge ${barbeiro.status === 'ativo' ? 'status-active' : 'status-inactive'}">
-                                    ${barbeiro.status === 'ativo' ? 'Ativo' : 'Inativo'}
-                                </span>
-                            </td>
-                            <td>
-                                <button class="btn-table btn-edit" onclick="editarBarbeiro(${barbeiro.id})">
-                                    <i class="fas fa-edit"></i>
-                                </button>
-                                <button class="btn-table btn-delete" onclick="excluirBarbeiro(${barbeiro.id})">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </td>
-                        </tr>
-                    `).join('');
+                const form = document.getElementById('form-novo-barbeiro');
+                if (form) {
+                    form.addEventListener('submit', handleNovoBarbeiro);
                 }
-            }, 1000);
+            }, 100);
+            
+            // Carregar barbeiros
+            await carregarBarbeiros();
+        }
+
+        // Função para filtrar barbeiros
+        function filtrarBarbeiros() {
+            const termo = document.getElementById('search-barbeiros')?.value.toLowerCase();
+            if (!termo) {
+                // Se não houver termo, recarregar todos os barbeiros
+                carregarBarbeiros();
+                return;
+            }
+            
+            const linhas = document.querySelectorAll('#lista-barbeiros tr');
+            linhas.forEach(linha => {
+                const textoLinha = linha.textContent.toLowerCase();
+                linha.style.display = textoLinha.includes(termo) ? '' : 'none';
+            });
         }
         
         async function loadAssinaturasPage() {
@@ -4441,6 +4492,299 @@
             }
         }
 
+        // ============ FUNÇÕES PARA BARBEIROS ============
+
+        async function carregarBarbeiros() {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_BASE_URL}/admin/barbeiros`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                const tbody = document.getElementById('lista-barbeiros');
+                if (!tbody) return;
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    const barbeiros = result.data || [];
+                    
+                    if (barbeiros.length === 0) {
+                        tbody.innerHTML = `
+                            <tr>
+                                <td colspan="6" style="text-align: center; padding: 3rem;">
+                                    <i class="fas fa-user-times"></i>
+                                    <p style="margin-top: 1rem;">Nenhum barbeiro cadastrado</p>
+                                </td>
+                            </tr>
+                        `;
+                        return;
+                    }
+                    
+                    tbody.innerHTML = barbeiros.map(barbeiro => {
+                        const status = barbeiro.status || 'ativo';
+                        return `
+                            <tr>
+                                <td><strong>${barbeiro.nome}</strong></td>
+                                <td>${barbeiro.email}</td>
+                                <td>${barbeiro.telefone || ''}</td>
+                                <td>${barbeiro.agendamentosHoje || 0}</td>
+                                <td>
+                                    <span class="status-badge ${status === 'ativo' ? 'status-active' : 'status-inactive'}">
+                                        ${status === 'ativo' ? 'Ativo' : 'Inativo'}
+                                    </span>
+                                </td>
+                                <td>
+                                    <button class="btn-table btn-delete" onclick="excluirBarbeiro(${barbeiro.id})">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        `;
+                    }).join('');
+                } else {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="6" style="text-align: center; padding: 3rem; color: #dc3545;">
+                                <i class="fas fa-exclamation-circle"></i>
+                                <p style="margin-top: 1rem;">Erro ao carregar barbeiros</p>
+                            </td>
+                        </tr>
+                    `;
+                }
+            } catch (error) {
+                console.error('Erro ao carregar barbeiros:', error);
+                const tbody = document.getElementById('lista-barbeiros');
+                if (tbody) {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="6" style="text-align: center; padding: 3rem; color: #dc3545;">
+                                <i class="fas fa-exclamation-circle"></i>
+                                <p style="margin-top: 1rem;">Erro de conexão</p>
+                            </td>
+                        </tr>
+                    `;
+                }
+            }
+        }
+
+        async function carregarClientesParaPromover() {
+            try {
+                const container = document.getElementById('lista-clientes-promover');
+                if (!container) return;
+                
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 2rem;">
+                        <i class="fas fa-spinner fa-spin"></i> Carregando clientes...
+                    </div>
+                `;
+                
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_BASE_URL}/admin/barbeiros/clientes-para-promover`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    const clientes = result.data || [];
+
+                    if (clientes.length === 0) {
+                        container.innerHTML = `
+                            <div style="text-align: center; padding: 2rem;">
+                                <i class="fas fa-users"></i>
+                                <p>Nenhum cliente disponível para promover.</p>
+                            </div>
+                        `;
+                        return;
+                    }
+
+                    container.innerHTML = clientes.map(cliente => `
+                        <div class="cliente-item" style="padding: 10px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <strong>${cliente.nome}</strong><br>
+                                <small>${cliente.email}</small><br>
+                                <small>${cliente.telefone || 'Sem telefone'}</small>
+                            </div>
+                            <button class="btn btn-primary" onclick="promoverCliente(${cliente.id}, '${cliente.nome}')">
+                                Promover
+                            </button>
+                        </div>
+                    `).join('');
+                } else {
+                    container.innerHTML = `
+                        <div style="text-align: center; padding: 2rem; color: #dc3545;">
+                            <i class="fas fa-exclamation-circle"></i>
+                            <p>Erro ao carregar clientes.</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Erro ao carregar clientes:', error);
+                const container = document.getElementById('lista-clientes-promover');
+                if (container) {
+                    container.innerHTML = `
+                        <div style="text-align: center; padding: 2rem; color: #dc3545;">
+                            <i class="fas fa-exclamation-circle"></i>
+                            <p>Erro ao carregar clientes.</p>
+                        </div>
+                    `;
+                }
+            }
+        }
+
+        async function promoverCliente(clienteId, clienteNome) {
+            if (!confirm(`Tem certeza que deseja promover "${clienteNome}" a barbeiro?`)) {
+                return;
+            }
+            
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_BASE_URL}/admin/barbeiros/promover`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ usuario_id: clienteId })
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    mostrarNotificacao(result.message || 'Cliente promovido a barbeiro com sucesso!', 'sucesso');
+                    closeModal('promover-usuario');
+                    await carregarBarbeiros();
+                } else {
+                    const error = await response.json();
+                    mostrarNotificacao(error.message || 'Erro ao promover cliente', 'erro');
+                }
+            } catch (error) {
+                console.error('Erro ao promover cliente:', error);
+                mostrarNotificacao('Erro ao promover cliente', 'erro');
+            }
+        }
+
+        async function excluirBarbeiro(id) {
+            if (!confirm('Tem certeza que deseja excluir este barbeiro?\n\nEsta ação não pode ser desfeita.')) {
+                return;
+            }
+            
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_BASE_URL}/admin/barbeiros/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    mostrarNotificacao(result.message || 'Barbeiro excluído com sucesso!', 'sucesso');
+                    await carregarBarbeiros();
+                } else {
+                    const error = await response.json();
+                    mostrarNotificacao(error.message || 'Erro ao excluir barbeiro', 'erro');
+                }
+            } catch (error) {
+                console.error('Erro ao excluir barbeiro:', error);
+                mostrarNotificacao('Erro ao excluir barbeiro', 'erro');
+            }
+        }
+
+        // Função para abrir modal de novo barbeiro
+        function abrirModalNovoBarbeiro() {
+            openModal('novo-barbeiro');
+            
+            // Limpar formulário
+            setTimeout(() => {
+                const form = document.getElementById('form-novo-barbeiro');
+                if (form) {
+                    form.reset();
+                }
+            }, 100);
+        }
+
+        // Função para abrir modal de promover usuário
+        function abrirModalPromoverUsuario() {
+            openModal('promover-usuario');
+            carregarClientesParaPromover();
+        }
+
+        // Handler para formulário de novo barbeiro
+        async function handleNovoBarbeiro(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            const barbeiroData = {
+                nome: formData.get('nome'),
+                email: formData.get('email'),
+                telefone: formData.get('telefone'),
+                senha: formData.get('senha')
+            };
+            
+            const confirmarSenha = formData.get('confirmar_senha');
+            
+            // Validações
+            if (!barbeiroData.nome || barbeiroData.nome.length < 3) {
+                mostrarNotificacao('Nome deve ter pelo menos 3 caracteres', 'erro');
+                return;
+            }
+            
+            if (!barbeiroData.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(barbeiroData.email)) {
+                mostrarNotificacao('Email inválido', 'erro');
+                return;
+            }
+            
+            if (barbeiroData.telefone && !/^\(\d{2}\) \d{5}-\d{4}$/.test(barbeiroData.telefone)) {
+                mostrarNotificacao('Telefone inválido. Use o formato (99) 99999-9999', 'erro');
+                return;
+            }
+            
+            if (barbeiroData.senha.length < 6) {
+                mostrarNotificacao('Senha deve ter pelo menos 6 caracteres', 'erro');
+                return;
+            }
+            
+            if (barbeiroData.senha !== confirmarSenha) {
+                mostrarNotificacao('As senhas não coincidem', 'erro');
+                return;
+            }
+            
+            // Desabilitar botão para evitar duplo clique
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Criando...';
+            }
+            
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_BASE_URL}/admin/barbeiros`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(barbeiroData)
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    mostrarNotificacao(result.message || 'Barbeiro criado com sucesso!', 'sucesso');
+                    closeModal('novo-barbeiro');
+                    await carregarBarbeiros();
+                } else {
+                    const error = await response.json();
+                    mostrarNotificacao(error.message || 'Erro ao criar barbeiro', 'erro');
+                }
+            } catch (error) {
+                console.error('Erro:', error);
+                mostrarNotificacao('Erro ao criar barbeiro', 'erro');
+            } finally {
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '<i class="fas fa-save"></i> Salvar Barbeiro';
+                }
+            }
+        }
+
         // Função para renderizar a lista de serviços
         function renderizarServicos(servicos) {
             const tbody = document.getElementById('lista-servicos');
@@ -4713,61 +5057,61 @@
 
 
         function mostrarNotificacao(mensagem, tipo = 'info') {
-        // Remover notificações anteriores
-        const notificacaoAnterior = document.querySelector('.notificacao-flutuante');
-        if (notificacaoAnterior) notificacaoAnterior.remove();
-        
-        const notificacao = document.createElement('div');
-        notificacao.className = `notificacao-flutuante notificacao-${tipo}`;
-        notificacao.style.cssText = `
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            padding: 12px 20px;
-            background: ${tipo === 'erro' ? '#dc3545' : tipo === 'sucesso' ? '#28a745' : '#17a2b8'};
-            color: white;
-            border-radius: 6px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            z-index: 9999;
-            animation: slideIn 0.3s ease;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        `;
-        
-        notificacao.innerHTML = `
-            <i class="fas fa-${tipo === 'erro' ? 'exclamation-circle' : tipo === 'sucesso' ? 'check-circle' : 'info-circle'}"></i>
-            <span>${mensagem}</span>
-        `;
-        
-        document.body.appendChild(notificacao);
-        
-        // Remover após 3 segundos
-        setTimeout(() => {
-            if (notificacao.parentElement) {
-                notificacao.remove();
-            }
-        }, 3000);
-    }
+            // Remover notificações anteriores
+            const notificacaoAnterior = document.querySelector('.notificacao-flutuante');
+            if (notificacaoAnterior) notificacaoAnterior.remove();
+            
+            const notificacao = document.createElement('div');
+            notificacao.className = `notificacao-flutuante notificacao-${tipo}`;
+            notificacao.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 12px 20px;
+                background: ${tipo === 'erro' ? '#dc3545' : tipo === 'sucesso' ? '#28a745' : '#17a2b8'};
+                color: white;
+                border-radius: 6px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                z-index: 9999;
+                animation: slideIn 0.3s ease;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            `;
+            
+            notificacao.innerHTML = `
+                <i class="fas fa-${tipo === 'erro' ? 'exclamation-circle' : tipo === 'sucesso' ? 'check-circle' : 'info-circle'}"></i>
+                <span>${mensagem}</span>
+            `;
+            
+            document.body.appendChild(notificacao);
+            
+            // Remover após 3 segundos
+            setTimeout(() => {
+                if (notificacao.parentElement) {
+                    notificacao.remove();
+                }
+            }, 3000);
+        }
 
-    // Adicionar animação CSS
-    if (!document.querySelector('#animacao-notificacao')) {
-        const style = document.createElement('style');
-        style.id = 'animacao-notificacao';
-        style.textContent = `
-            @keyframes slideIn {
-                from {
-                    transform: translateX(100%);
-                    opacity: 0;
+        // Adicionar animação CSS
+        if (!document.querySelector('#animacao-notificacao')) {
+            const style = document.createElement('style');
+            style.id = 'animacao-notificacao';
+            style.textContent = `
+                @keyframes slideIn {
+                    from {
+                        transform: translateX(100%);
+                        opacity: 0;
+                    }
+                    to {
+                        transform: translateX(0);
+                        opacity: 1;
+                    }
                 }
-                to {
-                    transform: translateX(0);
-                    opacity: 1;
-                }
-            }
-        `;
-        document.head.appendChild(style);
-    }
+            `;
+            document.head.appendChild(style);
+        }
         
         function editarPlano(id) {
             alert(`Editar plano ${id} (Funcionalidade em desenvolvimento)`);

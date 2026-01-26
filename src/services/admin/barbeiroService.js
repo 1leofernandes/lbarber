@@ -1,12 +1,11 @@
 const Barbeiro = require('../../models/Barber');
 const Usuario = require('../../models/User');
-const Agendamento = require('../../models/Appointment');
 const bcrypt = require('bcrypt');
 
 class BarbeiroService {
     async getAllBarbeiros(ativosOnly = true) {
         try {
-            const barbeiros = await Barbeiro.findAll(ativosOnly);
+            const barbeiros = await Barbeiro.findAll();
             
             // Adicionar estatísticas para cada barbeiro
             const barbeirosComEstatisticas = await Promise.all(
@@ -107,7 +106,7 @@ class BarbeiroService {
             }
             
             // Verificar se já é barbeiro
-            if (usuario.role && usuario.role.includes('barbeiro')) {
+            if (usuario.role === 'barbeiro') {
                 throw new Error('Usuário já é barbeiro');
             }
             
@@ -159,7 +158,7 @@ class BarbeiroService {
     }
 
     async validarBarbeiro(barbeiroData, isUpdate = false) {
-        const { nome, email, telefone} = barbeiroData;
+        const { nome, email, telefone, senha } = barbeiroData;
         
         if (!isUpdate || nome !== undefined) {
             if (!nome || nome.trim().length < 3) {
@@ -174,9 +173,17 @@ class BarbeiroService {
         }
         
         if (!isUpdate || telefone !== undefined) {
-            if (!telefone || !/^\(\d{2}\) \d{5}-\d{4}$/.test(telefone)) {
+            if (telefone && !/^\(\d{2}\) \d{5}-\d{4}$/.test(telefone)) {
                 throw new Error('Telefone inválido. Use o formato (99) 99999-9999');
             }
+        }
+        
+        if (!isUpdate && !senha) {
+            throw new Error('Senha é obrigatória');
+        }
+        
+        if (senha && senha.length < 6) {
+            throw new Error('Senha deve ter pelo menos 6 caracteres');
         }
         
         return true;
@@ -190,6 +197,7 @@ class BarbeiroService {
                 FROM agendamentos
                 WHERE barbeiro_id = $1
                 AND data_agendada >= $2
+                AND status != 'cancelado'
             `;
             
             const pool = require('../../config/database');
@@ -204,25 +212,17 @@ class BarbeiroService {
 
     async getEstatisticasBarbeiro(barbeiro_id) {
         try {
-            const hoje = new Date().toISOString().split('T')[0];
-            
-            const [
-                agendamentosHoje,
-                agendamentosMes,
-                receitaMes,
-                avaliacaoMedia
-            ] = await Promise.all([
+            const [agendamentosHoje, agendamentosMes, receitaMes] = await Promise.all([
                 Barbeiro.getAgendamentosHoje(barbeiro_id),
-                this.getAgendamentosMes(barbeiro_id),
-                this.getReceitaMes(barbeiro_id),
-                this.getAvaliacaoMedia(barbeiro_id)
+                Barbeiro.getAgendamentosMes(barbeiro_id),
+                this.getReceitaMes(barbeiro_id)
             ]);
             
             return {
-                agendamentosHoje,
-                agendamentosMes,
-                receitaMes,
-                avaliacaoMedia
+                agendamentosHoje: agendamentosHoje || 0,
+                agendamentosMes: agendamentosMes || 0,
+                receitaMes: receitaMes || 0,
+                status: 'ativo' // Sempre ativo por enquanto
             };
         } catch (error) {
             console.error('Erro ao buscar estatísticas do barbeiro:', error);
@@ -230,35 +230,8 @@ class BarbeiroService {
                 agendamentosHoje: 0,
                 agendamentosMes: 0,
                 receitaMes: 0,
-                avaliacaoMedia: 0
+                status: 'ativo'
             };
-        }
-    }
-
-    async getAgendamentosMes(barbeiro_id) {
-        try {
-            const hoje = new Date();
-            const primeiroDiaMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
-            const ultimoDiaMes = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0);
-            
-            const query = `
-                SELECT COUNT(*) as total
-                FROM agendamentos
-                WHERE barbeiro_id = $1
-                AND data_agendada BETWEEN $2 AND $3
-            `;
-            
-            const pool = require('../../config/database');
-            const result = await pool.query(query, [
-                barbeiro_id,
-                primeiroDiaMes.toISOString().split('T')[0],
-                ultimoDiaMes.toISOString().split('T')[0]
-            ]);
-            
-            return parseInt(result.rows[0].total);
-        } catch (error) {
-            console.error('Erro ao contar agendamentos do mês:', error);
-            return 0;
         }
     }
 
@@ -291,32 +264,12 @@ class BarbeiroService {
         }
     }
 
-    // async getAvaliacaoMedia(barbeiro_id) {
-    //     try {
-    //         const query = `
-    //             SELECT COALESCE(AVG(avaliacao), 0) as media
-    //             FROM avaliacoes
-    //             WHERE barbeiro_id = $1
-    //         `;
-            
-    //         const pool = require('../../config/database');
-    //         const result = await pool.query(query, [barbeiro_id]);
-            
-    //         return parseFloat(result.rows[0].media);
-    //     } catch (error) {
-    //         console.error('Erro ao buscar avaliação média:', error);
-    //         return 0;
-    //     }
-    // }
-
     async getClientesParaPromover() {
         try {
             const query = `
                 SELECT id, nome, email, telefone, created_at
                 FROM usuarios
-                WHERE 'cliente' = ANY(role)
-                AND NOT 'barbeiro' = ANY(role)
-                AND NOT 'admin' = ANY(roles)
+                WHERE role = 'cliente'
                 ORDER BY nome ASC
             `;
             

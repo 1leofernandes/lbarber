@@ -435,7 +435,7 @@ class AdminAgendamentoService {
             const query = `
                 SELECT id, nome 
                 FROM usuarios 
-                WHERE role = 'barbeiro' OR 'barbeiro' = ANY(roles)
+                WHERE role = 'barbeiro' OR 'barbeiro' = ANY(role)
                 ORDER BY nome ASC
             `;
             

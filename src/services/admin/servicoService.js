@@ -72,10 +72,10 @@ class ServicoService {
             }
             
             // Verificar se o serviço está sendo usado em agendamentos futuros
-            const temAgendamentos = await this.verificarAgendamentosFuturos(id);
-            if (temAgendamentos) {
-                throw new Error('Não é possível excluir este serviço pois existem agendamentos futuros vinculados a ele');
-            }
+            // const temAgendamentos = await this.verificarAgendamentosFuturos(id);
+            // if (temAgendamentos) {
+            //     throw new Error('Não é possível excluir este serviço pois existem agendamentos futuros vinculados a ele');
+            // }
             
             return await Servico.delete(id);
         } catch (error) {

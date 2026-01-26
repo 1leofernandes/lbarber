@@ -1568,6 +1568,89 @@
                 }
             }
         }
+
+        // Handler para o formulário de serviço
+        async function handleNovoServico(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            const servicoData = {
+                nome_servico: formData.get('nome_servico'),
+                duracao_servico: parseInt(formData.get('duracao_servico')),
+                valor_servico: parseFloat(formData.get('valor_servico')),
+                descricao: formData.get('descricao')
+            };
+            
+            // Coletar planos selecionados
+            const planosSelecionados = Array.from(
+                document.querySelectorAll('#planos-container input[name="assinaturas"]:checked')
+            ).map(cb => parseInt(cb.value));
+            
+            if (planosSelecionados.length > 0) {
+                servicoData.assinatura_ids = planosSelecionados;
+            }
+            
+            // Validações básicas
+            if (!servicoData.nome_servico || servicoData.nome_servico.length < 3) {
+                alert('Nome do serviço deve ter pelo menos 3 caracteres');
+                return;
+            }
+            
+            if (servicoData.duracao_servico < 15 || servicoData.duracao_servico % 15 !== 0) {
+                alert('Duração deve ser múltiplo de 15 minutos e no mínimo 15 minutos');
+                return;
+            }
+            
+            if (servicoData.valor_servico < 0) {
+                alert('Valor não pode ser negativo');
+                return;
+            }
+            
+            // Desabilitar botão para evitar duplo clique
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
+            }
+            
+            try {
+                const token = localStorage.getItem('token');
+                const servicoId = formData.get('servico_id');
+                const metodo = servicoId ? 'PUT' : 'POST';
+                const url = servicoId 
+                    ? `${API_BASE_URL}/admin/servicos/${servicoId}`
+                    : `${API_BASE_URL}/admin/servicos`;
+                
+                const response = await fetch(url, {
+                    method: metodo,
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(servicoData)
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    alert(result.message || 'Serviço salvo com sucesso!');
+                    closeModal('novo-servico');
+                    
+                    // Recarregar lista de serviços
+                    await carregarServicos();
+                } else {
+                    const error = await response.json();
+                    alert(error.message || 'Erro ao salvar serviço');
+                }
+            } catch (error) {
+                console.error('Erro:', error);
+                alert('Erro ao salvar serviço');
+            } finally {
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '<i class="fas fa-save"></i> Salvar Serviço';
+                }
+            }
+        }
         
         // Configurar eventos
         function setupEventListeners() {
@@ -4430,14 +4513,20 @@
             // Limpar formulário
             setTimeout(() => {
                 const form = document.getElementById('form-novo-servico');
-                if (form) form.reset();
-                
-                // Remover campo hidden de ID se existir
-                const idInput = form.querySelector('input[name="servico_id"]');
-                if (idInput) idInput.remove();
-                
-                // Carregar planos de assinatura para o select
-                carregarPlanosParaServico();
+                if (form) {
+                    form.reset();
+                    
+                    // Remover campo hidden de ID se existir
+                    const idInput = form.querySelector('input[name="servico_id"]');
+                    if (idInput) idInput.remove();
+                    
+                    // Limpar checkboxes de planos
+                    const checkboxes = document.querySelectorAll('#planos-container input[name="assinaturas"]');
+                    checkboxes.forEach(cb => cb.checked = false);
+                    
+                    // Carregar planos de assinatura para o select
+                    carregarPlanosParaServico();
+                }
             }, 100);
         }
 
@@ -4448,17 +4537,62 @@
                 if (!container) return;
                 
                 const token = localStorage.getItem('token');
-                const response = await fetch(`${API_BASE_URL}/assinatura`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
                 
-                if (response.ok) {
-                    const result = await response.json();
-                    // A resposta pode estar em result.data ou result.assinaturas
-                    const planos = result.data || result.assinaturas || [];
+                // TENTAR diferentes rotas de assinatura
+                let planos = [];
+                let erro = null;
+                
+                try {
+                    // Primeiro, tentar a rota padrão
+                    const response = await fetch(`${API_BASE_URL}/assinatura`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
                     
-                    // Criar checkboxes para seleção múltipla
-                    container.innerHTML = planos.map(plano => `
+                    if (response.ok) {
+                        const result = await response.json();
+                        // A resposta pode estar em result.data ou result.assinaturas ou ser o array direto
+                        planos = result.data || result.assinaturas || result || [];
+                    } else {
+                        throw new Error('Rota /assinatura não encontrada');
+                    }
+                } catch (error) {
+                    console.log('Tentando rota alternativa...');
+                    erro = error;
+                    
+                    // Tentar rota alternativa
+                    try {
+                        const response2 = await fetch(`${API_BASE_URL}/admin/assinaturas`, {
+                            headers: { 'Authorization': `Bearer ${token}` }
+                        });
+                        
+                        if (response2.ok) {
+                            const result2 = await response2.json();
+                            planos = result2.data || result2.assinaturas || result2 || [];
+                            erro = null;
+                        }
+                    } catch (error2) {
+                        console.error('Erro na rota alternativa:', error2);
+                    }
+                }
+                
+                // Se não conseguir carregar planos, mostrar mensagem amigável
+                if (erro || !planos || planos.length === 0) {
+                    container.innerHTML = `
+                        <div style="color: #666; text-align: center; padding: 20px;">
+                            <i class="fas fa-info-circle"></i>
+                            <p>Não foi possível carregar os planos de assinatura.</p>
+                            <p style="font-size: 0.9em;">Você pode criar o serviço sem vincular a planos.</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                // Criar checkboxes para seleção múltipla
+                container.innerHTML = planos.map(plano => {
+                    const planoNome = plano.nome || `Plano ${plano.id}`;
+                    const planoValor = parseFloat(plano.valor || plano.valor_mensal || 0).toFixed(2);
+                    
+                    return `
                         <div style="display: flex; align-items: center; padding: 8px; border-bottom: 1px solid #f0f0f0; transition: background 0.2s;" 
                             onmouseover="this.style.background='#f8f9fa'" 
                             onmouseout="this.style.background=''">
@@ -4466,21 +4600,26 @@
                                 id="plano-cb-${plano.id}" 
                                 style="margin-right: 10px; cursor: pointer;">
                             <label for="plano-cb-${plano.id}" style="flex: 1; cursor: pointer;">
-                                <div><strong>${plano.nome || `Plano ${plano.id}`}</strong></div>
+                                <div><strong>${planoNome}</strong></div>
                                 <div style="font-size: 0.9em; color: #666;">
-                                    R$ ${parseFloat(plano.valor || 0).toFixed(2)}/mês
+                                    R$ ${planoValor}/mês
                                 </div>
                             </label>
                         </div>
-                    `).join('');
-                } else {
-                    container.innerHTML = '<div style="color: #dc3545; text-align: center; padding: 20px;">Erro ao carregar planos</div>';
-                }
+                    `;
+                }).join('');
+                
             } catch (error) {
                 console.error('Erro ao carregar planos:', error);
                 const container = document.getElementById('planos-container');
                 if (container) {
-                    container.innerHTML = '<div style="color: #dc3545; text-align: center; padding: 20px;">Erro ao carregar planos</div>';
+                    container.innerHTML = `
+                        <div style="color: #666; text-align: center; padding: 20px;">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <p>Erro ao carregar planos.</p>
+                            <p style="font-size: 0.9em;">Você pode criar o serviço sem vincular a planos.</p>
+                        </div>
+                    `;
                 }
             }
         }
@@ -4503,8 +4642,14 @@
                     setTimeout(() => {
                         const form = document.getElementById('form-novo-servico');
                         if (form) {
-                            // Resetar form
+                            // Primeiro, limpar o formulário
                             form.reset();
+                            
+                            // Remover campo hidden antigo se existir
+                            const idInputExistente = form.querySelector('input[name="servico_id"]');
+                            if (idInputExistente) {
+                                idInputExistente.remove();
+                            }
                             
                             // Adicionar campo hidden para ID
                             const idInput = document.createElement('input');
@@ -4514,18 +4659,20 @@
                             form.appendChild(idInput);
                             
                             // Preencher campos
-                            document.getElementById('servico-nome').value = servico.nome_servico;
-                            document.getElementById('servico-duracao').value = servico.duracao_servico;
-                            document.getElementById('servico-valor').value = servico.valor_servico;
+                            document.getElementById('servico-nome').value = servico.nome_servico || '';
+                            document.getElementById('servico-duracao').value = servico.duracao_servico || 30;
+                            document.getElementById('servico-valor').value = servico.valor_servico || 0;
                             document.getElementById('servico-descricao').value = servico.descricao || '';
                             
                             // Carregar planos e selecionar os vinculados
                             carregarPlanosParaServico().then(() => {
                                 if (servico.assinatura_ids && Array.isArray(servico.assinatura_ids)) {
-                                    const checkboxes = document.querySelectorAll('input[name="assinaturas"]');
-                                    checkboxes.forEach(cb => {
-                                        cb.checked = servico.assinatura_ids.includes(parseInt(cb.value));
-                                    });
+                                    setTimeout(() => {
+                                        const checkboxes = document.querySelectorAll('#planos-container input[name="assinaturas"]');
+                                        checkboxes.forEach(cb => {
+                                            cb.checked = servico.assinatura_ids.includes(parseInt(cb.value));
+                                        });
+                                    }, 300);
                                 }
                             });
                         }

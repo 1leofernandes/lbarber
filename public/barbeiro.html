@@ -56,7 +56,8 @@
         
         .logo-img {
             height: 42px;
-            filter: drop-shadow(0 0 4px rgba(212, 175, 55, 0.3));
+            filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.767));
+            border-radius: 8px;
         }
         
         .logo-text {
@@ -318,7 +319,7 @@
     <!-- Header/Navbar -->
     <nav class="navbar">
         <div class="logo-container">
-            <img src="assets/lbarberlogo.png" alt="LBarber Logo" class="logo-img">
+            <img src="assets/image0 (1).jpeg" alt="LBarber Logo" class="logo-img">
             <div class="logo-text">Barbearia Silva</div>
         </div>
         
@@ -403,38 +404,18 @@
         let barbeiroId;
 
         // Função para validar se o usuário tem acesso
-        async function validarUsuario() {
-            const token = localStorage.getItem('token');
-            if (!token) {
-                alert('Você não está logado. Redirecionando para o login...');
-                window.location.href = '/login.html';
-                return;
-            }
-
-            try {
-                const res = await fetch(`${API_BASE_URL}/user-info`, {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
-
-                if (!res.ok) throw new Error('Erro ao validar usuário.');
-
-                const data = await res.json();
-                if (data.role !== 'barbeiro') {
-                    alert('Acesso negado. Somente barbeiros podem acessar esta página.');
-                    window.location.href = 'login.html';
-                    return;
-                }
-
-                document.getElementById('nomeUsuario').textContent = `Olá, ${data.nome || 'Barbeiro'}`;
-                barbeiroId = data.id;
-                carregarAgendamentos();
-                carregarBloqueios();
-            } catch (error) {
-                console.error('Erro na validação de usuário:', error);
-                alert('Erro na autenticação. Tente novamente.');
-                window.location.href = 'login.html';
-            }
+        const userData = parseJwt(token);
+        if (!userData.role || !userData.role.includes('barbeiro')) {
+            window.location.href = 'cliente-home.html';
+            return;
         }
+            
+        state.user = userData;
+        updateUserInfo();
+        setupEventListeners();
+        loadDashboardStats();
+        loadRecentAgendamentos();
+        setupModals();
 
         // Função para carregar agendamentos
         async function carregarAgendamentos() {

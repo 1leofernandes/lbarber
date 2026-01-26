@@ -4732,10 +4732,10 @@
                 return;
             }
             
-            if (barbeiroData.telefone && !/^\(\d{2}\) \d{5}-\d{4}$/.test(barbeiroData.telefone)) {
-                mostrarNotificacao('Telefone inválido. Use o formato (99) 99999-9999', 'erro');
-                return;
-            }
+            // if (barbeiroData.telefone && !/^\(\d{2}\) \d{5}-\d{4}$/.test(barbeiroData.telefone)) {
+            //     mostrarNotificacao('Telefone inválido. Use o formato (99) 99999-9999', 'erro');
+            //     return;
+            // }
             
             if (barbeiroData.senha.length < 6) {
                 mostrarNotificacao('Senha deve ter pelo menos 6 caracteres', 'erro');

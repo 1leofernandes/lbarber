@@ -1120,6 +1120,7 @@
             </div>
             
             <!-- Páginas serão carregadas dinamicamente -->
+             <div id="page-inicio" class="page-content"></div>
             <div id="page-dashboard" class="page-content"></div>
             <div id="page-agendamentos" class="page-content"></div>
             <div id="page-bloqueios" class="page-content"></div>
@@ -1758,6 +1759,9 @@
         // Carregar conteúdo da página
         async function loadPageContent(page) {
             switch(page) {
+                case 'inicio':
+                    loadInicioPage();
+                    break;
                 case 'dashboard':
                     loadDashboardPage();
                     break;
@@ -2266,7 +2270,143 @@
         }
         
         // ============ FUNÇÕES DE PÁGINAS ============
-        
+        async function loadInicioPage() {
+            const page = document.getElementById('page-inicio');
+            page.innerHTML = `<div id="page-inicio" class="page-content active">
+                <div class="welcome-section">
+                    <h1 class="welcome-title" id="welcomeTitle">Bem-vindo, Admin</h1>
+                    <p class="welcome-subtitle">Gerencie sua barbearia de forma eficiente</p>
+                </div>
+                
+                <div class="admin-cards">
+                    <div class="admin-card fade-in" onclick="navigateToPage('dashboard')">
+                        <div class="admin-card-header">
+                            <div class="admin-card-icon">
+                                <i class="fas fa-chart-pie"></i>
+                            </div>
+                            <div class="admin-card-title">Dashboard Financeiro</div>
+                        </div>
+                        <div class="admin-card-content">
+                            Visualize métricas financeiras, acompanhe receitas, despesas e crescimento do seu negócio.
+                        </div>
+                        <div class="admin-card-stats">
+                            <div class="stat-item">
+                                <span class="stat-value" id="total-receita">R$ 0,00</span>
+                                <span class="stat-label">Receita Total</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-value" id="agendamentos-hoje">0</span>
+                                <span class="stat-label">Hoje</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="admin-card fade-in" onclick="navigateToPage('servicos')">
+                        <div class="admin-card-header">
+                            <div class="admin-card-icon">
+                                <i class="fas fa-cut"></i>
+                            </div>
+                            <div class="admin-card-title">Serviços</div>
+                        </div>
+                        <div class="admin-card-content">
+                            Gerencie todos os serviços oferecidos, preços, durações e associações com planos de assinatura.
+                        </div>
+                        <div class="admin-card-stats">
+                            <div class="stat-item">
+                                <span class="stat-value" id="total-servicos">0</span>
+                                <span class="stat-label">Serviços Ativos</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-value" id="servicos-populares">0</span>
+                                <span class="stat-label">Mais Populares</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="admin-card fade-in" onclick="navigateToPage('assinaturas')">
+                        <div class="admin-card-header">
+                            <div class="admin-card-icon">
+                                <i class="fas fa-crown"></i>
+                            </div>
+                            <div class="admin-card-title">Assinaturas</div>
+                        </div>
+                        <div class="admin-card-content">
+                            Controle planos de assinatura, cobre valores recorrentes e gerencie benefícios para clientes.
+                        </div>
+                        <div class="admin-card-stats">
+                            <div class="stat-item">
+                                <span class="stat-value" id="total-assinantes">0</span>
+                                <span class="stat-label">Assinantes</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-value" id="receita-mensal">R$ 0,00</span>
+                                <span class="stat-label">Receita Mensal</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="quick-actions fade-in">
+                    <h2 class="section-title">
+                        <i class="fas fa-bolt"></i>
+                        Ações Rápidas
+                    </h2>
+                    <div class="actions-grid">
+                        <a class="action-btn" href="./agendamento.html" target="_blank">
+                            <div class="action-icon">
+                                <i class="fas fa-calendar-plus"></i>
+                            </div>
+                            <span class="action-text">Novo Agendamento</span>
+                        </a>
+                        <button class="action-btn" onclick="navigateToPage('servicos')">
+                            <div class="action-icon">
+                                <i class="fas fa-plus-circle"></i>
+                            </div>
+                            <span class="action-text">Criar Serviço</span>
+                        </button>
+                        <button class="action-btn" onclick="navigateToPage('barbeiros')">
+                            <div class="action-icon">
+                                <i class="fas fa-user-plus"></i>
+                            </div>
+                            <span class="action-text">Adicionar Barbeiro</span>
+                        </button>
+                        <button class="action-btn" onclick="openModal('novo-bloqueio')">
+                            <div class="action-icon">
+                                <i class="fas fa-calendar-times"></i>
+                            </div>
+                            <span class="action-text">Bloquear Horário</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="table-container fade-in">
+                    <div class="table-header">
+                        <div class="table-title">Agendamentos Recentes</div>
+                        <input type="text" class="table-search" placeholder="Buscar agendamentos...">
+                    </div>
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Cliente</th>
+                                <th>Serviço</th>
+                                <th>Barbeiro</th>
+                                <th>Data/Hora</th>
+                                <th>Status</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recent-agendamentos">
+                            <!-- Dados serão carregados via JavaScript -->
+                            <tr>
+                                <td colspan="6" style="text-align: center; padding: 3rem;">
+                                    <i class="fas fa-spinner fa-spin"></i> Carregando...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>`;
+        }
         async function loadDashboardPage() {
             const page = document.getElementById('page-dashboard');
             page.innerHTML = `

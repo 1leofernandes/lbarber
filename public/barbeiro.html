@@ -1371,7 +1371,6 @@
             state.user = userData;
             updateUserInfo();
             setupEventListeners();
-            loadDashboardStats();
             loadRecentAgendamentos();
             setupModals();
             
@@ -2134,8 +2133,8 @@
             `;
             
             // Carregar dados reais
-            await carregarResumoGeral();
-            await carregarRelatorioServicos();
+            // await carregarResumoGeral();
+            // await carregarRelatorioServicos();
         }
         
         async function loadAgendamentosPage() {

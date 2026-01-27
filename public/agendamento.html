@@ -6,7 +6,6 @@
     <title>Agendar - Barbearia Silva</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/simplebar@latest/dist/simplebar.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
     <style>
         :root {
@@ -152,6 +151,7 @@
             max-width: 800px;
             margin: 0 auto;
             width: 100%;
+            padding-bottom: 100px; /* Espaço para o botão flutuante */
         }
         
         .selection-card {
@@ -311,6 +311,7 @@
             flex: 1;
             overflow-y: auto;
             padding-right: 5px;
+            max-height: 60vh;
         }
         
         /* Options Grid */
@@ -409,12 +410,6 @@
             font-size: 1.2rem;
             font-weight: 600;
             color: var(--light-gray);
-        }
-        
-        .discounted-price {
-            font-size: 1.2rem;
-            font-weight: 600;
-            color: var(--success);
         }
         
         .free-badge {
@@ -608,6 +603,42 @@
             background: rgba(212, 175, 55, 0.1);
         }
         
+        /* Botão Flutuante */
+        .floating-confirm-btn {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(to right, var(--accent-gold), var(--dark-gold));
+            color: var(--primary-dark);
+            border: none;
+            border-radius: 50px;
+            padding: 16px 32px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 10px 30px rgba(212, 175, 55, 0.3);
+            transition: all 0.3s ease;
+            z-index: 99;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            white-space: nowrap;
+            max-width: 90%;
+            min-width: 300px;
+        }
+        
+        .floating-confirm-btn:hover:not(:disabled) {
+            transform: translateX(-50%) translateY(-2px);
+            box-shadow: 0 15px 40px rgba(212, 175, 55, 0.5);
+        }
+        
+        .floating-confirm-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: translateX(-50%);
+        }
+        
         /* Footer */
         .footer {
             background-color: var(--primary-dark);
@@ -671,6 +702,10 @@
             .bottom-sheet.active {
                 transform: translateX(-50%) translateY(0);
             }
+            
+            .floating-confirm-btn {
+                min-width: 400px;
+            }
         }
         
         @media (max-width: 767px) {
@@ -688,6 +723,20 @@
             
             .selection-card {
                 padding: 1.5rem;
+            }
+            
+            .floating-confirm-btn {
+                min-width: 280px;
+                padding: 14px 24px;
+                font-size: 1rem;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .floating-confirm-btn {
+                min-width: 250px;
+                padding: 12px 20px;
+                font-size: 0.95rem;
             }
         }
     </style>
@@ -810,10 +859,6 @@
         </div>
         
         <!-- Action Buttons -->
-        <button class="btn btn-primary" id="confirmBtn" disabled>
-            <i class="fas fa-calendar-check"></i> Confirmar Agendamento
-        </button>
-        
         <button class="btn btn-secondary" onclick="window.location.href='cliente-home.html'">
             <i class="fas fa-times"></i> Cancelar
         </button>
@@ -889,6 +934,11 @@
         </button>
     </div>
     
+    <!-- Botão Flutuante para Confirmar -->
+    <button class="floating-confirm-btn" id="floatingConfirmBtn" disabled>
+        <i class="fas fa-calendar-check"></i> Confirmar Agendamento
+    </button>
+    
     <!-- Footer -->
     <footer class="footer">
         <p>&copy; 2023 Barbearia Silva - Sistema de Agendamento. Todos os direitos reservados.</p>
@@ -907,12 +957,6 @@
             ? 'http://localhost:3000' 
             : 'https://barbeariasilva.onrender.com';
         
-        const HORARIO_FUNCIONAMENTO = {
-            seg_a_sex: { inicio: '08:30', fim: '19:00' },
-            sabado: { inicio: '08:30', fim: '18:30' },
-            domingo: { inicio: null, fim: null }
-        };
-        
         // Estado da aplicação
         let estado = {
             token: localStorage.getItem('token'),
@@ -921,14 +965,15 @@
             barbeiros: [],
             servicos: [],
             selecionados: {
-                barbeiro: null, // null = sem preferência
-                servicos: [], // Array de IDs de serviços
+                barbeiro: null,
+                servicos: [],
                 data: null,
                 horaInicio: null,
                 horaFim: null
             },
             horariosDisponiveis: [],
-            dataSelecionada: null
+            dataSelecionada: null,
+            passoAtual: 1 // 1=barbeiro, 2=servicos, 3=data/hora, 4=confirmar
         };
         
         // Elementos DOM
@@ -978,32 +1023,37 @@
             noSlotsMessage: document.getElementById('noSlotsMessage'),
             
             // Buttons
-            confirmBtn: document.getElementById('confirmBtn'),
+            floatingConfirmBtn: document.getElementById('floatingConfirmBtn'),
             confirmBarbeiroBtn: document.getElementById('confirmBarbeiroBtn'),
             confirmServicosBtn: document.getElementById('confirmServicosBtn'),
             confirmDataHoraBtn: document.getElementById('confirmDataHoraBtn'),
             selectedCount: document.getElementById('selectedCount')
         };
         
-        // Inicialização
-        document.addEventListener('DOMContentLoaded', async () => {
-            // Verificar autenticação
+        // Cache para dados já carregados
+        const cache = {
+            barbeiros: null,
+            servicos: null
+        };
+        
+        // Inicialização otimizada
+        document.addEventListener('DOMContentLoaded', () => {
             if (!estado.token) {
                 window.location.href = 'login.html';
                 return;
             }
             
-            // Carregar dados do usuário
-            await carregarDadosUsuario();
-            
-            // Configurar event listeners
-            configurarEventListeners();
-            
-            // Carregar dados iniciais
-            await carregarDadosIniciais();
-            
-            // Atualizar UI
-            atualizarUI();
+            // Carregar dados de forma assíncrona
+            Promise.all([
+                carregarDadosUsuario(),
+                carregarDadosIniciais()
+            ]).then(() => {
+                configurarEventListeners();
+                atualizarUI();
+            }).catch(error => {
+                console.error('Erro na inicialização:', error);
+                toast('Erro ao carregar dados. Tente novamente.', 'error');
+            });
         });
         
         async function carregarDadosUsuario() {
@@ -1013,24 +1063,15 @@
                 });
 
                 if (response.ok) {
-                    const data = await response.json();
-                    estado.usuario = data;
-
-                    // Proteção: se o campo assinatura_id existir e for truthy, carregar assinatura
+                    estado.usuario = await response.json();
                     if (estado.usuario && estado.usuario.assinatura_id) {
                         await carregarAssinatura(estado.usuario.assinatura_id);
                     }
-                    return;
                 }
-
-                // Se não ok, logue o erro para debug
-                const errBody = await response.text();
-                console.error('Erro ao buscar usuário. Status:', response.status, errBody);
             } catch (error) {
                 console.error('Erro ao carregar dados do usuário:', error);
             }
         }
-
         
         async function carregarAssinatura(assinaturaId) {
             try {
@@ -1039,8 +1080,7 @@
                 });
                 
                 if (response.ok) {
-                    const data = await response.json();
-                    estado.assinatura = data.assinatura;
+                    estado.assinatura = (await response.json()).assinatura;
                 }
             } catch (error) {
                 console.error('Erro ao carregar assinatura:', error);
@@ -1048,6 +1088,7 @@
         }
         
         async function carregarDadosIniciais() {
+            // Carregar barbeiros e serviços em paralelo
             await Promise.all([
                 carregarBarbeiros(),
                 carregarServicos()
@@ -1055,14 +1096,20 @@
         }
         
         async function carregarBarbeiros() {
+            if (cache.barbeiros) {
+                estado.barbeiros = cache.barbeiros;
+                renderizarBarbeiros();
+                return;
+            }
+            
             try {
                 const response = await fetch(`${API_BASE_URL}/barbeiros`, {
                     headers: { 'Authorization': `Bearer ${estado.token}` }
                 });
                 
                 if (response.ok) {
-                    const data = await response.json();
-                    estado.barbeiros = data;
+                    estado.barbeiros = await response.json();
+                    cache.barbeiros = estado.barbeiros;
                     renderizarBarbeiros();
                 }
             } catch (error) {
@@ -1071,14 +1118,20 @@
         }
         
         async function carregarServicos() {
+            if (cache.servicos) {
+                estado.servicos = cache.servicos;
+                renderizarServicos();
+                return;
+            }
+            
             try {
                 const response = await fetch(`${API_BASE_URL}/servicos`, {
                     headers: { 'Authorization': `Bearer ${estado.token}` }
                 });
                 
                 if (response.ok) {
-                    const data = await response.json();
-                    estado.servicos = data;
+                    estado.servicos = await response.json();
+                    cache.servicos = estado.servicos;
                     renderizarServicos();
                 }
             } catch (error) {
@@ -1119,23 +1172,18 @@
         function renderizarServicos() {
             elementos.servicosContent.innerHTML = '';
 
-            // Percorre os serviços do estado; calcula valor por item dentro do loop
             estado.servicos.forEach(servico => {
-                // segurança: garante que valor_servico existe e é número
                 const valorNumerico = parseFloat(servico.valor_servico) || 0;
-
-                const item = document.createElement('div');
-                item.className = `service-item ${estado.selecionados.servicos.includes(servico.id) ? 'selected' : ''}`;
-
-                // Verificar se o serviço está coberto pela assinatura
                 const estaCoberto = estado.assinatura && servico.assinatura_ids &&
-                                    Array.isArray(servico.assinatura_ids) &&
-                                    servico.assinatura_ids.includes(estado.assinatura.id);
+                    Array.isArray(servico.assinatura_ids) &&
+                    servico.assinatura_ids.includes(estado.assinatura.id);
 
                 const precoHtml = estaCoberto
                     ? '<div class="free-badge">INCLUSO</div>'
                     : `<div class="original-price">R$ ${valorNumerico.toFixed(2)}</div>`;
 
+                const item = document.createElement('div');
+                item.className = `service-item ${estado.selecionados.servicos.includes(servico.id) ? 'selected' : ''}`;
                 item.innerHTML = `
                     <div class="service-info">
                         <div class="service-name">${servico.nome_servico}</div>
@@ -1153,19 +1201,6 @@
             atualizarContadorServicos();
         }
         
-        function calcularPrecoServico(servico) {
-            if (!estado.assinatura || !servico.assinatura_ids) {
-                return servico.valor_servico;
-            }
-            
-            // Verificar se a assinatura cobre este serviço
-            if (servico.assinatura_ids.includes(estado.assinatura.id)) {
-                return 0; // Serviço incluso na assinatura
-            }
-            
-            return servico.valor_servico;
-        }
-        
         function toggleServico(servicoId) {
             const index = estado.selecionados.servicos.indexOf(servicoId);
             
@@ -1175,7 +1210,17 @@
                 estado.selecionados.servicos.splice(index, 1);
             }
             
-            renderizarServicos();
+            // Atualizar apenas o item modificado para melhor performance
+            const servicosItems = elementos.servicosContent.querySelectorAll('.service-item');
+            servicosItems.forEach(item => {
+                const servicoNome = item.querySelector('.service-name').textContent;
+                const servico = estado.servicos.find(s => s.nome_servico === servicoNome);
+                if (servico && servico.id === servicoId) {
+                    item.classList.toggle('selected');
+                }
+            });
+            
+            atualizarContadorServicos();
             elementos.confirmServicosBtn.disabled = estado.selecionados.servicos.length === 0;
         }
         
@@ -1185,7 +1230,28 @@
         
         function selecionarBarbeiro(barbeiroId) {
             estado.selecionados.barbeiro = barbeiroId;
-            renderizarBarbeiros();
+            
+            // Atualizar seleção visual
+            const cards = elementos.barbeiroContent.querySelectorAll('.option-card');
+            cards.forEach(card => card.classList.remove('selected'));
+            
+            // Encontrar e selecionar o card correto
+            const targetCard = Array.from(cards).find(card => {
+                const title = card.querySelector('.option-title');
+                if (!title) return false;
+                
+                if (barbeiroId === null) {
+                    return title.textContent === 'Sem preferência';
+                }
+                
+                const barbeiro = estado.barbeiros.find(b => b.id === barbeiroId);
+                return barbeiro && title.textContent === barbeiro.nome;
+            });
+            
+            if (targetCard) {
+                targetCard.classList.add('selected');
+            }
+            
             elementos.confirmBarbeiroBtn.disabled = false;
         }
         
@@ -1196,7 +1262,7 @@
                 if (estado.selecionados.barbeiro !== undefined) {
                     abrirBottomSheet('servicos');
                 } else {
-                    alert('Por favor, selecione um barbeiro primeiro.');
+                    toast('Por favor, selecione um barbeiro primeiro.', 'warning');
                 }
             };
             elementos.dataHoraCard.onclick = () => {
@@ -1204,7 +1270,7 @@
                     abrirBottomSheet('dataHora');
                     gerarDatasCarrossel();
                 } else {
-                    alert('Por favor, selecione pelo menos um serviço.');
+                    toast('Por favor, selecione pelo menos um serviço.', 'warning');
                 }
             };
             
@@ -1220,21 +1286,18 @@
             // Botões de confirmar nos bottom sheets
             elementos.confirmBarbeiroBtn.onclick = () => {
                 confirmarBarbeiro();
-                fecharBottomSheet('barbeiro');
             };
             
             elementos.confirmServicosBtn.onclick = () => {
                 confirmarServicos();
-                fecharBottomSheet('servicos');
             };
             
             elementos.confirmDataHoraBtn.onclick = () => {
                 confirmarDataHora();
-                fecharBottomSheet('dataHora');
             };
             
-            // Botão de confirmar agendamento final
-            elementos.confirmBtn.onclick = confirmarAgendamento;
+            // Botão flutuante de confirmar agendamento
+            elementos.floatingConfirmBtn.onclick = confirmarAgendamento;
             
             // Botões "Alterar" nos cards
             elementos.barbeiroSelected.querySelector('.change-btn').onclick = () => abrirBottomSheet('barbeiro');
@@ -1250,7 +1313,7 @@
             overlay.classList.add('active');
             document.body.style.overflow = 'hidden';
             
-            // Se for dataHora, carregar horários para a data selecionada
+            // Se for dataHora, carregar horários
             if (tipo === 'dataHora' && estado.dataSelecionada) {
                 carregarHorariosDisponiveis(estado.dataSelecionada);
             }
@@ -1281,6 +1344,12 @@
             elementos.servicosCard.classList.add('active');
             elementos.step2.classList.add('active');
             
+            // Fechar bottom sheet atual e abrir o próximo
+            fecharBottomSheet('barbeiro');
+            setTimeout(() => {
+                abrirBottomSheet('servicos');
+            }, 300); // Pequeno delay para transição
+            
             atualizarUI();
         }
         
@@ -1301,30 +1370,35 @@
             elementos.dataHoraCard.classList.add('active');
             elementos.step3.classList.add('active');
             
+            // Fechar bottom sheet atual e abrir o próximo
+            fecharBottomSheet('servicos');
+            setTimeout(() => {
+                abrirBottomSheet('dataHora');
+                gerarDatasCarrossel();
+            }, 300);
+            
             atualizarUI();
         }
         
         function confirmarDataHora() {
             if (!estado.selecionados.data || !estado.selecionados.horaInicio) {
-                alert('Por favor, selecione uma data e horário.');
+                toast('Por favor, selecione uma data e horário.', 'warning');
                 return;
             }
             
-            // VALIDAÇÃO: Verificar se não está agendando no passado
+            // Validação de horário no passado
             const agora = new Date();
             const [ano, mes, dia] = estado.selecionados.data.split('-').map(Number);
             const [horaAgendamento, minutoAgendamento] = estado.selecionados.horaInicio.split(':').map(Number);
             
-            // Criar objeto Date para o horário do agendamento (fuso local)
             const horarioAgendamento = new Date(ano, mes - 1, dia, horaAgendamento, minutoAgendamento, 0);
             
-            // Se o agendamento for no passado
             if (horarioAgendamento < agora) {
-                toast('Não é possível agendar para um horário no passado. Por favor, escolha um horário futuro.', 'error');
+                toast('Não é possível agendar para um horário no passado.', 'error');
                 return;
             }
             
-            // CORREÇÃO: Formatar data no fuso local
+            // Formatar data e hora
             const dataObj = new Date(ano, mes - 1, dia);
             const dataFormatada = dataObj.toLocaleDateString('pt-BR');
             const horaFormatada = `${estado.selecionados.horaInicio} - ${estado.selecionados.horaFim}`;
@@ -1340,6 +1414,9 @@
             // Ativar último step
             elementos.step4.classList.add('active');
             
+            // Fechar bottom sheet
+            fecharBottomSheet('dataHora');
+            
             atualizarUI();
         }
         
@@ -1347,27 +1424,21 @@
             elementos.dateCarousel.innerHTML = '';
             
             const hoje = new Date();
-            hoje.setHours(0, 0, 0, 0); // Zerar horas para comparar apenas a data
+            hoje.setHours(0, 0, 0, 0);
             
-            // Gerar próximos 7 dias (começando de HOJE)
+            // Gerar próximos 7 dias
             for (let i = 0; i < 7; i++) {
                 const data = new Date(hoje);
                 data.setDate(hoje.getDate() + i);
                 
-                // Pular datas passadas (nunca deve acontecer com i >= 0, mas por segurança)
-                if (data < hoje && i === 0) {
-                    continue; // Garante que não mostre datas passadas
-                }
-                
+                // Formatar data
                 const diaSemana = data.toLocaleDateString('pt-BR', { weekday: 'short' });
                 const dia = data.getDate();
                 const mes = data.toLocaleDateString('pt-BR', { month: 'short' });
-                
-                // CORREÇÃO: Usar formato YYYY-MM-DD sem conversão UTC
                 const ano = data.getFullYear();
                 const mesNum = String(data.getMonth() + 1).padStart(2, '0');
                 const diaNum = String(data.getDate()).padStart(2, '0');
-                const dataISO = `${ano}-${mesNum}-${diaNum}`; // Formato local, não UTC
+                const dataISO = `${ano}-${mesNum}-${diaNum}`;
                 
                 const dateCard = document.createElement('div');
                 dateCard.className = `date-card ${estado.dataSelecionada === dataISO ? 'selected' : ''}`;
@@ -1381,7 +1452,7 @@
                 elementos.dateCarousel.appendChild(dateCard);
             }
             
-            // Selecionar primeira data por padrão (HOJE)
+            // Selecionar primeira data por padrão
             if (!estado.dataSelecionada) {
                 const primeiraData = new Date(hoje);
                 const ano = primeiraData.getFullYear();
@@ -1407,18 +1478,17 @@
             estado.dataSelecionada = dataISO;
             estado.selecionados.data = dataISO;
             
-            // CORREÇÃO: Criar data no fuso horário local
+            // Formatar data para exibição
             const [ano, mes, dia] = dataISO.split('-').map(Number);
-            const dataObj = new Date(ano, mes - 1, dia); // mês é 0-indexed
+            const dataObj = new Date(ano, mes - 1, dia);
             
-            // Atualizar texto da data selecionada (usando fuso local)
             elementos.selectedDateText.textContent = dataObj.toLocaleDateString('pt-BR', {
                 weekday: 'long',
                 day: 'numeric',
                 month: 'long'
             });
             
-            // Carregar horários disponíveis para esta data
+            // Carregar horários disponíveis
             await carregarHorariosDisponiveis(dataISO);
             
             // Habilitar botão de confirmar se já tiver horário selecionado
@@ -1430,25 +1500,21 @@
                 elementos.timeSlotsGrid.innerHTML = '<div class="loading" style="margin: 2rem auto;"></div>';
                 elementos.noSlotsMessage.style.display = 'none';
                 
-                // Calcular duração total dos serviços selecionados
+                // Calcular duração total
                 const duracaoTotal = estado.servicos
                     .filter(s => estado.selecionados.servicos.includes(s.id))
                     .reduce((total, servico) => total + (servico.duracao_servico || 30), 0);
                 
-                // Construir URL da API - IMPORTANTE: mudar para rota correta
+                // Construir URL
                 let url = `${API_BASE_URL}/agendamentos/horarios-disponiveis?data=${dataISO}&duracao=${duracaoTotal}`;
                 
-                // Adicionar barbeiro se selecionado
                 if (estado.selecionados.barbeiro !== null) {
                     url += `&barbeiro_id=${estado.selecionados.barbeiro}`;
                 }
                 
-                // Adicionar serviços selecionados para cálculo de duração
                 if (estado.selecionados.servicos.length > 0) {
                     url += `&servicos_ids=${estado.selecionados.servicos.join(',')}`;
                 }
-                
-                console.log('URL da requisição:', url);
                 
                 const response = await fetch(url, {
                     headers: { 'Authorization': `Bearer ${estado.token}` }
@@ -1456,19 +1522,16 @@
                 
                 if (response.ok) {
                     let horarios = await response.json();
-                    console.log('Horários recebidos:', horarios);
                     
-                    // FILTRAR HORÁRIOS PASSADOS se for HOJE
+                    // Filtrar horários passados se for hoje
                     const agora = new Date();
                     const [ano, mes, dia] = dataISO.split('-').map(Number);
                     const dataSelecionada = new Date(ano, mes - 1, dia);
                     
-                    // Verificar se é hoje (comparando apenas dia, mês e ano)
                     const hoje = new Date();
                     hoje.setHours(0, 0, 0, 0);
                     dataSelecionada.setHours(0, 0, 0, 0);
                     
-                    // Se for hoje, remover horários que já passaram
                     if (dataSelecionada.getTime() === hoje.getTime()) {
                         const horaAtual = agora.getHours();
                         const minutoAtual = agora.getMinutes();
@@ -1476,7 +1539,6 @@
                         horarios = horarios.filter(horario => {
                             const [hora, minuto] = horario.inicio.split(':').map(Number);
                             
-                            // Verificar se o horário ainda não passou
                             if (hora < horaAtual) return false;
                             if (hora === horaAtual && minuto <= minutoAtual) return false;
                             
@@ -1487,19 +1549,12 @@
                     estado.horariosDisponiveis = horarios;
                     renderizarHorarios(horarios, duracaoTotal);
                 } else {
-                    const error = await response.text();
-                    console.error('Erro na resposta:', error);
                     throw new Error('Erro ao buscar horários');
                 }
             } catch (error) {
                 console.error('Erro ao carregar horários:', error);
                 elementos.timeSlotsGrid.innerHTML = '';
                 elementos.noSlotsMessage.style.display = 'block';
-                elementos.noSlotsMessage.innerHTML = `
-                    <i class="fas fa-calendar-times" style="font-size: 3rem; margin-bottom: 1rem;"></i>
-                    <p>Não foi possível carregar os horários disponíveis.</p>
-                    <p style="font-size: 0.9rem;">Verifique sua conexão ou tente novamente.</p>
-                `;
             }
         }
         
@@ -1530,7 +1585,7 @@
             const dataSelecionada = new Date(estado.dataSelecionada);
             const [hora, minutos] = horario.inicio.split(':').map(Number);
             
-            // VALIDAÇÃO: Verificar se não está agendando no passado
+            // Validação de horário no passado
             const hoje = new Date();
             hoje.setHours(0, 0, 0, 0);
             dataSelecionada.setHours(0, 0, 0, 0);
@@ -1540,7 +1595,7 @@
                 const minutoAtual = agora.getMinutes();
                 
                 if (hora < horaAtual || (hora === horaAtual && minutos < minutoAtual)) {
-                    toast('Este horário já passou. Por favor, escolha um horário futuro.', 'warning');
+                    toast('Este horário já passou.', 'warning');
                     return;
                 }
             }
@@ -1572,13 +1627,13 @@
             // Atualizar resumo financeiro
             atualizarResumoFinanceiro();
             
-            // Verificar se pode habilitar botão de confirmar
+            // Verificar se pode habilitar botão flutuante
             const podeConfirmar = estado.selecionados.barbeiro !== undefined &&
                                 estado.selecionados.servicos.length > 0 &&
                                 estado.selecionados.data &&
                                 estado.selecionados.horaInicio;
             
-            elementos.confirmBtn.disabled = !podeConfirmar;
+            elementos.floatingConfirmBtn.disabled = !podeConfirmar;
         }
         
         function atualizarResumoFinanceiro() {
@@ -1589,7 +1644,7 @@
             estado.selecionados.servicos.forEach(servicoId => {
                 const servico = estado.servicos.find(s => s.id === servicoId);
                 if (servico) {
-                    const precoServico = servico.valor_servico;
+                    const precoServico = parseFloat(servico.valor_servico) || 0;
                     const precoFinal = calcularPrecoServico(servico);
                     
                     subtotal += precoServico;
@@ -1610,9 +1665,21 @@
             }
         }
         
+        function calcularPrecoServico(servico) {
+            if (!estado.assinatura || !servico.assinatura_ids) {
+                return parseFloat(servico.valor_servico) || 0;
+            }
+            
+            if (servico.assinatura_ids.includes(estado.assinatura.id)) {
+                return 0;
+            }
+            
+            return parseFloat(servico.valor_servico) || 0;
+        }
+        
         async function confirmarAgendamento() {
-            // Validações básicas
-            if (!estado.selecionados.data || !estado.selecionados.horaInicio || !estado.selecionados.horaFim) {
+            // Validações
+            if (!estado.selecionados.data || !estado.selecionados.horaInicio) {
                 toast('Selecione uma data e horário válidos.', 'warning');
                 return;
             }
@@ -1621,21 +1688,6 @@
                 toast('Selecione pelo menos um serviço.', 'warning');
                 return;
             }
-
-            // VALIDAÇÃO FINAL: Verificar se não está agendando no passado
-            // const agora = new Date();
-            // const dataAgendamento = new Date(estado.selecionados.data);
-            // const [horaAgendamento, minutoAgendamento] = estado.selecionados.horaInicio.split(':').map(Number);
-            
-            // Criar objeto Date para o horário do agendamento
-            // const horarioAgendamento = new Date(dataAgendamento);
-            // horarioAgendamento.setHours(horaAgendamento, minutoAgendamento, 0, 0);
-            
-            // // Se o agendamento for no passado
-            // if (horarioAgendamento < agora) {
-            //     toast('Não é possível agendar para um horário no passado. Por favor, escolha um horário futuro.', 'error');
-            //     return;
-            // }
 
             // Toast de carregamento
             const loadingToast = Toastify({
@@ -1651,7 +1703,6 @@
             loadingToast.showToast();
 
             try {
-                // Enviar TODOS os serviços em uma única requisição
                 const response = await fetch(`${API_BASE_URL}/agendamentos`, {
                     method: 'POST',
                     headers: {
@@ -1660,7 +1711,7 @@
                     },
                     body: JSON.stringify({
                         barbeiro_id: estado.selecionados.barbeiro,
-                        servicos_ids: estado.selecionados.servicos, // ARRAY de IDs
+                        servicos_ids: estado.selecionados.servicos,
                         data_agendada: estado.selecionados.data,
                         hora_inicio: estado.selecionados.horaInicio,
                         hora_fim: estado.selecionados.horaFim
@@ -1675,29 +1726,16 @@
                 loadingToast.hideToast();
                 toast('Agendamento realizado com sucesso!', 'success');
 
-                // Redirecionamento suave
+                // Redirecionar após 2 segundos
                 setTimeout(() => {
                     window.location.href = 'cliente-home.html';
-                }, 1800);
+                }, 2000);
 
             } catch (error) {
                 loadingToast.hideToast();
                 console.error(error);
                 toast(error.message || 'Erro ao realizar agendamento.', 'error');
             }
-        }
-
-        
-        // Helper functions
-        function parseJwt(token) {
-            const base64Url = token.split('.')[1];
-            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-            return JSON.parse(atob(base64));
-        }
-        
-        function showNotification(message, type = 'success') {
-            // Implemente notificações Toastify se quiser
-            alert(message);
         }
 
         function toast(message, type = 'success') {
@@ -1723,7 +1761,6 @@
                 }
             }).showToast();
         }
-
     </script>
 </body>
 </html>

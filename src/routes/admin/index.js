@@ -17,16 +17,20 @@ const barbeiroRoutes = require('./barbeiroRoutes');
 const { authenticateToken } = require('../../middlewares/auth');
 const adminMiddleware = require('../../middlewares/adminMiddleware');
 
-// Aplicar middleware de autenticação e admin em TODAS as rotas admin
 router.use(authenticateToken);
-router.use(adminMiddleware);
 
-// Montar rotas
-router.use('/dashboard', dashboardRoutes);
+
 router.use('/agendamentos', agendamentoRoutes);
 router.use('/bloqueios', bloqueioRoutes);
 router.use('/servicos', servicoRoutes);
 router.use('/barbeiros', barbeiroRoutes);
+
+
+// Aplicar middleware de autenticação e admin em TODAS as rotas admin
+router.use(adminMiddleware);
+
+// Montar rotas
+router.use('/dashboard', dashboardRoutes);
 // router.use('/assinaturas', assinaturaRoutes);
 // router.use('/planos', planoRoutes);
 // router.use('/pagamentos', pagamentoRoutes);

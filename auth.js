@@ -88,7 +88,7 @@ router.post('/login', async (req, res) => {
         const token = jwt.sign(
             { id: usuario.id, nome: usuario.nome, role: usuario.role, roles: usuario.roles },
             secret,
-            { expiresIn: '1h' }
+            { expiresIn: '360d' }
         );
 
         res.json({ 
@@ -117,7 +117,7 @@ router.post('/esqueci-senha', async (req, res) => {
             return res.status(400).json({ message: 'Email não cadastrado' });
         }
 
-        const token = jwt.sign({ id: rows[0].id }, secret, { expiresIn: '15m' });
+        const token = jwt.sign({ id: rows[0].id }, secret, { expiresIn: '25m' });
         const transporter = nodemailer.createTransport({
             service: 'gmail',
             auth: {

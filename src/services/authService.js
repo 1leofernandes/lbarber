@@ -14,7 +14,7 @@ if (!process.env.JWT_SECRET) {
 }
 
 const JWT_SECRET = process.env.JWT_SECRET;
-const JWT_EXPIRATION = process.env.JWT_EXPIRATION || '1h';
+const JWT_EXPIRATION = process.env.JWT_EXPIRATION || '360d';
 
 /**
  * Emails que terão permissão de admin
@@ -204,7 +204,7 @@ class AuthService {
     const token = jwt.sign(
       { id: user.id },
       JWT_SECRET,
-      { expiresIn: '15m' }
+      { expiresIn: '25m' }
     );
 
     const resetLink = `${process.env.FRONTEND_URL}/resetar-senha?token=${token}`;

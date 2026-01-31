@@ -14,7 +14,7 @@
 // class AssinaturaController {
 
 //     // ADMIN: Criar plano no Mercado Pago
-//     async criarPlanoMercadoPago (req, res) => {
+//     static async criarPlanoMercadoPago(req, res) {
 //     try {
 //         const { nome, descricao, valor, servicos } = req.body;
 //         const adminId = req.usuario.id;
@@ -68,7 +68,7 @@
 //     };
 
 //     // Listar planos disponíveis
-//     export const listarPlanos = async (req, res) => {
+//     static async listarPlanos(req, res) {
 //     try {
 //         const result = await pool.query(
 //         `SELECT a.*, 
@@ -91,7 +91,7 @@
 //     };
 
 //     // Usuário assina um plano
-//     export const criarAssinatura = async (req, res) => {
+//     static async criarAssinatura(req, res) {
 //     try {
 //         const { planoId } = req.params;
 //         const usuarioId = req.usuario.id;
@@ -200,7 +200,7 @@
 //     };
 
 //     // Cancelar assinatura
-//     export const cancelarAssinatura = async (req, res) => {
+//     static async cancelarAssinatura(req, res) {
 //     try {
 //         const { assinaturaId } = req.params;
 //         const usuarioId = req.usuario.id;
@@ -258,7 +258,7 @@
 //     };
 
 //     // Reativar assinatura
-//     export const reativarAssinatura = async (req, res) => {
+//     static async reativarAssinatura(req, res) {
 //     try {
 //         const { assinaturaId } = req.params;
 //         const usuarioId = req.usuario.id;
@@ -320,7 +320,7 @@
 //     };
 
 //     // Minhas assinaturas
-//     export const minhasAssinaturas = async (req, res) => {
+//     static async minhasAssinaturas(req, res) {
 //     try {
 //         const usuarioId = req.usuario.id;
 
@@ -344,7 +344,7 @@
 //     };
 
 //     // Detalhes da assinatura
-//     export const obterDetalhesAssinatura = async (req, res) => {
+//     static async obterDetalhesAssinatura(req, res) {
 //     try {
 //         const { assinaturaId } = req.params;
 //         const usuarioId = req.usuario.id;
@@ -379,7 +379,7 @@
 //     };
 
 //     // Listar cobranças
-//     export const listarCobrancas = async (req, res) => {
+//     static async listarCobrancas(req, res) {
 //     try {
 //         const { assinaturaId } = req.params;
 //         const usuarioId = req.usuario.id;
@@ -412,7 +412,7 @@
 //     };
 
 //     // Atualizar método de pagamento
-//     export const atualizarMetodoPagamento = async (req, res) => {
+//     static async atualizarMetodoPagamento(req, res) {
 //     try {
 //         const { assinaturaId } = req.params;
 //         const usuarioId = req.usuario.id;
@@ -461,7 +461,7 @@
 //     };
 
 //     // Webhook Mercado Pago
-//     export const webhookMercadoPago = async (req, res) => {
+//     static async webhookMercadoPago(req, res) {
 //     try {
 //         const { type, data } = req.body;
 

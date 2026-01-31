@@ -14,7 +14,7 @@ require('./src/config/passport');
 
 // Importar rotas
 const authRoutes = require('./src/routes/auth');
-const paymentRoutes = require('./src/routes/payments');
+// const paymentRoutes = require('./src/routes/payments');
 const usuarioRoutes = require('./src/routes/usuarioRoutes');
 const barbeiroRoutes = require('./src/routes/barbeiros');
 const servicoRoutes = require('./src/routes/servicos');
@@ -130,7 +130,7 @@ app.use('/usuarios', limiter, usuarioRoutes);
 app.use('/agendamentos', limiter, agendamentoRoutes);
 app.use('/servicos', limiter, servicoRoutes);
 app.use('/barbeiros', limiter, barbeiroRoutes);
-app.use('/pagamentos', limiter, paymentRoutes);
+// app.use('/pagamentos', limiter, paymentRoutes);
 // app.use('/assinaturas', limiter, assinaturaRoutes);
 app.use('/subscricoes-recorrentes', limiter, subscriptionRecurrentRoutes);
 // Mappings com prefixo /api para compatibilidade com frontend

@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minha Assinatura - Barbearia Silva</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+    <style>
+        /* Mesmo CSS do arquivo anterior, adicionando estilos específicos */
+        /* ... (reutilizar o mesmo CSS do assinatura.html) ... */
+        
+        .status-badge {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        
+        .status-ativa {
+            background: rgba(40, 167, 69, 0.2);
+            color: #28a745;
+            border: 1px solid rgba(40, 167, 69, 0.3);
+        }
+        
+        .status-cancelada {
+            background: rgba(220, 53, 69, 0.2);
+            color: #dc3545;
+            border: 1px solid rgba(220, 53, 69, 0.3);
+        }
+        
+        .status-pendente {
+            background: rgba(255, 193, 7, 0.2);
+            color: #ffc107;
+            border: 1px solid rgba(255, 193, 7, 0.3);
+        }
+        
+        .status-suspensa {
+            background: rgba(108, 117, 125, 0.2);
+            color: #6c757d;
+            border: 1px solid rgba(108, 117, 125, 0.3);
+        }
+        
+        .actions-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+        
+        .action-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 1.5rem;
+            border: 1px solid rgba(212, 175, 55, 0.1);
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .action-card:hover {
+            border-color: var(--accent-gold);
+            transform: translateY(-2px);
+        }
+        
+        .action-icon {
+            font-size: 2rem;
+            color: var(--accent-gold);
+            margin-bottom: 1rem;
+        }
+        
+        .no-subscription {
+            text-align: center;
+            padding: 4rem 2rem;
+        }
+        
+        .no-subscription-icon {
+            font-size: 4rem;
+            color: var(--accent-gold);
+            margin-bottom: 1rem;
+        }
+        
+        .invoice-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            border-bottom: 1px solid rgba(212, 175, 55, 0.1);
+        }
+        
+        .invoice-item:last-child {
+            border-bottom: none;
+        }
+        
+        .invoice-status.pago {
+            color: var(--success);
+        }
+        
+        .invoice-status.pendente {
+            color: var(--warning);
+        }
+        
+        .invoice-status.falha {
+            color: var(--error);
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <button class="back-btn" onclick="window.location.href='cliente-home.html'">
+            <i class="fas fa-arrow-left"></i>
+        </button>
+        <div style="display:flex; gap:1rem; align-items:center;">
+            <div class="page-title">Minha Assinatura</div>
+            <button class="btn btn-primary" style="font-size:0.9rem; padding:0.4rem 0.8rem;" onclick="window.location.href='assinatura.html'">Torne-se um assinante</button>
+        </div>
+        <div id="subscriptionStatus" class="subscription-badge-wrapper"></div>
+        <img src="assets/image0 (1).jpeg" alt="Barbearia Silva Logo" class="header-logo">
+    </header>
+    
+    <!-- Main Content -->
+    <main class="container">
+        <div id="subscriptionContent">
+            <!-- Conteúdo carregado dinamicamente -->
+            <div class="loading" style="margin: 2rem auto;"></div>
+        </div>
+    </main>
+    
+    <!-- Modal de Confirmação -->
+    <div class="modal-overlay" id="confirmModal" style="display: none;">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title" id="confirmTitle"></h3>
+                <button class="modal-close" onclick="fecharModalConfirmacao()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div style="margin-bottom: 2rem;">
+                <p id="confirmMessage"></p>
+            </div>
+            
+            <div style="display: flex; gap: 1rem;">
+                <button class="btn btn-secondary" onclick="fecharModalConfirmacao()" style="flex: 1;">
+                    Cancelar
+                </button>
+                <button class="btn btn-primary" id="confirmAction" style="flex: 1;">
+                    Confirmar
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+    <script>
+        const API_BASE_URL = window.location.hostname === 'localhost' 
+            ? 'http://localhost:3000' 
+            : 'https://barbeariasilva.onrender.com';
+        
+        let assinaturas = [];
+        let acaoPendente = null;
+        let assinaturaSelecionada = null;
+        
+        // Inicialização
+        document.addEventListener('DOMContentLoaded', async () => {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                window.location.href = 'login.html';
+                return;
+            }
+            
+            await carregarAssinaturas();
+        });
+        
+        // Carregar assinaturas do usuário
+        async function carregarAssinaturas() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/assinatura/minhas-assinaturas`, {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
+                
+                if (response.ok) {
+                    assinaturas = await response.json();
+                    renderizarAssinaturas();
+                }
+            } catch (error) {
+                console.error('Erro ao carregar assinaturas:', error);
+                toast('Erro ao carregar suas assinaturas', 'error');
+            }
+        }
+        
+        // Renderizar assinaturas
+        function renderizarAssinaturas() {
+            const container = document.getElementById('subscriptionContent');
+            
+            if (assinaturas.length === 0) {
+                container.innerHTML = `
+                    <div class="no-subscription">
+                        <div class="no-subscription-icon">
+                            <i class="fas fa-crown"></i>
+                        </div>
+                        <h2 style="margin-bottom: 1rem; color: var(--light-gray);">Nenhuma assinatura ativa</h2>
+                        <p style="color: var(--medium-gray); margin-bottom: 2rem;">
+                            Você ainda não possui uma assinatura ativa. Assine agora e tenha acesso a benefícios exclusivos!
+                        </p>
+                        <button class="btn btn-primary" onclick="window.location.href='assinatura.html'">
+                            <i class="fas fa-crown"></i> Ver Planos Disponíveis
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = '';
+            
+            assinaturas.forEach(assinatura => {
+                const statusClass = `status-${assinatura.status.toLowerCase()}`;
+                const statusText = assinatura.status.charAt(0).toUpperCase() + assinatura.status.slice(1);
+                
+                const dataInicio = new Date(assinatura.data_inicio).toLocaleDateString('pt-BR');
+                const proximaCobranca = assinatura.proxima_cobranca 
+                    ? new Date(assinatura.proxima_cobranca).toLocaleDateString('pt-BR')
+                    : '--/--/----';
+                
+                const card = document.createElement('div');
+                card.className = 'plan-card';
+                card.style.marginBottom = '2rem';
+                
+                card.innerHTML = `
+                    <div class="plan-header">
+                        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                            <h3 class="plan-name">${assinatura.nome_plano}</h3>
+                            <span class="status-badge ${statusClass}">${statusText}</span>
+                        </div>
+                        <div class="plan-price">R$ ${parseFloat(assinatura.valor).toFixed(2)}<span>/mês</span></div>
+                        <p class="plan-period">Assinado em ${dataInicio} • Próxima cobrança: ${proximaCobranca}</p>
+                    </div>
+                    
+                    <div class="plan-features">
+                        <div class="feature-item">
+                            <i class="fas fa-calendar-check"></i>
+                            <span>Total de agendamentos: ${assinatura.total_agendamentos || 0}</span>
+                        </div>
+                        
+                        <div class="feature-item">
+                            <i class="fas fa-clock"></i>
+                            <span>Próxima renovação: ${proximaCobranca}</span>
+                        </div>
+                        
+                        <div class="feature-item">
+                            <i class="fas fa-info-circle"></i>
+                            <span>${assinatura.descricao || 'Plano premium com benefícios exclusivos'}</span>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top: 2rem;">
+                        <h4 style="margin-bottom: 1rem; color: var(--light-gray);">Ações</h4>
+                        <div class="actions-grid">
+                            ${assinatura.status === 'ativa' ? `
+                                <div class="action-card" onclick="mostrarModalCancelamento(${assinatura.id})">
+                                    <div class="action-icon">
+                                        <i class="fas fa-times-circle"></i>
+                                    </div>
+                                    <h4 style="color: var(--light-gray); margin-bottom: 0.5rem;">Cancelar</h4>
+                                    <p style="color: var(--medium-gray); font-size: 0.9rem;">Cancelar esta assinatura</p>
+                                </div>
+                                
+                                <div class="action-card" onclick="window.location.href='alterar-pagamento.html?assinatura=${assinatura.id}'">
+                                    <div class="action-icon">
+                                        <i class="fas fa-credit-card"></i>
+                                    </div>
+                                    <h4 style="color: var(--light-gray); margin-bottom: 0.5rem;">Alterar Cartão</h4>
+                                    <p style="color: var(--medium-gray); font-size: 0.9rem;">Atualizar método de pagamento</p>
+                                </div>
+                            ` : ''}
+                            
+                            ${assinatura.status === 'cancelado' ? `
+                                <div class="action-card" onclick="mostrarModalReativacao(${assinatura.id})">
+                                    <div class="action-icon">
+                                        <i class="fas fa-redo"></i>
+                                    </div>
+                                    <h4 style="color: var(--light-gray); margin-bottom: 0.5rem;">Reativar</h4>
+                                    <p style="color: var(--medium-gray); font-size: 0.9rem;">Reativar esta assinatura</p>
+                                </div>
+                            ` : ''}
+                            
+                            <div class="action-card" onclick="verDetalhes(${assinatura.id})">
+                                <div class="action-icon">
+                                    <i class="fas fa-file-invoice"></i>
+                                </div>
+                                <h4 style="color: var(--light-gray); margin-bottom: 0.5rem;">Ver Faturas</h4>
+                                <p style="color: var(--medium-gray); font-size: 0.9rem;">Histórico de cobranças</p>
+                            </div>
+                            
+                            <div class="action-card" onclick="verDetalhesAssinatura(${assinatura.id})">
+                                <div class="action-icon">
+                                    <i class="fas fa-info-circle"></i>
+                                </div>
+                                <h4 style="color: var(--light-gray); margin-bottom: 0.5rem;">Detalhes</h4>
+                                <p style="color: var(--medium-gray); font-size: 0.9rem;">Ver detalhes completos</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                container.appendChild(card);
+            });
+            
+            // Adicionar botão para ver mais planos
+            const verMaisBtn = document.createElement('div');
+            verMaisBtn.style.textAlign = 'center';
+            verMaisBtn.style.marginTop = '2rem';
+            verMaisBtn.innerHTML = `
+                <button class="btn btn-secondary" onclick="window.location.href='assinatura.html'">
+                    <i class="fas fa-crown"></i> Ver Outros Planos
+                </button>
+            `;
+            container.appendChild(verMaisBtn);
+        }
+        
+        // Mostrar modal de cancelamento
+        function mostrarModalCancelamento(assinaturaId) {
+            assinaturaSelecionada = assinaturaId;
+            acaoPendente = 'cancelar';
+            
+            document.getElementById('confirmTitle').textContent = 'Cancelar Assinatura';
+            document.getElementById('confirmMessage').textContent = 
+                'Tem certeza que deseja cancelar sua assinatura? Você perderá todos os benefícios imediatamente.';
+            document.getElementById('confirmAction').textContent = 'Cancelar Assinatura';
+            document.getElementById('confirmAction').className = 'btn btn-primary';
+            
+            document.getElementById('confirmModal').style.display = 'flex';
+        }
+        
+        // Mostrar modal de reativação
+        function mostrarModalReativacao(assinaturaId) {
+            assinaturaSelecionada = assinaturaId;
+            acaoPendente = 'reativar';
+            
+            document.getElementById('confirmTitle').textContent = 'Reativar Assinatura';
+            document.getElementById('confirmMessage').textContent = 
+                'Deseja reativar sua assinatura? A próxima cobrança ocorrerá hoje e a renovação será mensal.';
+            document.getElementById('confirmAction').textContent = 'Reativar Assinatura';
+            document.getElementById('confirmAction').className = 'btn btn-primary';
+            
+            document.getElementById('confirmModal').style.display = 'flex';
+        }
+        
+        // Fechar modal de confirmação
+        function fecharModalConfirmacao() {
+            document.getElementById('confirmModal').style.display = 'none';
+            assinaturaSelecionada = null;
+            acaoPendente = null;
+        }
+        
+        // Configurar ação do botão de confirmação
+        document.getElementById('confirmAction').addEventListener('click', async () => {
+            if (!assinaturaSelecionada || !acaoPendente) return;
+            
+            const btn = document.getElementById('confirmAction');
+            const originalText = btn.textContent;
+            btn.disabled = true;
+            btn.innerHTML = '<div class="loading"></div>';
+            
+            try {
+                let url, method;
+                
+                if (acaoPendente === 'cancelar') {
+                    url = `${API_BASE_URL}/api/assinatura/cancelar/${assinaturaSelecionada}`;
+                    method = 'POST';
+                } else if (acaoPendente === 'reativar') {
+                    url = `${API_BASE_URL}/api/assinatura/reativar/${assinaturaSelecionada}`;
+                    method = 'POST';
+                }
+                
+                const response = await fetch(url, {
+                    method: method,
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    toast(result.message || 'Ação realizada com sucesso!', 'success');
+                    
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1500);
+                } else {
+                    const error = await response.json();
+                    throw new Error(error.error || 'Erro ao processar ação');
+                }
+                
+            } catch (error) {
+                console.error('Erro:', error);
+                toast(error.message || 'Erro ao processar ação', 'error');
+                
+                btn.disabled = false;
+                btn.textContent = originalText;
+            }
+        });
+        
+        // Ver detalhes da assinatura
+        function verDetalhesAssinatura(assinaturaId) {
+            window.location.href = `detalhes-assinatura.html?id=${assinaturaId}`;
+        }
+        
+        // Ver faturas
+        function verDetalhes(assinaturaId) {
+            window.location.href = `faturas.html?assinatura=${assinaturaId}`;
+        }
+        
+        // Toast function
+        function toast(message, type = 'success') {
+            const colors = {
+                success: 'linear-gradient(135deg, #16a34a, #22c55e)',
+                error: 'linear-gradient(135deg, #dc2626, #ef4444)',
+                warning: 'linear-gradient(135deg, #f59e0b, #fbbf24)'
+            };
+            
+            Toastify({
+                text: message,
+                duration: 3000,
+                close: true,
+                gravity: 'top',
+                position: 'right',
+                style: {
+                    background: colors[type],
+                    borderRadius: '10px',
+                    fontWeight: '500'
+                }
+            }).showToast();
+        }
+    </script>
+    <script src="/scripts/subscriptionStatus.js"></script>
+</body>
+</html>

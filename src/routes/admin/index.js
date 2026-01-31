@@ -8,6 +8,7 @@ const agendamentoRoutes = require('./agendamentoRoutes');
 const bloqueioRoutes = require('./bloqueioRoutes');
 const servicoRoutes = require('./servicoRoutes');
 const barbeiroRoutes = require('./barbeiroRoutes');
+const subscriptionRecurrentRoutes = require('./subscriptionRecurrentRoutes');
 // const assinaturaRoutes = require('./assinaturaRoutes');
 // const planoRoutes = require('./planoRoutes');
 // const pagamentoRoutes = require('./pagamentoRoutes');
@@ -31,6 +32,7 @@ router.use(adminMiddleware);
 
 // Montar rotas
 router.use('/dashboard', dashboardRoutes);
+router.use('/assinaturas-recorrentes', subscriptionRecurrentRoutes);
 // router.use('/assinaturas', assinaturaRoutes);
 // router.use('/planos', planoRoutes);
 // router.use('/pagamentos', pagamentoRoutes);

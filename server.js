@@ -1,3 +1,5 @@
+// import { MercadoPagoService } from './services/mercadoPagoService.js';
+
 require('dotenv').config();
 const express = require('express');
 const compression = require('compression');
@@ -18,11 +20,14 @@ const barbeiroRoutes = require('./src/routes/barbeiros');
 const servicoRoutes = require('./src/routes/servicos');
 const agendamentoRoutes = require('./src/routes/agendamentos');
 const assinaturaRoutes = require('./src/routes/assinatura');
+const subscriptionRecurrentRoutes = require('./src/routes/subscriptionRecurrent');
+const webhookRoutes = require('./src/routes/webhooks');
 const adminRoutes = require('./src/routes/admin');
 
 // Importar middlewares
 const errorHandler = require('./src/middlewares/errorHandler');
 const logger = require('./src/utils/logger');
+const ChargeScheduler = require('./src/utils/chargeScheduler');
 // const adminMiddleware = require('./middlewares/adminMiddleware');
 // const { authenticateToken } = require('./middlewares/auth');
 
@@ -87,8 +92,13 @@ if (process.env.NODE_ENV === 'development') {
 app.use(passport.initialize());
 // ==================== PARSING ====================
 
-app.use(bodyParser.json({ limit: '10mb' }));
-app.use(bodyParser.urlencoded({ limit: '10mb', extended: true }));
+const rawBodySaver = function (req, res, buf, encoding) {
+  if (buf && buf.length) req.rawBody = buf.toString(encoding || 'utf8');
+};
+
+// Save raw body to req.rawBody for webhook HMAC validation
+app.use(bodyParser.json({ limit: '10mb', verify: rawBodySaver }));
+app.use(bodyParser.urlencoded({ limit: '10mb', extended: true, verify: rawBodySaver }));
 
 // ==================== STATIC FILES ====================
 
@@ -122,7 +132,15 @@ app.use('/servicos', limiter, servicoRoutes);
 app.use('/barbeiros', limiter, barbeiroRoutes);
 app.use('/pagamentos', limiter, paymentRoutes);
 app.use('/assinaturas', limiter, assinaturaRoutes);
+app.use('/subscricoes-recorrentes', limiter, subscriptionRecurrentRoutes);
+// Mappings com prefixo /api para compatibilidade com frontend
+app.use('/api/subscricoes-recorrentes', limiter, subscriptionRecurrentRoutes);
 app.use('/admin', limiter, adminRoutes);
+
+// Webhooks - SEM rate limit (pode receber múltiplas requisições)
+app.use('/webhooks', webhookRoutes);
+// também aceitar /api/webhooks por compatibilidade (public)
+app.use('/api/webhooks', webhookRoutes);
 
 // Rotas de admin (requer autenticação e privilégios de admin)
 // app.use('/admin', authMiddleware.authenticateToken, adminMiddleware.verifyAdmin, require('./src/routes/admin'));
@@ -146,12 +164,18 @@ app.use(errorHandler);
 const server = app.listen(port, () => {
   logger.info(`🚀 Servidor rodando em http://localhost:${port}`);
   logger.info(`📡 Ambiente: ${process.env.NODE_ENV || 'development'}`);
+  
+  // Iniciar agendador de cobranças recorrentes
+  if (process.env.NODE_ENV !== 'test') {
+    ChargeScheduler.start();
+  }
 });
 
 // ==================== GRACEFUL SHUTDOWN ====================
 
 process.on('SIGTERM', () => {
   logger.info('SIGTERM recebido. Encerrando servidor gracefully...');
+  ChargeScheduler.stop();
   server.close(() => {
     logger.info('Servidor encerrado');
     process.exit(0);
@@ -160,6 +184,7 @@ process.on('SIGTERM', () => {
 
 process.on('SIGINT', () => {
   logger.info('SIGINT recebido. Encerrando servidor gracefully...');
+  ChargeScheduler.stop();
   server.close(() => {
     logger.info('Servidor encerrado');
     process.exit(0);

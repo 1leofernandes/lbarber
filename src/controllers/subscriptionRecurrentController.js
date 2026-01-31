@@ -172,7 +172,7 @@ class SubscriptionRecurrentController {
     }
 
     // ==================== HISTÓRICO DE COBRANÇAS ====================
-    async listPlanos(req, res, next) {
+    static async listPlanos(req, res, next) {
         try {
             const pool = require('../config/database');
             const resultado = await pool.query(`
@@ -189,7 +189,7 @@ class SubscriptionRecurrentController {
         }
     }
 
-    async checkout(req, res, next) {
+    static async checkout(req, res, next) {
         try {
             const usuarioId = req.user.id;
             const { planoId } = req.body;

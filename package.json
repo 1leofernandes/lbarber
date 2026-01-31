@@ -1,7 +1,6 @@
 {
   "name": "agendamento-barbearia",
   "version": "2.0.0",
-  "type": "module",
   "main": "server.js",
   "description": "Sistema de agendamento para barbearia com backend otimizado para Render free tier",
   "scripts": {

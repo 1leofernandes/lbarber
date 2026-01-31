@@ -131,7 +131,7 @@ app.use('/agendamentos', limiter, agendamentoRoutes);
 app.use('/servicos', limiter, servicoRoutes);
 app.use('/barbeiros', limiter, barbeiroRoutes);
 app.use('/pagamentos', limiter, paymentRoutes);
-app.use('/assinaturas', limiter, assinaturaRoutes);
+// app.use('/assinaturas', limiter, assinaturaRoutes);
 app.use('/subscricoes-recorrentes', limiter, subscriptionRecurrentRoutes);
 // Mappings com prefixo /api para compatibilidade com frontend
 app.use('/api/subscricoes-recorrentes', limiter, subscriptionRecurrentRoutes);

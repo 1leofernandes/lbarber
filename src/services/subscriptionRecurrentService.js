@@ -251,7 +251,7 @@ class SubscriptionRecurrentService {
                 assinaturaPagamentoId: id,
                 usuarioId: usuario_id,
                 valor: valor_mensal,
-                dataCobr ança: proxima_cobranca
+                dataCobranca: proxima_cobranca
             });
 
             // Processar pagamento no Mercado Pago

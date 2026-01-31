@@ -217,7 +217,7 @@ class RecurringSubscription {
     // ==================== HISTÓRICO DE COBRANÇAS ====================
 
     static async createCobranca(dados) {
-        const { assinaturaPagamentoId, usuarioId, valor, dataCobr ança } = dados;
+        const { assinaturaPagamentoId, usuarioId, valor, dataCobranca } = dados;
         
         const query = `
             INSERT INTO assinaturas_historico_cobranças 
@@ -226,7 +226,7 @@ class RecurringSubscription {
             RETURNING *
         `;
         
-        const result = await pool.query(query, [assinaturaPagamentoId, usuarioId, valor, dataCobr ança]);
+        const result = await pool.query(query, [assinaturaPagamentoId, usuarioId, valor, dataCobranca]);
         return result.rows[0];
     }
 

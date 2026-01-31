@@ -303,8 +303,8 @@
             max-height: 500px;
         }
         
-        /* Modal de pagamento */
-        .modal-overlay {
+        /* Loading overlay */
+        .loading-overlay {
             position: fixed;
             top: 0;
             left: 0;
@@ -316,107 +316,26 @@
             display: none;
             align-items: center;
             justify-content: center;
-            padding: 1rem;
+            flex-direction: column;
         }
         
-        .modal-overlay.active {
+        .loading-overlay.active {
             display: flex;
         }
         
-        .modal {
-            background: var(--primary-dark);
-            border-radius: 20px;
-            padding: 2rem;
-            max-width: 500px;
-            width: 100%;
-            max-height: 90vh;
-            overflow-y: auto;
-            border: 1px solid rgba(212, 175, 55, 0.2);
-        }
-        
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 2rem;
-            padding-bottom: 1rem;
-            border-bottom: 1px solid rgba(212, 175, 55, 0.1);
-        }
-        
-        .modal-title {
-            font-size: 1.5rem;
-            font-weight: 600;
-        }
-        
-        .modal-close {
-            background: none;
-            border: none;
-            color: var(--medium-gray);
-            font-size: 1.5rem;
-            cursor: pointer;
-            width: 40px;
-            height: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 50%;
-        }
-        
-        .modal-close:hover {
-            background: rgba(212, 175, 55, 0.1);
-            color: var(--accent-gold);
-        }
-        
-        .form-group {
-            margin-bottom: 1.5rem;
-        }
-        
-        .form-label {
-            display: block;
-            margin-bottom: 0.5rem;
-            color: var(--light-gray);
-            font-weight: 500;
-        }
-        
-        .form-input {
-            width: 100%;
-            padding: 1rem;
-            background: var(--card-bg);
-            border: 2px solid rgba(212, 175, 55, 0.1);
-            border-radius: 10px;
-            color: var(--light-gray);
-            font-size: 1rem;
-            transition: border-color 0.3s ease;
-        }
-        
-        .form-input:focus {
-            outline: none;
-            border-color: var(--accent-gold);
-        }
-        
-        .row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 1rem;
-        }
-        
-        .security-badge {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            color: var(--medium-gray);
-            font-size: 0.9rem;
-            margin-top: 1rem;
-        }
-        
-        .loading {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid rgba(212, 175, 55, 0.3);
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid rgba(212, 175, 55, 0.3);
             border-radius: 50%;
             border-top-color: var(--accent-gold);
             animation: spin 1s ease-in-out infinite;
+            margin-bottom: 1.5rem;
+        }
+        
+        .loading-text {
+            color: var(--light-gray);
+            font-size: 1.2rem;
         }
         
         @keyframes spin {
@@ -434,10 +353,6 @@
             
             .plan-price {
                 font-size: 2.5rem;
-            }
-            
-            .row {
-                grid-template-columns: 1fr;
             }
         }
     </style>
@@ -465,7 +380,7 @@
             <h2 style="text-align: center; margin-bottom: 2rem; color: var(--light-gray);">Escolha seu Plano</h2>
             <div class="plans-grid" id="plansGrid">
                 <!-- Planos carregados dinamicamente -->
-                <div class="loading" style="margin: 2rem auto; grid-column: 1 / -1;"></div>
+                <div class="loading-spinner" style="margin: 2rem auto; grid-column: 1 / -1;"></div>
             </div>
         </section>
         
@@ -557,66 +472,10 @@
         </section>
     </main>
     
-    <!-- Modal de Pagamento -->
-    <div class="modal-overlay" id="paymentModal">
-        <div class="modal">
-            <div class="modal-header">
-                <h3 class="modal-title">Finalizar Assinatura</h3>
-                <button class="modal-close" onclick="fecharModalPagamento()">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            
-            <form id="paymentForm">
-                <input type="hidden" id="planoId">
-                
-                <div class="form-group">
-                    <label class="form-label">Nome no Cartão</label>
-                    <input type="text" class="form-input" id="cardName" placeholder="Como está no cartão" required>
-                </div>
-                
-                <div class="form-group">
-                    <label class="form-label">Número do Cartão</label>
-                    <input type="text" class="form-input" id="cardNumber" placeholder="1234 5678 9012 3456" required>
-                </div>
-                
-                <div class="row">
-                    <div class="form-group">
-                        <label class="form-label">Validade</label>
-                        <div style="display: flex; gap: 0.5rem;">
-                            <input type="text" class="form-input" id="cardMonth" placeholder="MM" maxlength="2" required style="flex: 1;">
-                            <span style="color: var(--medium-gray); align-self: center;">/</span>
-                            <input type="text" class="form-input" id="cardYear" placeholder="AA" maxlength="2" required style="flex: 1;">
-                        </div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label class="form-label">CVV</label>
-                        <input type="text" class="form-input" id="cardCvv" placeholder="123" maxlength="4" required>
-                    </div>
-                </div>
-                
-                <div class="form-group">
-                    <label class="form-label">CPF do Titular</label>
-                    <input type="text" class="form-input" id="cardCpf" placeholder="000.000.000-00" required>
-                </div>
-                
-                <div class="form-group">
-                    <label class="form-label">E-mail para receber faturas</label>
-                    <input type="email" class="form-input" id="cardEmail" required>
-                </div>
-                
-                <div class="security-badge">
-                    <i class="fas fa-lock"></i>
-                    <span>Pagamento 100% seguro via Mercado Pago</span>
-                </div>
-                
-                <button type="submit" class="btn btn-primary" id="submitPayment" style="margin-top: 2rem;">
-                    <span>Assinar Agora</span>
-                    <div class="loading" style="display: none;"></div>
-                </button>
-            </form>
-        </div>
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">Redirecionando para Mercado Pago...</div>
     </div>
     
     <!-- Scripts -->
@@ -627,7 +486,6 @@
             : 'https://barbeariasilva.onrender.com';
         
         let planos = [];
-        let planoSelecionado = null;
         
         // Inicialização
         document.addEventListener('DOMContentLoaded', async () => {
@@ -639,12 +497,6 @@
             
             // Carregar planos
             await carregarPlanos();
-            
-            // Preencher email do usuário
-            const usuario = JSON.parse(localStorage.getItem('usuario') || '{}');
-            if (usuario.email) {
-                document.getElementById('cardEmail').value = usuario.email;
-            }
         });
         
         // Carregar planos
@@ -658,8 +510,10 @@
                 
                 if (response.ok) {
                     const data = await response.json();
-                    planos = data.planos || [];
+                    planos = data.planos || data || [];
                     renderizarPlanos();
+                } else {
+                    throw new Error('Erro ao carregar planos');
                 }
             } catch (error) {
                 console.error('Erro ao carregar planos:', error);
@@ -672,7 +526,7 @@
             const container = document.getElementById('plansGrid');
             container.innerHTML = '';
             
-            if (planos.length === 0) {
+            if (!planos || planos.length === 0) {
                 container.innerHTML = `
                     <div style="grid-column: 1 / -1; text-align: center; padding: 3rem;">
                         <i class="fas fa-calendar-times" style="font-size: 3rem; color: var(--medium-gray); margin-bottom: 1rem;"></i>
@@ -747,7 +601,8 @@
                 
                 container.appendChild(card);
             });
-
+        }
+        
         // === FUNÇÃO: iniciar checkout de assinatura no Mercado Pago ===
         async function assinarPlano(planoId) {
             const token = localStorage.getItem('token');
@@ -757,6 +612,9 @@
             }
 
             try {
+                // Mostrar loading
+                document.getElementById('loadingOverlay').classList.add('active');
+                
                 const resp = await fetch(`${API_BASE_URL}/api/subscricoes-recorrentes/checkout`, {
                     method: 'POST',
                     headers: {
@@ -767,206 +625,24 @@
                 });
 
                 const data = await resp.json();
+                
                 if (!resp.ok || !data.success) {
+                    document.getElementById('loadingOverlay').classList.remove('active');
                     toast(data.message || 'Erro ao iniciar processo de assinatura', 'error');
                     console.error('Erro no checkout:', data);
                     return;
                 }
 
                 // Redirecionar para o Mercado Pago
-                window.location.href = data.redirectUrl;
+                setTimeout(() => {
+                    window.location.href = data.redirectUrl;
+                }, 1000);
+                
             } catch (error) {
+                document.getElementById('loadingOverlay').classList.remove('active');
                 console.error('Erro ao assinar:', error);
                 toast('Erro ao iniciar assinatura. Tente novamente.', 'error');
             }
-        }
-        }
-        
-        // Abrir modal de pagamento
-        function abrirModalPagamento(planoId) {
-            planoSelecionado = planos.find(p => p.id === planoId);
-            if (!planoSelecionado) return;
-            
-            document.getElementById('planoId').value = planoId;
-            document.getElementById('paymentModal').classList.add('active');
-        }
-        
-        // Fechar modal
-        function fecharModalPagamento() {
-            document.getElementById('paymentModal').classList.remove('active');
-            planoSelecionado = null;
-            document.getElementById('paymentForm').reset();
-        }
-        
-        // Processar pagamento
-        document.getElementById('paymentForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const btn = document.getElementById('submitPayment');
-            const btnText = btn.querySelector('span');
-            const loading = btn.querySelector('.loading');
-            
-            btn.disabled = true;
-            btnText.style.display = 'none';
-            loading.style.display = 'inline-block';
-            
-            try {
-                // Coletar dados do cartão
-                const cardData = {
-                    nome: document.getElementById('cardName').value,
-                    numero: document.getElementById('cardNumber').value.replace(/\s/g, ''),
-                    mes: document.getElementById('cardMonth').value,
-                    ano: '20' + document.getElementById('cardYear').value,
-                    cvv: document.getElementById('cardCvv').value,
-                    documento: document.getElementById('cardCpf').value.replace(/\D/g, ''),
-                    email: document.getElementById('cardEmail').value
-                };
-                
-                // Validar dados
-                if (!validarCartao(cardData)) {
-                    throw new Error('Dados do cartão inválidos');
-                }
-                
-                // Criar token do cartão
-                const tokenCartao = await criarTokenCartao(cardData);
-                
-                // Criar assinatura
-                const response = await fetch(`${API_BASE_URL}/api/assinatura/assinar/${planoSelecionado.id}`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${localStorage.getItem('token')}`
-                    },
-                    body: JSON.stringify({
-                        tokenCartao: tokenCartao,
-                        email: cardData.email
-                    })
-                });
-                
-                const result = await response.json();
-                
-                if (!response.ok) {
-                    throw new Error(result.error || 'Erro ao criar assinatura');
-                }
-                
-                // Sucesso
-                toast('Assinatura criada com sucesso!', 'success');
-                
-                // Se tiver redirectUrl, redirecionar para Mercado Pago
-                if (result.redirectUrl) {
-                    window.location.href = result.redirectUrl;
-                } else {
-                    // Atualizar interface e fechar modal
-                    setTimeout(() => {
-                        window.location.href = 'minha-assinatura.html';
-                    }, 2000);
-                }
-                
-            } catch (error) {
-                console.error('Erro no pagamento:', error);
-                toast(error.message || 'Erro ao processar pagamento', 'error');
-                
-                btn.disabled = false;
-                btnText.style.display = 'inline';
-                loading.style.display = 'none';
-            }
-        });
-        
-        // Criar token do cartão
-        async function criarTokenCartao(cardData) {
-            try {
-                const response = await fetch(`${API_BASE_URL}/api/mercado-pago/criar-token`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${localStorage.getItem('token')}`
-                    },
-                    body: JSON.stringify(cardData)
-                });
-                
-                if (!response.ok) {
-                    const error = await response.json();
-                    throw new Error(error.error || 'Erro ao criar token');
-                }
-                
-                const result = await response.json();
-                return result.token;
-            } catch (error) {
-                console.error('Erro ao criar token:', error);
-                throw new Error('Não foi possível processar seu cartão. Verifique os dados.');
-            }
-        }
-        
-        // Validar cartão
-        function validarCartao(cardData) {
-            // Validar número do cartão (Luhn algorithm simplificado)
-            if (!cardData.numero || cardData.numero.length < 13 || cardData.numero.length > 19) {
-                toast('Número do cartão inválido', 'error');
-                return false;
-            }
-            
-            // Validar mês
-            const mes = parseInt(cardData.mes);
-            if (mes < 1 || mes > 12) {
-                toast('Mês de validade inválido', 'error');
-                return false;
-            }
-            
-            // Validar ano
-            const ano = parseInt(cardData.ano.substring(2));
-            const anoAtual = new Date().getFullYear() % 100;
-            const mesAtual = new Date().getMonth() + 1;
-            
-            if (ano < anoAtual || (ano === anoAtual && mes < mesAtual)) {
-                toast('Cartão expirado', 'error');
-                return false;
-            }
-            
-            // Validar CVV
-            if (!cardData.cvv || cardData.cvv.length < 3 || cardData.cvv.length > 4) {
-                toast('CVV inválido', 'error');
-                return false;
-            }
-            
-            // Validar CPF
-            if (!validarCPF(cardData.documento)) {
-                toast('CPF inválido', 'error');
-                return false;
-            }
-            
-            return true;
-        }
-        
-        // Validar CPF
-        function validarCPF(cpf) {
-            cpf = cpf.replace(/\D/g, '');
-            if (cpf.length !== 11) return false;
-            
-            // Verifica se todos os dígitos são iguais
-            if (/^(\d)\1+$/.test(cpf)) return false;
-            
-            // Validação dos dígitos verificadores
-            let soma = 0;
-            let resto;
-            
-            for (let i = 1; i <= 9; i++) {
-                soma += parseInt(cpf.substring(i-1, i)) * (11 - i);
-            }
-            
-            resto = (soma * 10) % 11;
-            if (resto === 10 || resto === 11) resto = 0;
-            if (resto !== parseInt(cpf.substring(9, 10))) return false;
-            
-            soma = 0;
-            for (let i = 1; i <= 10; i++) {
-                soma += parseInt(cpf.substring(i-1, i)) * (12 - i);
-            }
-            
-            resto = (soma * 10) % 11;
-            if (resto === 10 || resto === 11) resto = 0;
-            if (resto !== parseInt(cpf.substring(10, 11))) return false;
-            
-            return true;
         }
         
         // Toggle FAQ
@@ -1000,23 +676,6 @@
                 }
             }).showToast();
         }
-        
-        // Formatação automática dos inputs
-        document.getElementById('cardNumber')?.addEventListener('input', function(e) {
-            let value = e.target.value.replace(/\D/g, '');
-            value = value.replace(/(\d{4})/g, '$1 ').trim();
-            e.target.value = value.substring(0, 19);
-        });
-        
-        document.getElementById('cardCpf')?.addEventListener('input', function(e) {
-            let value = e.target.value.replace(/\D/g, '');
-            value = value.replace(/(\d{3})(\d)/, '$1.$2')
-                        .replace(/(\d{3})(\d)/, '$1.$2')
-                        .replace(/(\d{3})(\d{1,2})/, '$1-$2')
-                        .replace(/(-\d{2})\d+?$/, '$1');
-            e.target.value = value.substring(0, 14);
-        });
     </script>
-    <script src="/scripts/subscriptionStatus.js"></script>
 </body>
 </html>

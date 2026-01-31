@@ -17,11 +17,18 @@ router.get('/planos', subscriptionRecurrentController.listPlanos);
 // GET /subscricoes-recorrentes/minha-assinatura - Buscar minha assinatura
 router.get('/minha-assinatura', subscriptionRecurrentController.getMinhaAssinatura);
 
+// GET /subscricoes-recorrentes/minhas-assinaturas - Listar minhas assinaturas
+router.get('/minhas-assinaturas', subscriptionRecurrentController.minhasAssinaturas);
+
 // POST /subscricoes-recorrentes/checkout - Criar preapproval no Mercado Pago e retornar URL de redirecionamento
 router.post('/checkout', subscriptionRecurrentController.checkout);
 
 // DELETE /subscricoes-recorrentes/:assinaturaRecurrenteId - Cancelar assinatura
 router.delete('/:assinaturaRecurrenteId', subscriptionRecurrentController.cancelarAssinatura);
+
+
+router.post('/confirmar', subscriptionRecurrentController.confirmarAssinatura);
+
 
 // ==================== HISTÓRICO ====================
 // GET /subscricoes-recorrentes/historico/cobrancas - Histórico de cobranças

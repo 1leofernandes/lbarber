@@ -8,7 +8,136 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
     <style>
-        /* Reutilize o mesmo CSS do assinatura.html com adições: */
+        :root {
+            --primary-dark: #121212;
+            --card-bg: #1e1e1e;
+            --accent-gold: #d4af37;
+            --light-gray: #f5f5f5;
+            --medium-gray: #a0a0a0;
+            --border-color: #333;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: var(--primary-dark);
+            color: var(--light-gray);
+            line-height: 1.6;
+            padding-bottom: 4rem;
+        }
+        
+        .header {
+            background: var(--card-bg);
+            padding: 1rem 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 2px solid var(--accent-gold);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .back-btn {
+            background: transparent;
+            border: none;
+            color: var(--accent-gold);
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 50%;
+            transition: background 0.3s;
+        }
+        
+        .back-btn:hover {
+            background: rgba(212, 175, 55, 0.1);
+        }
+        
+        .page-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--accent-gold);
+        }
+        
+        .header-logo {
+            height: 40px;
+            border-radius: 8px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
+        }
+        
+        .plan-card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 2rem;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            transition: transform 0.3s, border-color 0.3s;
+        }
+        
+        .plan-card:hover {
+            border-color: var(--accent-gold);
+            transform: translateY(-4px);
+        }
+        
+        .plan-header {
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .plan-name {
+            font-size: 1.8rem;
+            color: var(--accent-gold);
+            margin-bottom: 0.5rem;
+        }
+        
+        .plan-price {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--light-gray);
+            margin-bottom: 0.5rem;
+        }
+        
+        .plan-price span {
+            font-size: 1rem;
+            color: var(--medium-gray);
+            margin-left: 0.5rem;
+        }
+        
+        .plan-period {
+            color: var(--medium-gray);
+            font-size: 0.95rem;
+        }
+        
+        .plan-features {
+            margin: 2rem 0;
+        }
+        
+        .feature-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding: 0.8rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+        }
+        
+        .feature-item i {
+            color: var(--accent-gold);
+            margin-right: 1rem;
+            font-size: 1.2rem;
+        }
+        
         .status-badge {
             display: inline-block;
             padding: 0.5rem 1rem;
@@ -35,6 +164,12 @@
             border: 1px solid rgba(220, 53, 69, 0.3);
         }
         
+        .status-suspensa {
+            background: rgba(108, 117, 125, 0.2);
+            color: #6c757d;
+            border: 1px solid rgba(108, 117, 125, 0.3);
+        }
+        
         .actions-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -55,11 +190,87 @@
         .action-card:hover {
             border-color: var(--accent-gold);
             transform: translateY(-2px);
+            background: rgba(212, 175, 55, 0.05);
         }
         
         .no-subscription {
             text-align: center;
             padding: 4rem 2rem;
+            background: var(--card-bg);
+            border-radius: 16px;
+            border: 2px dashed var(--border-color);
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 1rem 2rem;
+            background: var(--accent-gold);
+            color: var(--primary-dark);
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+        }
+        
+        .btn:hover {
+            background: #c19b2c;
+            transform: translateY(-2px);
+        }
+        
+        .btn-primary {
+            background: var(--accent-gold);
+            color: var(--primary-dark);
+        }
+        
+        .btn-primary:hover {
+            background: #c19b2c;
+        }
+        
+        .loading-spinner {
+            border: 4px solid rgba(212, 175, 55, 0.2);
+            border-top: 4px solid var(--accent-gold);
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 4rem auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Toast customização */
+        .toastify {
+            font-family: 'Poppins', sans-serif;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+            
+            .plan-card {
+                padding: 1.5rem;
+            }
+            
+            .plan-name {
+                font-size: 1.5rem;
+            }
+            
+            .plan-price {
+                font-size: 2rem;
+            }
+            
+            .actions-grid {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
@@ -76,7 +287,7 @@
     <!-- Main Content -->
     <main class="container">
         <div id="subscriptionContent">
-            <div class="loading-spinner" style="margin: 2rem auto;"></div>
+            <div class="loading-spinner"></div>
         </div>
     </main>
     
@@ -97,21 +308,82 @@
             // Verificar parâmetros da URL
             const urlParams = new URLSearchParams(window.location.search);
             const subscriptionResult = urlParams.get('subscription_result');
+            const preapprovalId = urlParams.get('preapproval_id');
             
-            if (subscriptionResult === 'success') {
-                toast('Assinatura criada com sucesso!', 'success');
+            console.log('Parâmetros da URL:', { subscriptionResult, preapprovalId });
+            
+            if (subscriptionResult === 'success' && preapprovalId) {
+                toast('Processando sua assinatura...', 'success');
+                
+                try {
+                    // Confirmar assinatura com backend
+                    const response = await fetch(`${API_BASE_URL}/api/subscricoes-recorrentes/confirmar`, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ preapprovalId })
+                    });
+                    
+                    if (response.ok) {
+                        toast('Assinatura confirmada com sucesso!', 'success');
+                        // Aguardar um momento para o webhook processar
+                        setTimeout(async () => {
+                            await carregarMinhasAssinaturas();
+                        }, 2000);
+                    } else {
+                        const errorData = await response.json();
+                        toast('Assinatura recebida, mas houve um erro ao processar: ' + (errorData.message || ''), 'warning');
+                    }
+                } catch (error) {
+                    console.error('Erro ao confirmar assinatura:', error);
+                    toast('Erro ao confirmar assinatura. Recarregue a página.', 'error');
+                }
+                
                 // Limpar parâmetro da URL
+                const novaUrl = window.location.pathname;
+                window.history.replaceState({}, document.title, novaUrl);
+            } else if (subscriptionResult === 'success') {
+                toast('Assinatura criada com sucesso!', 'success');
+                await carregarMinhasAssinaturas();
                 window.history.replaceState({}, document.title, window.location.pathname);
             } else if (subscriptionResult === 'failure') {
                 toast('Erro ao criar assinatura. Tente novamente.', 'error');
                 window.history.replaceState({}, document.title, window.location.pathname);
+                await carregarMinhasAssinaturas();
+            } else {
+                // Carregar assinaturas normalmente
+                await carregarMinhasAssinaturas();
             }
-            
-            await carregarMinhasAssinaturas();
         });
         
         async function carregarMinhasAssinaturas() {
             try {
+                const response = await fetch(`${API_BASE_URL}/api/subscricoes-recorrentes/minhas-assinaturas`, {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
+                
+                if (response.ok) {
+                    const assinaturas = await response.json();
+                    renderizarAssinaturas(assinaturas);
+                } else if (response.status === 404) {
+                    // Se a rota não existir, tentar a rota alternativa
+                    await carregarAssinaturasAlternativa();
+                } else {
+                    throw new Error('Erro ao carregar assinaturas: ' + response.status);
+                }
+            } catch (error) {
+                console.error('Erro ao carregar assinaturas:', error);
+                toast('Erro ao carregar suas assinaturas', 'error');
+            }
+        }
+        
+        async function carregarAssinaturasAlternativa() {
+            try {
+                // Tentar outra rota possivel
                 const response = await fetch(`${API_BASE_URL}/api/assinatura/minhas-assinaturas`, {
                     headers: {
                         'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -121,10 +393,12 @@
                 if (response.ok) {
                     const assinaturas = await response.json();
                     renderizarAssinaturas(assinaturas);
+                } else {
+                    renderizarAssinaturas([]);
                 }
             } catch (error) {
-                console.error('Erro ao carregar assinaturas:', error);
-                toast('Erro ao carregar suas assinaturas', 'error');
+                console.error('Erro ao carregar assinaturas (alternativa):', error);
+                renderizarAssinaturas([]);
             }
         }
         
@@ -151,10 +425,32 @@
             
             container.innerHTML = '';
             
-            assinaturas.forEach(assinatura => {
-                const statusClass = `status-${assinatura.status.toLowerCase()}`;
-                const statusText = assinatura.status.charAt(0).toUpperCase() + assinatura.status.slice(1);
-                const dataInicio = new Date(assinatura.data_inicio).toLocaleDateString('pt-BR');
+            // Verificar se é um array ou um objeto com propriedade success
+            const listaAssinaturas = Array.isArray(assinaturas) ? assinaturas : (assinaturas.assinaturas || []);
+            
+            if (listaAssinaturas.length === 0) {
+                container.innerHTML = `
+                    <div class="no-subscription">
+                        <div style="font-size: 4rem; color: var(--accent-gold); margin-bottom: 1rem;">
+                            <i class="fas fa-crown"></i>
+                        </div>
+                        <h2 style="margin-bottom: 1rem; color: var(--light-gray);">Nenhuma assinatura ativa</h2>
+                        <p style="color: var(--medium-gray); margin-bottom: 2rem;">
+                            Você ainda não possui uma assinatura ativa. Assine agora e tenha acesso a benefícios exclusivos!
+                        </p>
+                        <button class="btn btn-primary" onclick="window.location.href='assinatura.html'">
+                            <i class="fas fa-crown"></i> Ver Planos Disponíveis
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+            
+            listaAssinaturas.forEach(assinatura => {
+                const status = assinatura.status || 'pendente';
+                const statusClass = `status-${status.toLowerCase()}`;
+                const statusText = status.charAt(0).toUpperCase() + status.slice(1);
+                const dataInicio = assinatura.data_inicio ? new Date(assinatura.data_inicio).toLocaleDateString('pt-BR') : '--/--/----';
                 const proximaCobranca = assinatura.proxima_cobranca 
                     ? new Date(assinatura.proxima_cobranca).toLocaleDateString('pt-BR')
                     : '--/--/----';
@@ -166,10 +462,10 @@
                 card.innerHTML = `
                     <div class="plan-header">
                         <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
-                            <h3 class="plan-name">${assinatura.nome_plano}</h3>
+                            <h3 class="plan-name">${assinatura.nome_plano || 'Plano de Assinatura'}</h3>
                             <span class="status-badge ${statusClass}">${statusText}</span>
                         </div>
-                        <div class="plan-price">R$ ${parseFloat(assinatura.valor).toFixed(2)}<span>/mês</span></div>
+                        <div class="plan-price">R$ ${parseFloat(assinatura.valor || 0).toFixed(2)}<span>/mês</span></div>
                         <p class="plan-period">Assinado em ${dataInicio} • Próxima cobrança: ${proximaCobranca}</p>
                     </div>
                     
@@ -188,13 +484,20 @@
                             <i class="fas fa-info-circle"></i>
                             <span>${assinatura.descricao || 'Plano premium com benefícios exclusivos'}</span>
                         </div>
+                        
+                        ${assinatura.mercado_pago_subscription_id ? `
+                        <div class="feature-item">
+                            <i class="fas fa-id-card"></i>
+                            <span>ID Mercado Pago: ${assinatura.mercado_pago_subscription_id}</span>
+                        </div>
+                        ` : ''}
                     </div>
                     
                     <div style="margin-top: 2rem;">
                         <h4 style="margin-bottom: 1rem; color: var(--light-gray);">Ações</h4>
                         <div class="actions-grid">
-                            ${assinatura.status === 'ativa' ? `
-                                <div class="action-card" onclick="cancelarAssinatura(${assinatura.id})">
+                            ${status === 'ativa' || status === 'active' ? `
+                                <div class="action-card" onclick="cancelarAssinatura('${assinatura.mercado_pago_subscription_id || ''}', ${assinatura.id})">
                                     <div style="font-size: 2rem; color: var(--accent-gold); margin-bottom: 1rem;">
                                         <i class="fas fa-times-circle"></i>
                                     </div>
@@ -203,7 +506,7 @@
                                 </div>
                             ` : ''}
                             
-                            ${assinatura.status === 'cancelado' ? `
+                            ${status === 'cancelada' || status === 'cancelled' ? `
                                 <div class="action-card" onclick="reativarAssinatura(${assinatura.id})">
                                     <div style="font-size: 2rem; color: var(--accent-gold); margin-bottom: 1rem;">
                                         <i class="fas fa-redo"></i>
@@ -228,14 +531,16 @@
             });
         }
         
-        async function cancelarAssinatura(assinaturaId) {
+        async function cancelarAssinatura(mercadoPagoId, assinaturaId) {
             if (!confirm('Tem certeza que deseja cancelar esta assinatura?')) return;
             
             try {
-                const response = await fetch(`${API_BASE_URL}/api/assinatura/cancelar/${assinaturaId}`, {
-                    method: 'POST',
+                // Usar a rota correta para cancelar
+                const response = await fetch(`${API_BASE_URL}/api/subscricoes-recorrentes/${assinaturaId}`, {
+                    method: 'DELETE',
                     headers: {
-                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                        'Content-Type': 'application/json'
                     }
                 });
                 
@@ -243,7 +548,8 @@
                     toast('Assinatura cancelada com sucesso!', 'success');
                     setTimeout(() => location.reload(), 1500);
                 } else {
-                    throw new Error('Erro ao cancelar assinatura');
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || 'Erro ao cancelar assinatura');
                 }
             } catch (error) {
                 toast(error.message, 'error');
@@ -276,7 +582,8 @@
             const colors = {
                 success: 'linear-gradient(135deg, #16a34a, #22c55e)',
                 error: 'linear-gradient(135deg, #dc2626, #ef4444)',
-                warning: 'linear-gradient(135deg, #f59e0b, #fbbf24)'
+                warning: 'linear-gradient(135deg, #f59e0b, #fbbf24)',
+                info: 'linear-gradient(135deg, #0ea5e9, #3b82f6)'
             };
             
             Toastify({
@@ -286,9 +593,10 @@
                 gravity: 'top',
                 position: 'right',
                 style: {
-                    background: colors[type],
+                    background: colors[type] || colors.info,
                     borderRadius: '10px',
-                    fontWeight: '500'
+                    fontWeight: '500',
+                    padding: '12px 20px'
                 }
             }).showToast();
         }

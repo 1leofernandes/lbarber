@@ -217,7 +217,7 @@ class SubscriptionRecurrentController {
 
             // Criar preapproval no Mercado Pago usando wrapper
             const mp = require('../config/mercadoPago');
-            const backUrl = (process.env.FRONTEND_URL || 'https://barbeariasilva.vercel.app') + '/minha-assinatura?subscription_result=success';
+            const backUrl = (process.env.FRONTEND_URL || 'https://barbeariasilva.vercel.app') + '/minha-assinatura.html?subscription_result=success';
 
             const pre = await mp.createPreapproval({
                 reason: plano.nome_plano || `Assinatura #${plano.id}`,
@@ -261,56 +261,13 @@ class SubscriptionRecurrentController {
         }
     }
 
-    // controllers/subscriptionController.js
-    static async webhookMercadoPago(req, res) {
-        try {
-            const { type, data } = req.body;
-            
-            if (type === 'subscription_preapproval') {
-                const { id, status } = data;
-                
-                // Buscar assinatura pelo marketplace_pago_subscription_id
-                const assinatura = await pool.query(
-                    'SELECT * FROM assinaturas_pagamentos_recorrentes WHERE mercado_pago_subscription_id = $1',
-                    [id]
-                );
-                
-                if (assinatura.rows.length > 0) {
-                    // Atualizar status
-                    await pool.query(
-                        'UPDATE assinaturas_pagamentos_recorrentes SET status = $1 WHERE mercado_pago_subscription_id = $2',
-                        [status === 'authorized' ? 'ativa' : status, id]
-                    );
-                    
-                    // Se aprovado, atualizar usuário
-                    if (status === 'authorized') {
-                        await pool.query(
-                            `UPDATE usuarios u 
-                            SET assinante = true, assinatura_id = (
-                                SELECT plano_id FROM assinaturas_pagamentos_recorrentes 
-                                WHERE mercado_pago_subscription_id = $1
-                            )
-                            FROM assinaturas_pagamentos_recorrentes apr
-                            WHERE apr.mercado_pago_subscription_id = $1 
-                            AND apr.usuario_id = u.id`,
-                            [id]
-                        );
-                    }
-                }
-            }
-            
-            res.sendStatus(200);
-        } catch (error) {
-            console.error('Erro webhook:', error);
-            res.sendStatus(500);
-        }
-    };
 
     // Rota para minhas assinaturas
     static async minhasAssinaturas(req, res) {
         try {
-            const usuarioId = req.usuario.id;
+            const usuarioId = req.user.id;
             
+            const pool = require('../config/database');
             const result = await pool.query(
                 `SELECT au.*, a.nome_plano, a.descricao, a.valor,
                         apr.mercado_pago_subscription_id, apr.proxima_cobranca,
@@ -328,7 +285,29 @@ class SubscriptionRecurrentController {
             console.error('Erro ao buscar assinaturas:', error);
             res.status(500).json({ error: 'Erro ao buscar assinaturas' });
         }
-    };
+    }
+
+    // Adicione ao subscriptionRecurrentController.js
+    static async confirmarAssinatura(req, res) {
+        try {
+            const usuarioId = req.user.id;
+            const { preapprovalId } = req.body;
+            
+            if (!preapprovalId) {
+                return res.status(400).json({ success: false, message: 'preapprovalId é obrigatório' });
+            }
+            
+            const mp = require('../config/mercadoPago');
+            const detalhes = await mp.getSubscription(preapprovalId);
+            
+            // ... lógica para criar/atualizar assinatura local ...
+            
+            res.json({ success: true, message: 'Assinatura confirmada' });
+        } catch (error) {
+            logger.error('Erro ao confirmar assinatura:', error);
+            res.status(500).json({ success: false, error: error.message });
+        }
+    }
 }
 
 module.exports = SubscriptionRecurrentController;

@@ -308,6 +308,110 @@ class SubscriptionRecurrentController {
             res.status(500).json({ success: false, error: error.message });
         }
     }
+
+    static async confirmarAssinaturaManual(req, res) {
+        try {
+            const { preapprovalId } = req.body;
+            const usuarioId = req.user.id;
+            
+            if (!preapprovalId) {
+                return res.status(400).json({ success: false, message: 'preapprovalId é obrigatório' });
+            }
+            
+            // Buscar detalhes da assinatura no Mercado Pago
+            const mp = require('../config/mercadoPago');
+            const detalhes = await mp.getSubscription(preapprovalId);
+            
+            if (!detalhes) {
+                return res.status(404).json({ success: false, message: 'Assinatura não encontrada no Mercado Pago' });
+            }
+            
+            const externalReference = detalhes.external_reference;
+            if (!externalReference) {
+                return res.status(400).json({ success: false, message: 'Assinatura sem external_reference' });
+            }
+            
+            const match = externalReference.match(/usuario_(\d+)_plano_(\d+)/);
+            if (!match) {
+                return res.status(400).json({ success: false, message: 'External reference em formato inválido' });
+            }
+            
+            const usuarioIdRef = parseInt(match[1]);
+            const planoId = parseInt(match[2]);
+            
+            // Verificar se o usuário é o dono da assinatura
+            if (usuarioIdRef !== usuarioId) {
+                return res.status(403).json({ success: false, message: 'Esta assinatura não pertence a você' });
+            }
+            
+            // Processar assinatura manualmente
+            if (detalhes.status === 'authorized' || detalhes.status === 'active') {
+                // Buscar plano
+                const planoRes = await pool.query(
+                    'SELECT id, valor FROM assinatura WHERE id = $1',
+                    [planoId]
+                );
+                
+                if (planoRes.rows.length === 0) {
+                    return res.status(404).json({ success: false, message: 'Plano não encontrado' });
+                }
+                
+                const plano = planoRes.rows[0];
+                
+                await pool.query('BEGIN');
+                
+                // Criar assinatura do usuário
+                const insertUsuarioAssinatura = await pool.query(
+                    `INSERT INTO assinaturas_usuarios 
+                    (usuario_id, plano_id, status, data_inicio, proxima_cobranca, created_at)
+                    VALUES ($1, $2, 'ativa', CURRENT_DATE, CURRENT_DATE + INTERVAL '30 days', CURRENT_TIMESTAMP) 
+                    RETURNING *`,
+                    [usuarioId, planoId]
+                );
+                
+                const assinaturaUsuarioId = insertUsuarioAssinatura.rows[0].id;
+                
+                // Criar assinatura recorrente
+                const insertRecorrente = await pool.query(
+                    `INSERT INTO assinaturas_pagamentos_recorrentes
+                    (usuario_id, assinatura_usuario_id, plano_id, mercado_pago_subscription_id, 
+                    valor_mensal, proxima_cobranca, status, created_at)
+                    VALUES ($1, $2, $3, $4, $5, CURRENT_DATE + INTERVAL '30 days', 'ativa', CURRENT_TIMESTAMP) 
+                    RETURNING *`,
+                    [usuarioId, assinaturaUsuarioId, planoId, preapprovalId, plano.valor]
+                );
+                
+                // Atualizar usuário
+                await pool.query(
+                    `UPDATE usuarios 
+                    SET assinante = true, 
+                        assinatura_id = $1,
+                        updated_at = CURRENT_TIMESTAMP
+                    WHERE id = $2`,
+                    [assinaturaUsuarioId, usuarioId]
+                );
+                
+                await pool.query('COMMIT');
+                
+                logger.info('Assinatura confirmada manualmente:', { usuarioId, preapprovalId });
+                
+                return res.json({ 
+                    success: true, 
+                    message: 'Assinatura confirmada com sucesso',
+                    assinatura: insertRecorrente.rows[0]
+                });
+            } else {
+                return res.status(400).json({ 
+                    success: false, 
+                    message: `Assinatura com status inválido: ${detalhes.status}` 
+                });
+            }
+            
+        } catch (error) {
+            logger.error('Erro ao confirmar assinatura manualmente:', error);
+            return res.status(500).json({ success: false, error: error.message });
+        }
+    }
 }
 
 module.exports = SubscriptionRecurrentController;

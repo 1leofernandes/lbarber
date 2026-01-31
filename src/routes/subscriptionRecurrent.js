@@ -39,4 +39,8 @@ router.get('/historico/cobrancas', subscriptionRecurrentController.getHistoricoC
 // GET /subscricoes-recorrentes/historico/cobrancas - Histórico de cobranças
 router.get('/historico/cobrancas', subscriptionRecurrentController.getHistoricoCobrancas);
 
+
+// POST /subscricoes-recorrentes/confirmar-manual - Confirmar assinatura manualmente
+router.post('/confirmar-manual', subscriptionRecurrentController.confirmarAssinaturaManual);
+
 module.exports = router;

@@ -497,7 +497,7 @@
                         <h4 style="margin-bottom: 1rem; color: var(--light-gray);">Ações</h4>
                         <div class="actions-grid">
                             ${status === 'ativa' || status === 'active' ? `
-                                <div class="action-card" onclick="cancelarAssinatura('${assinatura.mercado_pago_subscription_id || ''}', ${assinatura.id})">
+                                <div class="action-card" onclick="cancelarAssinatura(${assinatura.pagamento_recorrente_id || 'null'}, ${assinatura.assinatura_usuario_id})">
                                     <div style="font-size: 2rem; color: var(--accent-gold); margin-bottom: 1rem;">
                                         <i class="fas fa-times-circle"></i>
                                     </div>
@@ -531,12 +531,16 @@
             });
         }
         
-        async function cancelarAssinatura(mercadoPagoId, assinaturaId) {
+        async function cancelarAssinatura(pagamentoRecorrenteId, assinaturaUsuarioId) {
             if (!confirm('Tem certeza que deseja cancelar esta assinatura?')) return;
             
             try {
-                // Usar a rota correta para cancelar
-                const response = await fetch(`${API_BASE_URL}/api/subscricoes-recorrentes/${assinaturaId}`, {
+                const idToSend = pagamentoRecorrenteId || assinaturaUsuarioId;
+                if (!idToSend) {
+                    throw new Error('ID da assinatura não disponível para cancelamento');
+                }
+
+                const response = await fetch(`${API_BASE_URL}/api/subscricoes-recorrentes/${idToSend}`, {
                     method: 'DELETE',
                     headers: {
                         'Authorization': `Bearer ${localStorage.getItem('token')}`,

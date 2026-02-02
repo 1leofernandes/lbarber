@@ -15,9 +15,13 @@ class WebhookController {
             // IMPORTANTE: Em produção, aceitar webhooks mesmo com validação falhando temporariamente
             // Mas logar para debug
             if (!WebhookController.validarWebhookMercadoPago(req)) {
-                logger.warn('Webhook Mercado Pago com assinatura inválida - MAS ACEITANDO PARA TESTE');
-                // Em produção, aceitar mesmo com erro por enquanto
-                // return res.status(400).json({ success: false, message: 'Assinatura inválida' });
+                logger.warn('Webhook Mercado Pago com assinatura inválida');
+                // Em produção, rejeitar webhooks com assinatura inválida
+                if (process.env.NODE_ENV === 'production') {
+                    return res.status(400).json({ success: false, message: 'Assinatura inválida' });
+                } else {
+                    logger.warn('Aceitando webhook em ambiente não-prod por compatibilidade de teste');
+                }
             }
 
             // Processar conforme tipo de evento

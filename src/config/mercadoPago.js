@@ -97,6 +97,89 @@ const MercadoPago = {
       logger.error('Erro ao criar preapproval no Mercado Pago:', error);
       throw error;
     }
+  },
+
+  // Criar token de cartão (para fluxos que usam tokenização server-side)
+  async createCardToken(payload = {}) {
+    try {
+      // Aceitar tanto chaves em inglês quanto em português
+      const card_number = payload.card_number || payload.numeroCartao || payload.numero || payload.cardNumber;
+      const expiration_month = payload.expiration_month || payload.mesValidade || payload.expirationMonth;
+      const expiration_year = payload.expiration_year || payload.anoValidade || payload.expirationYear;
+      const security_code = payload.security_code || payload.codigoSeguranca || payload.securityCode || payload.cvv;
+      const cardholder = payload.cardholder || payload.nomeTitular || payload.cardholderName;
+
+      const token = await this.getAccessToken();
+      const body = {
+        card_number,
+        expiration_month,
+        expiration_year,
+        security_code,
+        cardholder: cardholder || undefined
+      };
+
+      // Remover undefined para não enviar campos vazios
+      Object.keys(body).forEach(k => (body[k] === undefined) && delete body[k]);
+
+      const res = await fetch('https://api.mercadopago.com/v1/card_tokens', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+
+      const data = await res.json();
+      if (res.status >= 400) {
+        logger.warn('Erro ao criar card token no Mercado Pago:', data);
+        throw new Error('Erro ao criar card token no Mercado Pago: ' + JSON.stringify(data));
+      }
+
+      return data;
+    } catch (error) {
+      logger.error('Erro ao criar card token no Mercado Pago:', error);
+      throw error;
+    }
+  },
+
+
+  // Criar pagamento (usado pelo agendador quando processa cobranças com token de cartão)
+  async createPayment({ valor, descricao, emailCliente, nomeCliente, cartaoToken, idempotenciaKey } = {}) {
+    try {
+      const token = await this.getAccessToken();
+      const body = {
+        transaction_amount: parseFloat(valor) || 0,
+        token: cartaoToken,
+        description: descricao || 'Cobrança de Assinatura',
+        installments: 1,
+        payment_method_id: 'credit_card',
+        payer: {
+          email: emailCliente || undefined,
+          first_name: nomeCliente || undefined
+        }
+      };
+
+      // Remover undefined keys
+      Object.keys(body).forEach(k => (body[k] === undefined) && delete body[k]);
+
+      const headers = { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
+      if (idempotenciaKey) headers['x-idempotency-key'] = idempotenciaKey;
+
+      const res = await fetch('https://api.mercadopago.com/v1/payments', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(body)
+      });
+
+      const data = await res.json();
+      if (res.status >= 400) {
+        logger.warn('Erro ao criar pagamento no Mercado Pago:', data);
+        throw new Error('Erro ao criar pagamento no Mercado Pago: ' + JSON.stringify(data));
+      }
+
+      return data;
+    } catch (error) {
+      logger.error('Erro ao criar pagamento no Mercado Pago:', error);
+      throw error;
+    }
   }
 };
 

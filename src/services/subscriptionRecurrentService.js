@@ -324,10 +324,31 @@ class SubscriptionRecurrentService {
             await pool.query('BEGIN');
 
             try {
-                // Verificar se assinatura pertence ao usuário
-                const assinatura = await RecurringSubscription.getAssinaturaRecorrente(assinaturaRecurrenteId);
+                // Tentar buscar assinatura considerando que o ID recebido pode ser id de `assinaturas_pagamentos_recorrentes` (apr.id)
+                // ou `assinaturas_usuarios` (assinatura_usuario_id)
+                let assinatura = await RecurringSubscription.getAssinaturaRecorrente(assinaturaRecurrenteId);
+                let pagamentoRecorrenteId = assinaturaRecurrenteId;
 
-                if (!assinatura || assinatura.usuario_id !== usuarioId) {
+                if (!assinatura) {
+                    // Interpretar como assinatura_usuario_id e buscar o pagamento recorrente ativo correspondente
+                    const q = await pool.query(
+                        `SELECT id, usuario_id, assinatura_usuario_id, mercado_pago_subscription_id FROM assinaturas_pagamentos_recorrentes WHERE assinatura_usuario_id = $1 AND status = 'ativa' LIMIT 1`,
+                        [assinaturaRecurrenteId]
+                    );
+
+                    if (q.rows.length === 0) {
+                        throw new Error('Assinatura não encontrada ou não autorizada');
+                    }
+
+                    pagamentoRecorrenteId = q.rows[0].id;
+                    assinatura = {
+                        usuario_id: q.rows[0].usuario_id,
+                        assinatura_usuario_id: q.rows[0].assinatura_usuario_id,
+                        mercado_pago_subscription_id: q.rows[0].mercado_pago_subscription_id
+                    };
+                }
+
+                if (assinatura.usuario_id !== usuarioId) {
                     throw new Error('Assinatura não encontrada ou não autorizada');
                 }
 
@@ -336,23 +357,23 @@ class SubscriptionRecurrentService {
                     await mercadoPagoConfig.cancelSubscription(assinatura.mercado_pago_subscription_id);
                 }
 
-                // Cancelar assinatura no banco de dados
+                // Cancelar assinatura no banco de dados (usando pagamento_recorrente_id)
                 const resultado = await RecurringSubscription.cancelarAssinaturaRecorrente(
-                    assinaturaRecurrenteId,
+                    pagamentoRecorrenteId,
                     motivo
                 );
 
                 // Atualizar status da assinatura do usuário
                 await pool.query(
                     `UPDATE assinaturas_usuarios 
-                    SET status = 'cancelada' 
+                    SET status = 'cancelada', data_fim = CURRENT_DATE 
                     WHERE id = $1`,
                     [assinatura.assinatura_usuario_id]
                 );
 
                 await pool.query('COMMIT');
 
-                logger.info('Assinatura recorrente cancelada:', { assinaturaRecurrenteId, usuarioId });
+                logger.info('Assinatura recorrente cancelada:', { pagamentoRecorrenteId, usuarioId });
                 return resultado;
             } catch (error) {
                 await pool.query('ROLLBACK');
@@ -371,6 +392,133 @@ class SubscriptionRecurrentService {
             return await RecurringSubscription.getAssinaturaRecorrentePorUsuario(usuarioId);
         } catch (error) {
             logger.error('Erro ao buscar assinatura recorrente:', error);
+            throw error;
+        }
+    }
+
+    // Confirmar assinatura quando recebemos preapprovalId (retorno do Mercado Pago)
+    async confirmarAssinaturaPorPreapproval(preapprovalId, usuarioId) {
+        try {
+            const mp = require('../config/mercadoPago');
+            const detalhes = await mp.getSubscription(preapprovalId);
+
+            if (!detalhes) throw new Error('Detalhes da assinatura não encontrados no Mercado Pago');
+
+            const externalReference = detalhes.external_reference;
+            if (!externalReference) throw new Error('Assinatura sem external_reference');
+
+            const match = externalReference.match(/usuario_(\d+)_plano_(\d+)/);
+            if (!match) throw new Error('External reference em formato inválido');
+
+            const usuarioIdRef = parseInt(match[1]);
+            const planoId = parseInt(match[2]);
+
+            if (usuarioIdRef !== usuarioId) {
+                throw new Error('Esta assinatura não pertence a você');
+            }
+
+            // Se já existe assinatura ativa para esse usuário/plano, apenas atualizar campos
+            if (detalhes.status === 'authorized' || detalhes.status === 'active') {
+                const poolLocal = require('../config/database');
+
+                const planoRes = await poolLocal.query('SELECT id, valor FROM assinatura WHERE id = $1', [planoId]);
+                if (planoRes.rows.length === 0) throw new Error('Plano não encontrado');
+
+                const plano = planoRes.rows[0];
+
+                await poolLocal.query('BEGIN');
+
+                // Verificar se já existe uma assinatura ativa para este usuário/plano
+                const existing = await poolLocal.query(
+                    `SELECT * FROM assinaturas_usuarios WHERE usuario_id = $1 AND plano_id = $2 AND status = 'ativa' LIMIT 1`,
+                    [usuarioId, planoId]
+                );
+
+                let assinaturaUsuarioId;
+                if (existing.rows.length > 0) {
+                    assinaturaUsuarioId = existing.rows[0].id;
+
+                    // Verificar se já existe um registro de pagamento recorrente
+                    const percor = await poolLocal.query(
+                        `SELECT * FROM assinaturas_pagamentos_recorrentes WHERE assinatura_usuario_id = $1 LIMIT 1`,
+                        [assinaturaUsuarioId]
+                    );
+
+                    if (percor.rows.length === 0) {
+                        const insertRecorrente = await poolLocal.query(
+                            `INSERT INTO assinaturas_pagamentos_recorrentes
+                            (usuario_id, assinatura_usuario_id, plano_id, mercado_pago_subscription_id, 
+                            valor_mensal, proxima_cobranca, status, created_at)
+                            VALUES ($1, $2, $3, $4, $5, CURRENT_DATE + INTERVAL '30 days', 'ativa', CURRENT_TIMESTAMP) 
+                            RETURNING *`,
+                            [usuarioId, assinaturaUsuarioId, planoId, preapprovalId, plano.valor]
+                        );
+
+                        await poolLocal.query(
+                            `UPDATE usuarios 
+                            SET assinante = true, assinatura_id = $1, updated_at = CURRENT_TIMESTAMP
+                            WHERE id = $2`,
+                            [assinaturaUsuarioId, usuarioId]
+                        );
+
+                        await poolLocal.query('COMMIT');
+                        logger.info('Assinatura confirmada via preapproval (existing usuario):', { usuarioId, preapprovalId });
+                        return insertRecorrente.rows[0];
+                    } else {
+                        // Atualizar mercado id se necessário e retornar
+                        const atualizar = await poolLocal.query(
+                            `UPDATE assinaturas_pagamentos_recorrentes SET mercado_pago_subscription_id = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2 RETURNING *`,
+                            [preapprovalId, percor.rows[0].id]
+                        );
+
+                        await poolLocal.query(
+                            `UPDATE usuarios 
+                            SET assinante = true, assinatura_id = $1, updated_at = CURRENT_TIMESTAMP
+                            WHERE id = $2`,
+                            [assinaturaUsuarioId, usuarioId]
+                        );
+
+                        await poolLocal.query('COMMIT');
+                        logger.info('Assinatura confirmada via preapproval (updated recorrente):', { usuarioId, preapprovalId });
+                        return atualizar.rows[0];
+                    }
+                } else {
+                    // Criar assinatura do usuário
+                    const insertUsuarioAssinatura = await poolLocal.query(
+                        `INSERT INTO assinaturas_usuarios 
+                        (usuario_id, plano_id, status, data_inicio, proxima_cobranca, created_at)
+                        VALUES ($1, $2, 'ativa', CURRENT_DATE, CURRENT_DATE + INTERVAL '30 days', CURRENT_TIMESTAMP) 
+                        RETURNING *`,
+                        [usuarioId, planoId]
+                    );
+
+                    assinaturaUsuarioId = insertUsuarioAssinatura.rows[0].id;
+
+                    const insertRecorrente = await poolLocal.query(
+                        `INSERT INTO assinaturas_pagamentos_recorrentes
+                        (usuario_id, assinatura_usuario_id, plano_id, mercado_pago_subscription_id, 
+                        valor_mensal, proxima_cobranca, status, created_at)
+                        VALUES ($1, $2, $3, $4, $5, CURRENT_DATE + INTERVAL '30 days', 'ativa', CURRENT_TIMESTAMP) 
+                        RETURNING *`,
+                        [usuarioId, assinaturaUsuarioId, planoId, preapprovalId, plano.valor]
+                    );
+
+                    await poolLocal.query(
+                        `UPDATE usuarios 
+                        SET assinante = true, assinatura_id = $1, updated_at = CURRENT_TIMESTAMP
+                        WHERE id = $2`,
+                        [assinaturaUsuarioId, usuarioId]
+                    );
+
+                    await poolLocal.query('COMMIT');
+                    logger.info('Assinatura confirmada via preapproval:', { usuarioId, preapprovalId });
+                    return insertRecorrente.rows[0];
+                }
+            } else {
+                throw new Error(`Assinatura com status inválido: ${detalhes.status}`);
+            }
+        } catch (error) {
+            logger.error('Erro ao confirmar assinatura por preapproval:', error);
             throw error;
         }
     }

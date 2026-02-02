@@ -1,6 +1,7 @@
 // src/controllers/subscriptionRecurrentController.js
 const subscriptionRecurrentService = require('../services/subscriptionRecurrentService');
 const logger = require('../utils/logger');
+const pool = require('../config/database');
 
 class SubscriptionRecurrentController {
     // ==================== CARTÕES ====================
@@ -269,9 +270,21 @@ class SubscriptionRecurrentController {
             
             const pool = require('../config/database');
             const result = await pool.query(
-                `SELECT au.*, a.nome_plano, a.descricao, a.valor,
-                        apr.mercado_pago_subscription_id, apr.proxima_cobranca,
-                        (SELECT COUNT(*) FROM agendamentos ag WHERE ag.assinatura_usuario_id = au.id) as total_agendamentos
+                `SELECT 
+                    au.id AS assinatura_usuario_id,
+                    au.usuario_id,
+                    au.plano_id,
+                    au.status AS status_assinatura,
+                    au.data_inicio,
+                    au.data_fim,
+                    au.proxima_cobranca AS assinatura_proxima_cobranca,
+                    a.nome_plano,
+                    a.descricao,
+                    a.valor,
+                    apr.id AS pagamento_recorrente_id,
+                    apr.mercado_pago_subscription_id,
+                    apr.proxima_cobranca AS pagamento_proxima_cobranca,
+                    (SELECT COUNT(*) FROM agendamentos ag WHERE ag.assinatura_usuario_id = au.id) as total_agendamentos
                 FROM assinaturas_usuarios au
                 JOIN assinatura a ON au.plano_id = a.id
                 LEFT JOIN assinaturas_pagamentos_recorrentes apr ON au.id = apr.assinatura_usuario_id
@@ -280,7 +293,24 @@ class SubscriptionRecurrentController {
                 [usuarioId]
             );
             
-            res.json(result.rows);
+            // Normalizar resposta: retornar array de assinaturas com campos claros
+            const rows = result.rows.map(r => ({
+                assinatura_usuario_id: r.assinatura_usuario_id,
+                usuario_id: r.usuario_id,
+                plano_id: r.plano_id,
+                status: r.status_assinatura,
+                data_inicio: r.data_inicio,
+                data_fim: r.data_fim,
+                proxima_cobranca: r.pagamento_proxima_cobranca || r.assinatura_proxima_cobranca,
+                nome_plano: r.nome_plano,
+                descricao: r.descricao,
+                valor: r.valor,
+                pagamento_recorrente_id: r.pagamento_recorrente_id || null,
+                mercado_pago_subscription_id: r.mercado_pago_subscription_id || null,
+                total_agendamentos: parseInt(r.total_agendamentos, 10) || 0
+            }));
+            
+            res.json(rows);
         } catch (error) {
             console.error('Erro ao buscar assinaturas:', error);
             res.status(500).json({ error: 'Erro ao buscar assinaturas' });
@@ -297,12 +327,10 @@ class SubscriptionRecurrentController {
                 return res.status(400).json({ success: false, message: 'preapprovalId é obrigatório' });
             }
             
-            const mp = require('../config/mercadoPago');
-            const detalhes = await mp.getSubscription(preapprovalId);
+            // Delegar a confirmação ao serviço para garantir idempotência e regras de negócio
+            const resultado = await subscriptionRecurrentService.confirmarAssinaturaPorPreapproval(preapprovalId, usuarioId);
             
-            // ... lógica para criar/atualizar assinatura local ...
-            
-            res.json({ success: true, message: 'Assinatura confirmada' });
+            res.json({ success: true, message: 'Assinatura confirmada', assinatura: resultado });
         } catch (error) {
             logger.error('Erro ao confirmar assinatura:', error);
             res.status(500).json({ success: false, error: error.message });

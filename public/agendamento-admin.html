@@ -1534,18 +1534,25 @@
         
         function selecionarHorario(horario, slotElement, duracaoTotal) {
             const agora = new Date();
-            const dataSelecionada = new Date(estado.dataSelecionada);
+            // Criar data selecionada em horário local a partir de YYYY-MM-DD
+            let dataSelecionada;
+            if (typeof estado.dataSelecionada === 'string' && estado.dataSelecionada.includes('-')) {
+                const [y, m, d] = estado.dataSelecionada.split('-').map(Number);
+                dataSelecionada = new Date(y, m - 1, d);
+            } else {
+                dataSelecionada = new Date(estado.dataSelecionada);
+            }
             const [hora, minutos] = horario.inicio.split(':').map(Number);
-            
+
             // VALIDAÇÃO: Verificar se não está agendando no passado
             const hoje = new Date();
             hoje.setHours(0, 0, 0, 0);
             dataSelecionada.setHours(0, 0, 0, 0);
-            
+
             if (dataSelecionada.getTime() === hoje.getTime()) {
                 const horaAtual = agora.getHours();
                 const minutoAtual = agora.getMinutes();
-                
+
                 if (hora < horaAtual || (hora === horaAtual && minutos < minutoAtual)) {
                     toast('Este horário já passou. Por favor, escolha um horário futuro.', 'warning');
                     return;

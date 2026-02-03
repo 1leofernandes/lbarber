@@ -1,5 +1,6 @@
 // src/services/agendamentoService.js
 const pool = require('../config/database');
+const servicoService = require('./servicoService');
 
 class AgendamentoService {
     // Criar novo agendamento COM MÚLTIPLOS SERVIÇOS

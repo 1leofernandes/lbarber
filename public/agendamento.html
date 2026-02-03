@@ -1696,77 +1696,29 @@
         function calcularPrecoServico(servico) {
             const valor = parseFloat(servico.valor_servico) || 0;
 
-            if (!estado.assinatura || !servico.assinatura_ids) {
-                return valor;
-            }
+            // Se não há assinatura carregada ou o serviço não possui lista de assinaturas, retorna valor normal
+            if (!estado.assinatura || !Array.isArray(servico.assinatura_ids)) return valor;
 
-            // Verificar se o serviço está no plano e se a data selecionada está coberta
-            const isServicoEmPlano = Array.isArray(servico.assinatura_ids) && servico.assinatura_ids.includes(estado.assinatura.id);
+            // Verifica se o serviço pertence ao plano do usuário
+            const isServicoEmPlano = servico.assinatura_ids.includes(estado.assinatura.id);
             if (!isServicoEmPlano) return valor;
 
-            if (!estado.selecionados.data) return valor; // sem data selecionada não assume cobertura
+            // Sem data selecionada, não assume cobertura
+            if (!estado.selecionados.data) return valor;
 
+            // Determina o dia no formato 1..7 (1=segunda, ..., 7=domingo)
             const [ano, mes, dia] = estado.selecionados.data.split('-').map(Number);
             const d = new Date(ano, mes - 1, dia);
-            const jsDay = d.getDay();
+            const jsDay = d.getDay(); // 0=domingo, 1=segunda, ...
             const dbDay = jsDay === 0 ? 7 : jsDay;
 
-            const diasPlano = estado.assinatura.dias_semana || [];
+            const diasPlano = Array.isArray(estado.assinatura.dias_semana) ? estado.assinatura.dias_semana : [];
             if (diasPlano.includes(dbDay)) {
+                // Serviço coberto no dia selecionado
                 return 0;
             }
 
             return valor;
-            }
-            
-            // Se não tem data selecionada, não pode verificar dia
-            if (!estado.selecionados.data) {
-                return parseFloat(servico.valor_servico) || 0;
-            }
-            
-            // Verificar se o dia está coberto pela assinatura
-            const dataSelecionada = new Date(estado.selecionados.data);
-            
-            // Converter para ISODOW (1=seg, 2=ter, ..., 7=dom)
-            // getDay() retorna 0=dom, 1=seg, ..., 6=sab
-            let isodow = dataSelecionada.getDay();
-            if (isodow === 0) {
-                isodow = 7; // Domingo
-            }
-            // Senão, isodow já está correto (1=seg, 2=ter, etc)
-            
-            // Se não tem dias_semana na assinatura, retorna preço normal
-            if (!estado.assinatura.dias_semana || !Array.isArray(estado.assinatura.dias_semana)) {
-                return parseFloat(servico.valor_servico) || 0;
-            }
-            
-            // Verificar se o ISODOW está coberto
-            if (!estado.assinatura.dias_semana.includes(isodow)) {
-                return parseFloat(servico.valor_servico) || 0;
-            }
-            
-            // Tudo OK! Serviço está coberto e é um dia válido
-            return 0;
-=======
-
-            // Verificar se o serviço está no plano e se a data selecionada está coberta
-            const isServicoEmPlano = Array.isArray(servico.assinatura_ids) && servico.assinatura_ids.includes(estado.assinatura.id);
-            if (!isServicoEmPlano) return valor;
-
-            if (!estado.selecionados.data) return valor; // sem data selecionada não assume cobertura
-
-            const [ano, mes, dia] = estado.selecionados.data.split('-').map(Number);
-            const d = new Date(ano, mes - 1, dia);
-            const jsDay = d.getDay();
-            const dbDay = jsDay === 0 ? 7 : jsDay;
-
-            const diasPlano = estado.assinatura.dias_semana || [];
-            if (diasPlano.includes(dbDay)) {
-                return 0;
-            }
-
-            return valor;
->>>>>>> ef7cac2 (feat: aplicar cobertura de assinaturas (dias da semana) e calcular valor final dos agendamentos; frontend e admin adaptados)
         }
         
         async function confirmarAgendamento() {

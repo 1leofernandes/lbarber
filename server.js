@@ -119,6 +119,36 @@ app.get('/health', (req, res) => {
 
 // ==================== ROTAS ====================
 
+// GET /assinatura/:id - Obter dados da assinatura com dias de semana
+app.get('/assinatura/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const pool = require('./src/config/database');
+    
+    const result = await pool.query(`
+      SELECT 
+        a.*,
+        json_agg(DISTINCT ads.dia_semana) as dias_semana
+      FROM assinatura a
+      LEFT JOIN assinatura_dias_semana ads ON a.id = ads.assinatura_id
+      WHERE a.id = $1
+      GROUP BY a.id
+    `, [id]);
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Assinatura não encontrada' });
+    }
+    
+    const assinatura = result.rows[0];
+    assinatura.dias_semana = assinatura.dias_semana.filter(d => d !== null);
+    
+    res.json({ assinatura });
+  } catch (error) {
+    console.error('Erro ao buscar assinatura:', error);
+    res.status(500).json({ error: 'Erro ao buscar assinatura' });
+  }
+});
+
 // Rate limit em rotas de autenticação
 app.use('/auth/login', authLimiter);
 app.use('/auth/registrar', authLimiter);

@@ -1684,15 +1684,44 @@
         }
         
         function calcularPrecoServico(servico) {
+            // Se não tem assinatura ou serviço não tem IDs, retorna preço normal
             if (!estado.assinatura || !servico.assinatura_ids) {
                 return parseFloat(servico.valor_servico) || 0;
             }
             
-            if (servico.assinatura_ids.includes(estado.assinatura.id)) {
-                return 0;
+            // Se serviço não está na assinatura do usuário, retorna preço normal
+            if (!servico.assinatura_ids.includes(estado.assinatura.id)) {
+                return parseFloat(servico.valor_servico) || 0;
             }
             
-            return parseFloat(servico.valor_servico) || 0;
+            // Se não tem data selecionada, não pode verificar dia
+            if (!estado.selecionados.data) {
+                return parseFloat(servico.valor_servico) || 0;
+            }
+            
+            // Verificar se o dia está coberto pela assinatura
+            const dataSelecionada = new Date(estado.selecionados.data);
+            
+            // Converter para ISODOW (1=seg, 2=ter, ..., 7=dom)
+            // getDay() retorna 0=dom, 1=seg, ..., 6=sab
+            let isodow = dataSelecionada.getDay();
+            if (isodow === 0) {
+                isodow = 7; // Domingo
+            }
+            // Senão, isodow já está correto (1=seg, 2=ter, etc)
+            
+            // Se não tem dias_semana na assinatura, retorna preço normal
+            if (!estado.assinatura.dias_semana || !Array.isArray(estado.assinatura.dias_semana)) {
+                return parseFloat(servico.valor_servico) || 0;
+            }
+            
+            // Verificar se o ISODOW está coberto
+            if (!estado.assinatura.dias_semana.includes(isodow)) {
+                return parseFloat(servico.valor_servico) || 0;
+            }
+            
+            // Tudo OK! Serviço está coberto e é um dia válido
+            return 0;
         }
         
         async function confirmarAgendamento() {

@@ -21,10 +21,18 @@ class AssinaturaService {
                 WHERE $1 = ANY(s.assinatura_ids)
             `;
             const servicosResult = await pool.query(servicosQuery, [id]);
+
+            // Buscar dias da semana que o plano cobre (1..7)
+            const diasQuery = `
+                SELECT dia_semana FROM assinatura_dias_semana WHERE assinatura_id = $1 ORDER BY dia_semana
+            `;
+            const diasResult = await pool.query(diasQuery, [id]);
+            const dias_semana = diasResult.rows.map(r => r.dia_semana);
             
             return {
                 ...assinatura,
-                servicos_cobertos: servicosResult.rows
+                servicos_cobertos: servicosResult.rows,
+                dias_semana
             };
         } catch (error) {
             console.error('Erro no getAssinaturaById:', error);

@@ -1,5 +1,7 @@
 // src/services/agendamentoService.js
 const pool = require('../config/database');
+const assinaturaService = require('./assinaturaService');
+const subscriptionService = require('./subscriptionRecurrentService');
 const servicoService = require('./servicoService');
 
 class AgendamentoService {
@@ -37,14 +39,18 @@ class AgendamentoService {
             
             // 3. Criar o agendamento (servico_id pode ser NULL ou primeiro serviço)
             const primeiroServico = servicos_ids[0] || null;
+            // Verificar se usuário tem assinatura ativa (para referenciar em agendamento)
+            const assinaturaUsuario = await subscriptionService.getActiveAssinaturaUsuario(usuario_id);
+            const assinaturaUsuarioId = assinaturaUsuario ? assinaturaUsuario.id : null;
+
             const agendamentoQuery = `
                 INSERT INTO agendamentos 
-                (usuario_id, barbeiro_id, servico_id, data_agendada, hora_inicio, hora_fim, observacoes, created_at, updated_at)
-                VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
+                (usuario_id, barbeiro_id, servico_id, data_agendada, hora_inicio, hora_fim, observacoes, assinatura_usuario_id, created_at, updated_at)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW())
                 RETURNING *
             `;
             
-            const agendamentoValues = [usuario_id, barbeiro_id, primeiroServico, data_agendada, hora_inicio, hora_fim, observacoes || null];
+            const agendamentoValues = [usuario_id, barbeiro_id, primeiroServico, data_agendada, hora_inicio, hora_fim, observacoes || null, assinaturaUsuarioId];
             const agendamentoResult = await client.query(agendamentoQuery, agendamentoValues);
             const agendamento = agendamentoResult.rows[0];
             
@@ -120,7 +126,15 @@ class AgendamentoService {
                 ORDER BY a.data_agendada DESC, a.hora_inicio DESC
             `;
             const result = await pool.query(query, [usuarioId]);
-            return result.rows;
+            const agendamentos = result.rows;
+
+            // Aplicar descontos/coberturas em cada agendamento
+            const agendamentosEnriquecidos = [];
+            for (const a of agendamentos) {
+                agendamentosEnriquecidos.push(await this.aplicarDescontosAssinatura(a));
+            }
+
+            return agendamentosEnriquecidos;
         } catch (error) {
             console.error('Erro no getAgendamentosComServicosByUsuario:', error);
             throw error;
@@ -205,7 +219,11 @@ class AgendamentoService {
             }
             
             const result = await pool.query(query, params);
-            return result.rows[0];
+            const agendamento = result.rows[0];
+
+            // Aplicar descontos/coberturas de assinatura (se aplicável)
+            const agendamentoEnriquecido = await this.aplicarDescontosAssinatura(agendamento);
+            return agendamentoEnriquecido;
         } catch (error) {
             console.error('Erro no getAgendamentoComServicosById:', error);
             throw error;
@@ -588,6 +606,85 @@ class AgendamentoService {
         } catch (error) {
             console.error('Erro no verificarSlotDisponivel:', error);
             throw error;
+        }
+    }
+
+    // Aplicar descontos/coberturas de assinatura a um agendamento (retorna agendamento enriquecido com preços)
+    async aplicarDescontosAssinatura(agendamento) {
+        try {
+            if (!agendamento) return agendamento;
+
+            const servicos = agendamento.servicos || [];
+            const usuarioId = agendamento.usuario_id;
+            const dataAgendada = agendamento.data_agendada;
+
+            // Buscar assinatura do agendamento (prioriza assinatura_usuario_id se existir)
+            let assinaturaUsuario = null;
+            if (agendamento.assinatura_usuario_id) {
+                const res = await pool.query('SELECT * FROM assinaturas_usuarios WHERE id = $1', [agendamento.assinatura_usuario_id]);
+                assinaturaUsuario = res.rows[0] || null;
+            }
+            if (!assinaturaUsuario) {
+                assinaturaUsuario = await subscriptionService.getActiveAssinaturaUsuario(usuarioId);
+            }
+
+            let assinaturaPlanoId = null;
+            let diasSemana = [];
+
+            if (assinaturaUsuario) {
+                assinaturaPlanoId = assinaturaUsuario.plano_id;
+                const assin = await assinaturaService.getAssinaturaById(assinaturaPlanoId);
+                diasSemana = assin && Array.isArray(assin.dias_semana) ? assin.dias_semana : [];
+            }
+
+            // Converter data para dia da semana compatível com DB (1..7, segunda=1, domingo=7)
+            let dbDay = null;
+            if (dataAgendada) {
+                const d = new Date(dataAgendada);
+                const jsDay = d.getDay(); // 0 (domingo) .. 6 (sabado)
+                dbDay = jsDay === 0 ? 7 : jsDay; // 1..7 where segunda=1
+            }
+
+            let subtotal = 0;
+            let descontoTotal = 0;
+            const servicosEnriquecidos = [];
+
+            for (const s of servicos) {
+                const valorOriginal = parseFloat(s.valor_servico) || 0;
+                let coberto = false;
+
+                if (assinaturaPlanoId && dbDay !== null) {
+                    const isCobertoPorPlano = await servicoService.isServicoCobertoPorAssinatura(s.id, assinaturaPlanoId);
+                    if (isCobertoPorPlano && diasSemana.includes(dbDay)) {
+                        coberto = true;
+                    }
+                }
+
+                const valorFinal = coberto ? 0 : valorOriginal;
+                subtotal += valorOriginal;
+                descontoTotal += (valorOriginal - valorFinal);
+
+                servicosEnriquecidos.push({
+                    ...s,
+                    valor_original: valorOriginal,
+                    valor_final: valorFinal,
+                    coberto
+                });
+            }
+
+            const total = subtotal - descontoTotal;
+
+            return {
+                ...agendamento,
+                servicos: servicosEnriquecidos,
+                valor_subtotal: subtotal,
+                desconto_total: descontoTotal,
+                valor_total: total,
+                assinatura_usuario: assinaturaUsuario ? { id: assinaturaUsuario.id, plano_id: assinaturaUsuario.plano_id } : null
+            };
+        } catch (error) {
+            console.error('Erro ao aplicar descontos de assinatura:', error);
+            return agendamento;
         }
     }
 }

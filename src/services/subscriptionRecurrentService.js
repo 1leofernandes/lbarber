@@ -396,6 +396,18 @@ class SubscriptionRecurrentService {
         }
     }
 
+    // Retorna a assinatura ativa do usuário (assinaturas_usuarios) se existir
+    async getActiveAssinaturaUsuario(usuarioId) {
+        try {
+            const query = `SELECT * FROM assinaturas_usuarios WHERE usuario_id = $1 AND status = 'ativa' ORDER BY data_inicio DESC LIMIT 1`;
+            const result = await pool.query(query, [usuarioId]);
+            return result.rows[0] || null;
+        } catch (error) {
+            logger.error('Erro ao buscar assinatura ativa do usuário:', error);
+            throw error;
+        }
+    }
+
     // Confirmar assinatura quando recebemos preapprovalId (retorno do Mercado Pago)
     async confirmarAssinaturaPorPreapproval(preapprovalId, usuarioId) {
         try {

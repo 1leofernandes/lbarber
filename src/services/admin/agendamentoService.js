@@ -4,6 +4,7 @@ const User = require('../../models/User');
 const Service = require('../../models/Service');
 const Barber = require('../../models/Barber');
 const Block = require('../../models/Block');
+const agendamentoService = require('../agendamentoService');
 
 class AdminAgendamentoService {
     // NO services/admin/agendamentoService.js - MÉTODO getAllAgendamentos ATUALIZADO
@@ -46,7 +47,14 @@ class AdminAgendamentoService {
             
             console.log('Filtros transformados:', filtrosTransformados);
             
-            return await Appointment.findAll(filtrosTransformados, limit, offset);
+            const agendamentos = await Appointment.findAll(filtrosTransformados, limit, offset);
+
+            // Aplicar descontos/coberturas de assinatura para cada agendamento (melhora exibição no admin)
+            const enriched = [];
+            for (const a of agendamentos) {
+                enriched.push(await agendamentoService.aplicarDescontosAssinatura(a));
+            }
+            return enriched;
         } catch (error) {
             console.error('Erro ao buscar agendamentos:', error);
             throw error;
@@ -55,7 +63,8 @@ class AdminAgendamentoService {
 
     async getAgendamentoById(id) {
         try {
-            const agendamento = await Appointment.findByIdWithServices(id);
+            // Usar agendamentoService para garantir preços e coberturas aplicadas
+            const agendamento = await agendamentoService.getAgendamentoComServicosById(id);
             if (!agendamento) {
                 throw new Error('Agendamento não encontrado');
             }

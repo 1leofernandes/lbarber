@@ -1718,7 +1718,7 @@
                 if (agendamento.servicos && Array.isArray(agendamento.servicos) && agendamento.servicos.length > 0) {
                     servicosTexto = agendamento.servicos.map(s => s.nome_servico).join(', ');
                     valorTotal = agendamento.servicos.reduce((total, servico) => {
-                        return total + (parseFloat(servico.valor_servico) || 0);
+                        return total + (parseFloat(servico.valor_final !== undefined ? servico.valor_final : servico.valor_servico) || 0);
                     }, 0);
                 } else if (agendamento.servico_nome) {
                     servicosTexto = agendamento.servico_nome;

@@ -1935,9 +1935,9 @@
             let servicosHtml = '';
             
             if (agendamento.servicos && agendamento.servicos.length > 0) {
-                // Construir HTML dos serviços
+                // Construir HTML dos serviços (usar valor_final se disponível)
                 servicosHtml = agendamento.servicos.map(servico => {
-                    const valorServico = parseFloat(servico.valor_servico) || 0;
+                    const valorServico = parseFloat(servico.valor_final !== undefined ? servico.valor_final : servico.valor_servico) || 0;
                     const duracaoServico = parseInt(servico.duracao_servico) || 0;
                     
                     valorTotal += valorServico;
@@ -2151,7 +2151,7 @@
                                         <div style="display: flex; justify-content: space-between; padding: 8px; border-bottom: 1px solid #dee2e6;">
                                             <span>${servico.nome_servico}</span>
                                             <span style="color: #28a745; font-weight: bold;">
-                                                R$ ${parseFloat(servico.valor_servico || 0).toFixed(2)}
+                                                R$ ${parseFloat(servico.valor_final !== undefined ? servico.valor_final : servico.valor_servico || 0).toFixed(2)}
                                             </span>
                                         </div>
                                     `).join('')}
@@ -2160,7 +2160,7 @@
                         `;
                         
                         // Calcular total
-                        const total = agendamento.servicos.reduce((sum, s) => sum + parseFloat(s.valor_servico || 0), 0);
+                        const total = agendamento.servicos.reduce((sum, s) => sum + parseFloat(s.valor_final !== undefined ? s.valor_final : s.valor_servico || 0), 0);
                         detalhesHTML += `
                             <div style="margin-top: 15px; text-align: right; font-weight: bold; font-size: 1.1em;">
                                 <strong>Total:</strong> R$ ${total.toFixed(2)}

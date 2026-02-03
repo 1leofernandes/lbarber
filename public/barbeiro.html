@@ -2041,7 +2041,15 @@
         
         function formatDateTime(dateStr, timeStr) {
             try {
-                const date = new Date(dateStr);
+                // Extrair YYYY-MM-DD antes de construir Date para evitar shift
+                const iso = (typeof dateStr === 'string') ? dateStr.split('T')[0] : null;
+                let date;
+                if (iso) {
+                    const [y,m,d] = iso.split('-').map(Number);
+                    date = new Date(y, m - 1, d);
+                } else {
+                    date = new Date(dateStr);
+                }
                 return `${date.toLocaleDateString('pt-BR')} ${timeStr}`;
             } catch (error) {
                 return `${dateStr} ${timeStr}`;

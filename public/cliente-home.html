@@ -1827,20 +1827,32 @@
 
 
         // Função para filtrar apenas agendamentos futuros
+        function getIsoDateOnly(dateString) {
+            if (!dateString) return null;
+            // Se já vem no formato YYYY-MM-DD ou com T, retorna a parte antes do T
+            if (typeof dateString === 'string') {
+                return dateString.split('T')[0];
+            }
+            // Fallback: criar Date e construir YYYY-MM-DD localmente
+            const d = new Date(dateString);
+            return `${d.getFullYear().toString().padStart(4,'0')}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+        }
+
         function filtrarAgendamentosFuturos() {
-            const hoje = new Date().toISOString().split('T')[0];
-            
+            const hoje = new Date();
+            const hojeIso = `${hoje.getFullYear().toString().padStart(4,'0')}-${String(hoje.getMonth()+1).padStart(2,'0')}-${String(hoje.getDate()).padStart(2,'0')}`;
+
             const agendamentosFuturos = todosAgendamentos.filter(agendamento => {
-                const dataAgendamento = new Date(agendamento.data_agendada).toISOString().split('T')[0];
-                return dataAgendamento >= hoje;
+                const dataAgendamento = getIsoDateOnly(agendamento.data_agendada);
+                return dataAgendamento >= hojeIso;
             });
-            
+
             // Atualizar contador
             const countElement = document.getElementById('agendamentos-count');
             if (countElement) {
                 countElement.textContent = `${agendamentosFuturos.length} agendamento(s) futuro(s)`;
             }
-            
+
             // Renderizar apenas os futuros
             renderizarListaAgendamentos(agendamentosFuturos);
         }
@@ -1902,10 +1914,9 @@
 
         // Função auxiliar para criar item de agendamento (extraída da renderizarAgendamentos original)
         function createAgendamentoItem(agendamento) {
-            // Formatar data
-            const dataObj = new Date(agendamento.data_agendada);
-            const dataFormatada = formatarData(dataObj);
-            
+            // Formatar data (usar apenas a parte YYYY-MM-DD para evitar shift de timezone)
+            const dataFormatada = formatarData(agendamento.data_agendada);
+
             // Formatar hora
             const horaFormatada = formatarHora(agendamento.hora_inicio);
             
@@ -2265,10 +2276,13 @@
             return horaString;
         }
 
-        // Formatar data
+        // Formatar data usando apenas YYYY-MM-DD (evita problemas de timezone)
         function formatarData(dataString) {
-            const data = new Date(dataString);
-            return data.toLocaleDateString('pt-BR', {
+            const iso = getIsoDateOnly(dataString);
+            if (!iso) return '--/--/----';
+            const [ano, mes, dia] = iso.split('-').map(Number);
+            const date = new Date(ano, mes - 1, dia);
+            return date.toLocaleDateString('pt-BR', {
                 weekday: 'long',
                 day: 'numeric',
                 month: 'long'

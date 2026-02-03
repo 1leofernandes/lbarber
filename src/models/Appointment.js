@@ -136,16 +136,6 @@ class Appointment {
       console.log('Parâmetros:', params);
 
       const result = await pool.query(query, params);
-      
-      // DEBUG: Log completo do resultado
-      if (result.rows.length > 0) {
-        console.log('DEBUG - Primeira linha do resultado:');
-        console.log('  usuario_id:', result.rows[0].usuario_id);
-        console.log('  valor_total:', result.rows[0].valor_total);
-        console.log('  assinatura_usuario_id:', result.rows[0].assinatura_usuario_id);
-        console.log('  data_agendada:', result.rows[0].data_agendada);
-      }
-      
       return result.rows;
   }
 
@@ -364,19 +354,6 @@ class Appointment {
       `;
       
       const result = await pool.query(query, [id]);
-      
-      // DEBUG
-      if (result.rows[0]) {
-        const row = result.rows[0];
-        console.log('DEBUG findByIdWithServices:');
-        console.log('  ID:', id);
-        console.log('  usuario_id:', row.usuario_id);
-        console.log('  data_agendada:', row.data_agendada);
-        console.log('  assinatura_usuario_id:', row.assinatura_usuario_id);
-        console.log('  valor_total calculado:', row.valor_total);
-        console.log('  servicos:', row.servicos);
-      }
-      
       return result.rows[0];
   }
 

@@ -1526,7 +1526,10 @@
                 });
                 
                 if (response.ok) {
-                    let horarios = await response.json();
+                    const payload = await response.json();
+                    // Extrair os dados da resposta corretamente
+                    const responseData = payload.data || payload;
+                    let horarios = Array.isArray(responseData) ? responseData : (responseData.horarios || []);
                     
                     // Filtrar horários passados se for hoje
                     const agora = new Date();
@@ -1574,21 +1577,27 @@
             elementos.noSlotsMessage.style.display = 'none';
             
             horarios.forEach(horario => {
+                // Suportar ambos formatos: string direto ou objeto com .inicio
+                const horaString = typeof horario === 'string' ? horario : horario.inicio;
+                
                 const timeSlot = document.createElement('div');
                 timeSlot.className = `time-slot ${
-                    estado.selecionados.horaInicio === horario.inicio ? 'selected' : ''
+                    estado.selecionados.horaInicio === horaString ? 'selected' : ''
                 }`;
-                timeSlot.textContent = horario.inicio;
+                timeSlot.textContent = horaString;
                 
-                timeSlot.onclick = () => selecionarHorario(horario, timeSlot, duracaoTotal);
+                timeSlot.onclick = () => selecionarHorario(horaString, timeSlot, duracaoTotal);
                 elementos.timeSlotsGrid.appendChild(timeSlot);
             });
         }
         
         function selecionarHorario(horario, slotElement, duracaoTotal) {
+            // Suportar ambos formatos: string ou objeto
+            const horaString = typeof horario === 'string' ? horario : horario.inicio;
+            
             const agora = new Date();
             const dataSelecionada = new Date(estado.dataSelecionada);
-            const [hora, minutos] = horario.inicio.split(':').map(Number);
+            const [hora, minutos] = horaString.split(':').map(Number);
             
             // Validação de horário no passado
             const hoje = new Date();
@@ -1621,7 +1630,7 @@
             const horaFim = `${String(dataFim.getHours()).padStart(2, '0')}:${String(dataFim.getMinutes()).padStart(2, '0')}`;
             
             // Salvar no estado
-            estado.selecionados.horaInicio = horario.inicio;
+            estado.selecionados.horaInicio = horaString;
             estado.selecionados.horaFim = horaFim;
             
             // Habilitar botão de confirmar

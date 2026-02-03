@@ -441,17 +441,24 @@ class AdminAgendamentoService {
                     COUNT(CASE WHEN a.status = 'cancelado' THEN 1 END) as cancelados,
                     COALESCE(
                         SUM(
-                            COALESCE(
-                                (SELECT SUM(s.valor_servico) 
-                                 FROM agendamento_servicos ags 
-                                 JOIN servicos s ON ags.servico_id = s.id 
-                                 WHERE ags.agendamento_id = a.id),
-                                s.valor_servico
-                            )
+                            CASE
+                              WHEN u.assinante = true
+                                AND u.assinatura_id IS NOT NULL
+                                AND EXISTS (
+                                  SELECT 1 FROM assinatura_servico ass WHERE ass.assinatura_id = u.assinatura_id AND ass.servico_id = s2.id
+                                )
+                                AND EXISTS (
+                                  SELECT 1 FROM assinatura_dias_semana ads WHERE ads.assinatura_id = u.assinatura_id AND ads.dia_semana = EXTRACT(ISODOW FROM a.data_agendada)::integer
+                                )
+                              THEN 0
+                              ELSE COALESCE(s2.valor_servico, 0)
+                            END
                         ), 
                     0) as receita
                 FROM agendamentos a
-                LEFT JOIN servicos s ON a.servico_id = s.id
+                LEFT JOIN usuarios u ON a.usuario_id = u.id
+                LEFT JOIN agendamento_servicos ags ON a.id = ags.agendamento_id
+                LEFT JOIN servicos s2 ON ags.servico_id = s2.id
                 WHERE a.data_agendada BETWEEN $1 AND $2
                 GROUP BY DATE(a.data_agendada)
                 ORDER BY data ASC

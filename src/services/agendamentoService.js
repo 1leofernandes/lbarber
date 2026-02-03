@@ -281,8 +281,8 @@ class AgendamentoService {
         }
     }
     
-    // MÉTODO ATUALIZADO: Buscar horários disponíveis (AGORA COM BLOQUEIOS)
-    async getHorariosDisponiveis(barbeiro_id, data, servicosIds = [], duracaoMinutos = 30) {
+    // MÉTODO ATUALIZADO: Buscar horários disponíveis (AGORA COM BLOQUEIOS E PREÇOS)
+    async getHorariosDisponiveis(barbeiro_id, data, servicosIds = [], duracaoMinutos = 30, usuarioId = null) {
         try {
             console.log(`Buscando horários para barbeiro: ${barbeiro_id}, data: ${data}, duração: ${duracaoMinutos}min`);
             
@@ -291,7 +291,7 @@ class AgendamentoService {
             
             if (bloqueios.todoDiaBloqueado) {
                 console.log('Dia inteiro bloqueado para este barbeiro');
-                return []; // Retorna array vazio - dia inteiro bloqueado
+                return { horarios: [], precoEstimado: 0, precoComDesconto: 0 };
             }
             
             // 2. Obter horários padrão da barbearia para este dia
@@ -309,7 +309,56 @@ class AgendamentoService {
             );
             
             console.log(`Horários disponíveis encontrados: ${horariosDisponiveis.length}`);
-            return horariosDisponiveis;
+
+            // Calcular preços estimado e com desconto (se servicosIds fornecidos)
+            let precoEstimado = 0;
+            let precoComDesconto = 0;
+            if (servicosIds && servicosIds.length > 0) {
+                const servicos = await Promise.all(servicosIds.map(id => servicoService.getServicoById(id)));
+                precoEstimado = servicos.reduce((acc, s) => acc + (s ? parseFloat(s.valor_servico || 0) : 0), 0);
+
+                // Se usuário identificado e assinante, calcular desconto por serviço e por dia
+                if (usuarioId) {
+                    const userRes = await pool.query('SELECT assinante, assinatura_id FROM usuarios WHERE id = $1', [usuarioId]);
+                    const user = userRes.rows[0];
+                    if (user && user.assinante && user.assinatura_id) {
+                        // identificar dia da semana
+                        const diaSemana = await (async () => {
+                            const q = `SELECT EXTRACT(ISODOW FROM $1::date)::integer as d`;
+                            const r = await pool.query(q, [data]);
+                            return r.rows[0].d;
+                        })();
+                        // buscar servicos do plano
+                        const coveredRes = await pool.query(
+                            `SELECT servico_id FROM assinatura_servico WHERE assinatura_id = $1 AND servico_id = ANY($2::int[])`,
+                            [user.assinatura_id, servicosIds]
+                        );
+                        const coveredIds = coveredRes.rows.map(r => r.servico_id);
+                        // checar dia coberto
+                        const diaRes = await pool.query(
+                            `SELECT 1 FROM assinatura_dias_semana WHERE assinatura_id = $1 AND dia_semana = $2 LIMIT 1`,
+                            [user.assinatura_id, diaSemana]
+                        );
+                        const diaCoberto = diaRes.rows.length > 0;
+                        // aplicar desconto: servicos cobertos e diaCoberto -> valor 0
+                        precoComDesconto = servicos.reduce((acc, s) => {
+                            if (!s) return acc;
+                            const isCovered = diaCoberto && coveredIds.includes(s.id);
+                            return acc + (isCovered ? 0 : parseFloat(s.valor_servico || 0));
+                        }, 0);
+                    } else {
+                        precoComDesconto = precoEstimado;
+                    }
+                } else {
+                    precoComDesconto = precoEstimado;
+                }
+            }
+
+            return {
+                horarios: horariosDisponiveis,
+                precoEstimado,
+                precoComDesconto
+            };
         } catch (error) {
             console.error('Erro ao buscar horários disponíveis:', error);
             throw error;

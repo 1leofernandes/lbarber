@@ -100,7 +100,7 @@ class AgendamentoController {
         }
     }
     
-    // Buscar horários disponíveis (ATUALIZADO PARA CONSIDERAR BLOQUEIOS)
+    // Buscar horários disponíveis (ATUALIZADO PARA CONSIDERAR BLOQUEIOS E RETORNAR PREÇOS)
     async getHorariosDisponiveis(req, res) {
         try {
             const { data, duracao, barbeiro_id, servicos_ids } = req.query;
@@ -125,19 +125,20 @@ class AgendamentoController {
             // Converter duração para número (se não fornecida, usar 30 minutos como padrão)
             const duracaoMinutos = duracao ? parseInt(duracao) : 30;
             
-            const horarios = await agendamentoService.getHorariosDisponiveis(
+            const userId = req.user ? req.user.id : null;
+            const result = await agendamentoService.getHorariosDisponiveis(
                 barbeiro_id, 
                 data,
                 servicosArray,
-                duracaoMinutos
+                duracaoMinutos,
+                userId
             );
             
             // Formatar resposta para o frontend
-            const horariosFormatados = horarios.map(horario => ({
-                inicio: horario
-            }));
-            
-            res.json(horariosFormatados);
+            res.json({
+                success: true,
+                data: result
+            });
         } catch (error) {
             console.error('Erro ao buscar horários disponíveis:', error);
             res.status(500).json({

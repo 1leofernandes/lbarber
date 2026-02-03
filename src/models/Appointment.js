@@ -30,7 +30,30 @@ class Appointment {
               )
             ) FILTER (WHERE s.id IS NOT NULL),
             '[]'::json
-          ) as servicos
+          ) as servicos,
+          COALESCE((
+            SELECT COALESCE(SUM(
+              CASE
+                WHEN u2.assinante = true
+                  AND u2.assinatura_id IS NOT NULL
+                  AND EXISTS (
+                    SELECT 1 FROM assinatura_servico ass WHERE ass.assinatura_id = u2.assinatura_id AND ass.servico_id = s2.id
+                  )
+                  AND EXISTS (
+                    SELECT 1 FROM assinatura_dias_semana ads WHERE ads.assinatura_id = u2.assinatura_id AND ads.dia_semana = EXTRACT(ISODOW FROM a.data_agendada)::integer
+                  )
+                THEN 0
+                ELSE COALESCE(s2.valor_servico,0)
+              END
+            ),0)
+            FROM (
+              SELECT servico_id FROM agendamento_servicos WHERE agendamento_id = a.id
+              UNION ALL
+              SELECT a.servico_id WHERE a.servico_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM agendamento_servicos ags3 WHERE ags3.agendamento_id = a.id)
+            ) rel
+            LEFT JOIN servicos s2 ON rel.servico_id = s2.id
+            LEFT JOIN usuarios u2 ON u2.id = a.usuario_id
+          ), 0) as valor_total
         FROM agendamentos a
         INNER JOIN usuarios c ON a.usuario_id = c.id
         INNER JOIN usuarios b ON a.barbeiro_id = b.id
@@ -223,7 +246,7 @@ class Appointment {
         INSERT INTO agendamentos 
         (usuario_id, barbeiro_id, servico_id, data_agendada, hora_inicio, hora_fim, observacoes, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
-        RETURNING id
+        RETURNING *
       `;
       
       const primeiroServico = servicos_ids[0] || null;
@@ -231,20 +254,45 @@ class Appointment {
         usuario_id, barbeiro_id, primeiroServico, data_agendada, hora_inicio, hora_fim, observacoes
       ]);
       
-      const agendamentoId = agendamentoResult.rows[0].id;
+      const agendamento = agendamentoResult.rows[0];
       
       // 2. Inserir todos os serviços na tabela de relação
       for (const servicoId of servicos_ids) {
         await client.query(
-          'INSERT INTO agendamento_servicos (agendamento_id, servico_id) VALUES ($1, $2)',
-          [agendamentoId, servicoId]
+          'INSERT INTO agendamento_servicos (agendamento_id, servico_id) VALUES ($1, $2) ON CONFLICT DO NOTHING',
+          [agendamento.id, servicoId]
         );
+      }
+
+      // 2.5 Vincular assinatura_usuario_id se o usuário possui assinatura ativa
+      if (usuario_id) {
+        const userRes = await client.query('SELECT assinante, assinatura_id FROM usuarios WHERE id = $1', [usuario_id]);
+        const user = userRes.rows[0];
+        if (user && user.assinante && user.assinatura_id) {
+          const assinaturaUsuarioRes = await client.query(
+            `SELECT id FROM assinaturas_usuarios
+             WHERE usuario_id = $1
+               AND plano_id = $2
+               AND status = 'ativa'
+               AND data_inicio <= $3
+               AND (data_fim IS NULL OR data_fim >= $3)
+             ORDER BY data_inicio DESC
+             LIMIT 1`,
+             [usuario_id, user.assinatura_id, data_agendada]
+          );
+          if (assinaturaUsuarioRes.rows[0]) {
+            await client.query(
+              'UPDATE agendamentos SET assinatura_usuario_id = $1 WHERE id = $2',
+              [assinaturaUsuarioRes.rows[0].id, agendamento.id]
+            );
+          }
+        }
       }
       
       await client.query('COMMIT');
       
       // 3. Retornar o agendamento completo com serviços
-      return await this.findByIdWithServices(agendamentoId);
+      return await this.findByIdWithServices(agendamento.id);
       
     } catch (error) {
       await client.query('ROLLBACK');
@@ -254,8 +302,7 @@ class Appointment {
     }
   }
 
-  // NOVO: findByIdWithServices
-  // NO models/Appointment.js - MÉTODO findByIdWithServices
+  // NOVO: findByIdWithServices com valor_total
   static async findByIdWithServices(id) {
       const query = `
           SELECT 
@@ -273,7 +320,30 @@ class Appointment {
                       )
                   ) FILTER (WHERE s.id IS NOT NULL),
                   '[]'::json
-              ) as servicos
+              ) as servicos,
+              COALESCE((
+                SELECT COALESCE(SUM(
+                  CASE
+                    WHEN u2.assinante = true
+                      AND u2.assinatura_id IS NOT NULL
+                      AND EXISTS (
+                        SELECT 1 FROM assinatura_servico ass WHERE ass.assinatura_id = u2.assinatura_id AND ass.servico_id = s2.id
+                      )
+                      AND EXISTS (
+                        SELECT 1 FROM assinatura_dias_semana ads WHERE ads.assinatura_id = u2.assinatura_id AND ads.dia_semana = EXTRACT(ISODOW FROM a.data_agendada)::integer
+                      )
+                    THEN 0
+                    ELSE COALESCE(s2.valor_servico,0)
+                  END
+                ),0)
+                FROM (
+                  SELECT servico_id FROM agendamento_servicos WHERE agendamento_id = a.id
+                  UNION ALL
+                  SELECT a.servico_id WHERE a.servico_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM agendamento_servicos ags3 WHERE ags3.agendamento_id = a.id)
+                ) rel
+                LEFT JOIN servicos s2 ON rel.servico_id = s2.id
+                LEFT JOIN usuarios u2 ON u2.id = a.usuario_id
+              ), 0) as valor_total
           FROM agendamentos a
           LEFT JOIN usuarios c ON a.usuario_id = c.id
           LEFT JOIN usuarios b ON a.barbeiro_id = b.id
@@ -287,8 +357,7 @@ class Appointment {
       return result.rows[0];
   }
 
-  // NOVO: findByUserWithServices
-  // NO models/Appointment.js - MÉTODO findByUserWithServices
+// NOVO: findByUserWithServices com valor_total
   static async findByUserWithServices(usuario_id) {
       const query = `
           SELECT 
@@ -305,7 +374,30 @@ class Appointment {
                       )
                   ) FILTER (WHERE s.id IS NOT NULL),
                   '[]'::json
-              ) as servicos
+              ) as servicos,
+              COALESCE((
+                SELECT COALESCE(SUM(
+                  CASE
+                    WHEN u2.assinante = true
+                      AND u2.assinatura_id IS NOT NULL
+                      AND EXISTS (
+                        SELECT 1 FROM assinatura_servico ass WHERE ass.assinatura_id = u2.assinatura_id AND ass.servico_id = s2.id
+                      )
+                      AND EXISTS (
+                        SELECT 1 FROM assinatura_dias_semana ads WHERE ads.assinatura_id = u2.assinatura_id AND ads.dia_semana = EXTRACT(ISODOW FROM a.data_agendada)::integer
+                      )
+                    THEN 0
+                    ELSE COALESCE(s2.valor_servico,0)
+                  END
+                ),0)
+                FROM (
+                  SELECT servico_id FROM agendamento_servicos WHERE agendamento_id = a.id
+                  UNION ALL
+                  SELECT a.servico_id WHERE a.servico_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM agendamento_servicos ags3 WHERE ags3.agendamento_id = a.id)
+                ) rel
+                LEFT JOIN servicos s2 ON rel.servico_id = s2.id
+                LEFT JOIN usuarios u2 ON u2.id = a.usuario_id
+              ), 0) as valor_total
           FROM agendamentos a
           LEFT JOIN usuarios c ON a.usuario_id = c.id
           LEFT JOIN usuarios b ON a.barbeiro_id = b.id

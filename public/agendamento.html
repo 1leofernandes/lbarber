@@ -1545,7 +1545,11 @@
                         const minutoAtual = agora.getMinutes();
                         
                         horarios = horarios.filter(horario => {
-                            const [hora, minuto] = horario.inicio.split(':').map(Number);
+                            // Suportar ambos formatos: string ou objeto
+                            const horaString = typeof horario === 'string' ? horario : (horario?.inicio || '');
+                            if (!horaString) return true; // Se não conseguir extrair hora, mantém
+                            
+                            const [hora, minuto] = horaString.split(':').map(Number);
                             
                             if (hora < horaAtual) return false;
                             if (hora === horaAtual && minuto <= minutoAtual) return false;

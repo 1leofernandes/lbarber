@@ -5,7 +5,7 @@ class UsuarioController {
     async getMe(req, res) {
         try {
             const userId = req.user.id;
-            const usuario = await usuarioService.getUsuarioById(userId);
+            const usuario = await usuarioService.getUsuarioComAssinatura(userId);
             
             if (!usuario) {
                 return res.status(404).json({ error: 'Usuário não encontrado' });

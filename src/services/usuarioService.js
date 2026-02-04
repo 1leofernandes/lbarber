@@ -7,7 +7,7 @@ class UsuarioService {
     async getUsuarioById(id) {
         try {
             const query = `
-                SELECT id, nome, email, telefone, role, assinatura_id created_at, updated_at
+                SELECT id, nome, email, telefone, role, assinante, assinatura_id, created_at, updated_at
                 FROM usuarios 
                 WHERE id = $1
             `;
@@ -17,6 +17,40 @@ class UsuarioService {
             return result.rows[0];
         } catch (error) {
             console.error('Erro no getUsuarioById:', error);
+            throw error;
+        }
+    }
+    
+    // Buscar usuário com dados da assinatura
+    async getUsuarioComAssinatura(id) {
+        try {
+            const query = `
+                SELECT 
+                    u.id, 
+                    u.nome, 
+                    u.email, 
+                    u.telefone, 
+                    u.role, 
+                    u.assinante, 
+                    u.assinatura_id,
+                    u.created_at, 
+                    u.updated_at,
+                    a.id as plano_id,
+                    a.nome_plano,
+                    a.descricao,
+                    a.servicos,
+                    a.valor,
+                    a.status as plano_status
+                FROM usuarios u
+                LEFT JOIN assinatura a ON u.assinatura_id = a.id
+                WHERE u.id = $1
+            `;
+            const values = [id];
+            
+            const result = await pool.query(query, values);
+            return result.rows[0];
+        } catch (error) {
+            console.error('Erro no getUsuarioComAssinatura:', error);
             throw error;
         }
     }

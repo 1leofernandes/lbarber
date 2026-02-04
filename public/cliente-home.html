@@ -1380,7 +1380,7 @@
     
     <!-- Footer -->
     <footer class="footer">
-        <p>&copy; 2023 Barbearia Silva - Sistema de Agendamento. Todos os direitos reservados.</p>
+        <p>&copy; 2026 Barbearia Silva - Sistema de Agendamento. Todos os direitos reservados.</p>
         <div class="social-links">
             <a href="#" class="social-link"><i class="fab fa-facebook-f"></i></a>
             <a href="#" class="social-link"><i class="fab fa-instagram"></i></a>
@@ -1427,7 +1427,8 @@
         let usuario = {
             nome: nomeUsuario,
             assinante: false,
-            assinaturaAtiva: null
+            assinatura_id: null,
+            plano: null
         };
 
         // Estado para controle de histórico
@@ -1475,36 +1476,41 @@
             // Atualizar nome do usuário
             welcomeTitle.textContent = `Bem-vindo, ${usuario.nome}`;
             
-            // Configurar plano do usuário
-            setupUserPlan();
+            // Carregar dados do perfil (que inclui dados de assinatura)
+            loadProfileData();
             
             // Carregar agendamentos
             loadAgendamentos();
             
             // Configurar eventos
             setupEventListeners();
-            
-            // Verificar se há parâmetro de assinante na URL
-            const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.has('assinante')) {
-                usuario.assinante = urlParams.get('assinante') === 'true';
-                setupUserPlan();
-            }
-            
-            // Carregar dados do perfil se existirem
-            loadProfileData();
         }
         
         // Configurar plano do usuário
         function setupUserPlan() {
-            if (usuario.assinante) {
+            if (usuario.assinante && usuario.plano) {
                 planCard.classList.add('plan-highlight');
                 planStatus.textContent = 'Ativo';
                 planStatus.className = 'plan-status status-active';
-                planDescription.textContent = 'Você está aproveitando as vantagens do "Corte Ilimitado"';
+                
+                // Construir descrição com nome do plano
+                const nomePlano = usuario.plano.nome_plano || 'Plano';
+                planDescription.textContent = `Você está aproveitando as vantagens do "${nomePlano}"`;
+                
                 planActionBtn.innerHTML = '<i class="fas fa-info-circle"></i> Detalhes sobre o plano';
                 planActionBtn.onclick = () => {
-                    alert('Detalhes da assinatura:\n\n• Corte ilimitado mensal\n• Desconto de 20% em produtos\n• Prioridade nos agendamentos\n• Custo: R$ 89,90/mês');
+                    let detalhes = `Detalhes da Assinatura:\n\n`;
+                    detalhes += `Plano: ${usuario.plano.nome_plano || 'Não especificado'}\n`;
+                    if (usuario.plano.descricao) {
+                        detalhes += `Descrição: ${usuario.plano.descricao}\n`;
+                    }
+                    if (usuario.plano.servicos) {
+                        detalhes += `Serviços: ${usuario.plano.servicos}\n`;
+                    }
+                    if (usuario.plano.valor) {
+                        detalhes += `Valor: R$ ${parseFloat(usuario.plano.valor).toFixed(2)}/mês`;
+                    }
+                    alert(detalhes);
                 };
             } else {
                 planCard.classList.remove('plan-highlight');
@@ -1532,6 +1538,26 @@
                 if (response.ok) {
                     const userDataFromAPI = await response.json();
                     
+                    // Atualizar dados do usuário
+                    usuario.nome = userDataFromAPI.nome;
+                    usuario.assinante = userDataFromAPI.assinante || false;
+                    usuario.assinatura_id = userDataFromAPI.assinatura_id;
+                    
+                    // Se o usuário é assinante, extrair dados da assinatura
+                    if (usuario.assinante && userDataFromAPI.plano_id) {
+                        usuario.plano = {
+                            id: userDataFromAPI.plano_id,
+                            nome_plano: userDataFromAPI.nome_plano,
+                            descricao: userDataFromAPI.descricao,
+                            servicos: userDataFromAPI.servicos,
+                            valor: userDataFromAPI.valor,
+                            status: userDataFromAPI.plano_status
+                        };
+                    }
+                    
+                    // Atualizar o card do plano com os dados reais
+                    setupUserPlan();
+                    
                     // Preencher campos com dados da API
                     if (userDataFromAPI.nome) {
                         profileName.value = userDataFromAPI.nome;
@@ -1547,6 +1573,8 @@
                     localStorage.setItem('userName', userDataFromAPI.nome || '');
                     localStorage.setItem('userEmail', userDataFromAPI.email || '');
                     localStorage.setItem('userPhone', userDataFromAPI.telefone || '');
+                    localStorage.setItem('assinante', usuario.assinante);
+                    localStorage.setItem('assinatura_id', usuario.assinatura_id || '');
                     
                 } else {
                     // Se API falhar, usar dados do localStorage ou token

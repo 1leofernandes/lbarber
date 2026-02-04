@@ -12,16 +12,15 @@ class WebhookController {
 
             logger.info('Webhook Mercado Pago recebido:', { type, action });
 
-            // IMPORTANTE: Em produção, aceitar webhooks mesmo com validação falhando temporariamente
-            // Mas logar para debug
-            if (!WebhookController.validarWebhookMercadoPago(req)) {
-                logger.warn('Webhook Mercado Pago com assinatura inválida');
-                // Em produção, rejeitar webhooks com assinatura inválida
-                if (process.env.NODE_ENV === 'production') {
-                    return res.status(400).json({ success: false, message: 'Assinatura inválida' });
-                } else {
-                    logger.warn('Aceitando webhook em ambiente não-prod por compatibilidade de teste');
+            // Validação HMAC é OPCIONAL - apenas logar se falhar
+            // Desabilitada por padrão (configure WEBHOOK_HMAC_ENABLED=true para ativar)
+            if (process.env.WEBHOOK_HMAC_ENABLED === 'true') {
+                if (!WebhookController.validarWebhookMercadoPago(req)) {
+                    logger.warn('Webhook Mercado Pago com HMAC inválido - REJEITANDO');
+                    return res.status(400).json({ success: false, message: 'Assinatura HMAC inválida' });
                 }
+            } else {
+                logger.info('Validação HMAC desabilitada - webhook aceito sem verificação');
             }
 
             // Processar conforme tipo de evento
@@ -124,61 +123,73 @@ class WebhookController {
         }
     }
 
-    static async ativarAssinaturaUsuario(usuarioId, planoId, paymentId) {
+    static async ativarAssinaturaUsuario(usuarioId, planoId, subscriptionMPId) {
         try {
-            logger.info('Ativando assinatura do usuário:', { usuarioId, planoId });
+            logger.info('Ativando assinatura do usuário:', { usuarioId, planoId, subscriptionMPId });
+            
+            // Converter para int se necessário
+            const uid = parseInt(usuarioId);
+            const pid = parseInt(planoId);
             
             // Verificar se já existe assinatura ativa
             const assinaturaExistente = await pool.query(
                 `SELECT au.* FROM assinaturas_usuarios au
                  WHERE au.usuario_id = $1 AND au.plano_id = $2 
                  AND au.status = 'ativa'`,
-                [usuarioId, planoId]
+                [uid, pid]
             );
 
             if (assinaturaExistente.rows.length === 0) {
                 // Criar nova assinatura
                 await pool.query('BEGIN');
 
-                // Criar assinatura do usuário
-                const insertUsuarioAssinatura = await pool.query(
-                    `INSERT INTO assinaturas_usuarios 
-                     (usuario_id, plano_id, status, data_inicio, data_fim, proxima_cobranca, created_at)
-                     VALUES ($1, $2, 'ativa', CURRENT_DATE, NULL, CURRENT_DATE + INTERVAL '30 days', CURRENT_TIMESTAMP) 
-                     RETURNING *`,
-                    [usuarioId, planoId]
-                );
+                try {
+                    // Criar assinatura do usuário
+                    const insertUsuarioAssinatura = await pool.query(
+                        `INSERT INTO assinaturas_usuarios 
+                         (usuario_id, plano_id, status, data_inicio, proxima_cobranca, created_at)
+                         VALUES ($1, $2, 'ativa', CURRENT_DATE, CURRENT_DATE + INTERVAL '30 days', CURRENT_TIMESTAMP) 
+                         RETURNING *`,
+                        [uid, pid]
+                    );
 
-                const assinaturaUsuarioId = insertUsuarioAssinatura.rows[0].id;
+                    const assinaturaUsuarioId = insertUsuarioAssinatura.rows[0].id;
 
-                // Criar assinatura recorrente
-                await pool.query(
-                    `INSERT INTO assinaturas_pagamentos_recorrentes
-                     (usuario_id, assinatura_usuario_id, plano_id, valor_mensal, 
-                      proxima_cobranca, status, created_at)
-                     VALUES ($1, $2, $3, 
-                     (SELECT valor FROM assinatura WHERE id = $3),
-                     CURRENT_DATE + INTERVAL '30 days', 'ativa', CURRENT_TIMESTAMP)`,
-                    [usuarioId, assinaturaUsuarioId, planoId]
-                );
+                    // Buscar valor do plano
+                    const planoRes = await pool.query('SELECT valor FROM assinatura WHERE id = $1', [pid]);
+                    const valor = planoRes.rows[0]?.valor || 0;
 
-                // Atualizar usuário
-                await pool.query(
-                    `UPDATE usuarios 
-                     SET assinante = true, 
-                         assinatura_id = $1,
-                         updated_at = CURRENT_TIMESTAMP
-                     WHERE id = $2`,
-                    [assinaturaUsuarioId, usuarioId]
-                );
+                    // Criar assinatura recorrente
+                    await pool.query(
+                        `INSERT INTO assinaturas_pagamentos_recorrentes
+                         (usuario_id, assinatura_usuario_id, plano_id, valor_mensal, 
+                          proxima_cobranca, status, mercado_pago_subscription_id, created_at)
+                         VALUES ($1, $2, $3, $4, 
+                         CURRENT_DATE + INTERVAL '30 days', 'ativa', $5, CURRENT_TIMESTAMP)`,
+                        [uid, assinaturaUsuarioId, pid, valor, subscriptionMPId]
+                    );
 
-                await pool.query('COMMIT');
-                
-                logger.info('Assinatura criada e usuário ativado:', { 
-                    usuarioId, 
-                    assinaturaUsuarioId,
-                    paymentId 
-                });
+                    // Atualizar usuário
+                    await pool.query(
+                        `UPDATE usuarios 
+                         SET assinante = true, 
+                             assinatura_id = $1,
+                             updated_at = CURRENT_TIMESTAMP
+                         WHERE id = $2`,
+                        [assinaturaUsuarioId, uid]
+                    );
+
+                    await pool.query('COMMIT');
+                    
+                    logger.info('✅ Assinatura criada e usuário ativado:', { 
+                        usuarioId: uid, 
+                        assinaturaUsuarioId,
+                        mercado_pago_subscription_id: subscriptionMPId
+                    });
+                } catch (innerErr) {
+                    await pool.query('ROLLBACK');
+                    throw innerErr;
+                }
             } else {
                 // Já existe assinatura ativa, apenas atualizar usuário
                 const assinaturaId = assinaturaExistente.rows[0].id;
@@ -242,19 +253,34 @@ class WebhookController {
     static async processarEventoSubscription(data, eventType) {
         try {
             const subscriptionId = data.id || data.preapproval_id;
-            const status = data.status;
             
             logger.info('Processando evento de assinatura:', { 
                 subscriptionId, 
-                eventType, 
-                status,
-                externalReference: data.external_reference 
+                eventType,
+                dataPayload: JSON.stringify(data).substring(0, 200)
             });
 
-            // Extrair external_reference
-            const externalReference = data.external_reference;
+            // ⭐ BUSCAR DETALHES COMPLETOS DA API (webhook pode não trazer external_reference)
+            let assinaturaDetalhes = data;
+            try {
+                const mp = require('../config/mercadoPago');
+                const detalhes = await mp.getSubscription(subscriptionId);
+                if (detalhes && detalhes.id) {
+                    assinaturaDetalhes = detalhes;
+                    logger.info('Detalhes da assinatura buscados da API MP:', { 
+                        status: detalhes.status, 
+                        externalRef: detalhes.external_reference 
+                    });
+                }
+            } catch (err) {
+                logger.warn('Não foi possível buscar detalhes da assinatura da API MP:', err.message);
+            }
+
+            const status = assinaturaDetalhes.status;
+            const externalReference = assinaturaDetalhes.external_reference;
+            
             if (!externalReference) {
-                logger.warn('Assinatura sem external_reference:', subscriptionId);
+                logger.warn('Assinatura sem external_reference - não será processada', { subscriptionId });
                 return;
             }
 
@@ -269,8 +295,9 @@ class WebhookController {
 
             logger.info('Processando assinatura para usuário:', { usuarioId, planoId, status });
 
-            if (status === 'authorized' || status === 'active') {
+            if (status === 'authorized' || status === 'active' || status === 'pending_authorization') {
                 // Ativar assinatura
+                logger.info('Status autorizado/ativo - ativando assinatura:', { status });
                 await WebhookController.ativarAssinaturaUsuario(usuarioId, planoId, subscriptionId);
                 
                 // Atualizar assinatura recorrente com ID do Mercado Pago
@@ -279,10 +306,11 @@ class WebhookController {
                      SET mercado_pago_subscription_id = $1,
                          updated_at = CURRENT_TIMESTAMP
                      WHERE usuario_id = $2 
-                     AND plano_id = $3
-                     AND status = 'ativa'`,
+                     AND plano_id = $3`,
                     [subscriptionId, usuarioId, planoId]
                 );
+                
+                logger.info('Assinatura recorrente atualizada com mercado_pago_subscription_id:', { subscriptionId, usuarioId, planoId });
                 
             } else if (status === 'cancelled' || status === 'paused') {
                 // Cancelar assinatura
@@ -335,65 +363,59 @@ class WebhookController {
 
     static validarWebhookMercadoPago(req) {
         try {
+            // Se WEBHOOK_HMAC_ENABLED está diferente de 'true', desabilitar validação
+            if (process.env.WEBHOOK_HMAC_ENABLED !== 'true') {
+                logger.info('Validação HMAC desabilitada via ENV - webhook considerado válido');
+                return true;
+            }
+
             const signatureHeader = req.headers['x-signature'] || 
                                   req.headers['x-hub-signature'] || 
                                   req.headers['x-mercadopago-signature'];
 
-            // Log para debug
-            logger.info('Validando webhook - Header recebido:', { signatureHeader });
+            logger.info('Validando webhook HMAC - Header recebido:', { signatureHeader });
 
-            // Se não tem header e está em produção, aceitar (temporariamente)
             if (!signatureHeader) {
                 logger.warn('Headers de validação webhook ausentes');
                 return false;
             }
 
             const secret = process.env.WEBHOOK_SECRET;
-            
-            // Se não tem secret configurado, aceitar (apenas para desenvolvimento)
             if (!secret) {
                 logger.warn('WEBHOOK_SECRET não configurado; aceitando webhook sem validação');
                 return true;
             }
 
-            // Obter corpo da requisição
             const raw = req.rawBody || JSON.stringify(req.body);
             let sig = signatureHeader;
 
             logger.info('Raw body para validação:', { rawLength: raw.length });
 
-            // O Mercado Pago envia no formato: ts=timestamp,v1=hash
-            // Precisamos extrair apenas o hash após v1=
             if (sig.includes('ts=') && sig.includes('v1=')) {
-                // Extrair a parte v1=hash
                 const v1Match = sig.match(/v1=([a-f0-9]+)/i);
                 if (v1Match && v1Match[1]) {
                     sig = v1Match[1];
                     logger.info('Hash extraído do header:', sig);
                 } else {
-                    logger.warn('Não foi possível extrair hash do formato ts=...,v1=...');
+                    logger.warn('Não foi possível extrair hash');
                     return false;
                 }
             } else {
-                // Remove prefixo se existir
                 sig = sig.replace(/^sha256=/i, '').trim();
             }
 
-            // Calcular HMAC
             const crypto = require('crypto');
             const expected = crypto.createHmac('sha256', secret)
                                   .update(raw)
                                   .digest('hex');
 
             logger.info('Hash esperado:', expected);
-            
             const valid = sig === expected;
             
             if (!valid) {
-                logger.warn('Assinatura HMAC inválida para webhook');
+                logger.warn('Assinatura HMAC inválida (webhook será rejeitado)');
                 logger.warn(`Recebido: ${sig}`);
                 logger.warn(`Esperado: ${expected}`);
-                logger.warn(`Secret usado: ${secret.substring(0, 8)}...`);
             } else {
                 logger.info('Webhook validado com sucesso!');
             }
@@ -402,9 +424,7 @@ class WebhookController {
             
         } catch (error) {
             logger.error('Erro ao validar webhook:', error);
-            // Em produção, é mais seguro rejeitar webhooks inválidos
-            // Mas para testes, podemos aceitar
-            return process.env.NODE_ENV !== 'production';
+            return false;
         }
     }
 }

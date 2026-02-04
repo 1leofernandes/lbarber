@@ -117,6 +117,12 @@ app.get('/health', (req, res) => {
   });
 });
 
+// ==================== UPTIMEROBOT PING ====================
+
+app.get('/ping', (req, res) => {
+  res.status(200).send('ok');
+});
+
 // ==================== ROTAS ====================
 
 // GET /assinatura/:id - Obter dados da assinatura com dias de semana

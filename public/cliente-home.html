@@ -1499,18 +1499,19 @@
                 
                 planActionBtn.innerHTML = '<i class="fas fa-info-circle"></i> Detalhes sobre o plano';
                 planActionBtn.onclick = () => {
-                    let detalhes = `Detalhes da Assinatura:\n\n`;
-                    detalhes += `Plano: ${usuario.plano.nome_plano || 'Não especificado'}\n`;
-                    if (usuario.plano.descricao) {
-                        detalhes += `Descrição: ${usuario.plano.descricao}\n`;
-                    }
-                    if (usuario.plano.servicos) {
-                        detalhes += `Serviços: ${usuario.plano.servicos}\n`;
-                    }
-                    if (usuario.plano.valor) {
-                        detalhes += `Valor: R$ ${parseFloat(usuario.plano.valor).toFixed(2)}/mês`;
-                    }
-                    alert(detalhes);
+                    // let detalhes = `Detalhes da Assinatura:\n\n`;
+                    // detalhes += `Plano: ${usuario.plano.nome_plano || 'Não especificado'}\n`;
+                    // if (usuario.plano.descricao) {
+                    //     detalhes += `Descrição: ${usuario.plano.descricao}\n`;
+                    // }
+                    // if (usuario.plano.servicos) {
+                    //     detalhes += `Serviços: ${usuario.plano.servicos}\n`;
+                    // }
+                    // if (usuario.plano.valor) {
+                    //     detalhes += `Valor: R$ ${parseFloat(usuario.plano.valor).toFixed(2)}/mês`;
+                    // }
+                    // alert(detalhes);
+                    window.location.href = 'minha-assinatura.html';
                 };
             } else {
                 planCard.classList.remove('plan-highlight');

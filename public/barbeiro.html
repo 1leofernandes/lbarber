@@ -1735,7 +1735,8 @@
                     }, 0);
                 } else if (agendamento.servico_nome) {
                     servicosTexto = agendamento.servico_nome;
-                    valorTotal = parseFloat(agendamento.valor_servico || 0);
+                    // Usar valor_final se disponível (com desconto de assinatura), senão usar valor_servico
+                    valorTotal = parseFloat(agendamento.valor_final !== undefined ? agendamento.valor_final : agendamento.valor_servico || 0);
                 }
                 
                 // Calcular valor se não estiver nos dados
@@ -2154,7 +2155,7 @@
             `;
             
             // Carregar dados reais
-            // await carregarResumoGeral();
+            await carregarResumoGeral();
             // await carregarRelatorioServicos();
         }
         
@@ -4460,6 +4461,153 @@
             document.head.appendChild(style);
         }
         
+        async function calcularReceitaCorretamente() {
+            try {
+                const token = localStorage.getItem('token');
+                
+                // Buscar todos os agendamentos do mês atual
+                const hoje = new Date();
+                const primeiroDoMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+                const ultimoDoMes = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0);
+                
+                const response = await fetch(`${API_BASE_URL}/admin/agendamentos?limit=1000`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Erro ao buscar agendamentos');
+                }
+                
+                const data = await response.json();
+                const agendamentos = data.data || [];
+                
+                // Filtrar agendamentos do mês atual (concluídos)
+                const agendamentosMes = agendamentos.filter(a => {
+                    const dataAgendamento = new Date(a.data_agendada);
+                    return dataAgendamento >= primeiroDoMes && 
+                           dataAgendamento <= ultimoDoMes && 
+                           a.status === 'concluido';
+                });
+                
+                // Map para rastrear valores por usuário
+                const receitaPorUsuario = new Map();
+                const clientesComAssinatura = new Set();
+                
+                // Processar cada agendamento
+                for (const agendamento of agendamentosMes) {
+                    const usuarioId = agendamento.usuario_id;
+                    
+                    // Calcular valor do agendamento (com desconto se houver)
+                    let valorAgendamento = 0;
+                    if (agendamento.servicos && Array.isArray(agendamento.servicos)) {
+                        valorAgendamento = agendamento.servicos.reduce((total, servico) => {
+                            // Usar valor_final se disponível (já inclui desconto de assinatura)
+                            const valor = parseFloat(servico.valor_final !== undefined ? servico.valor_final : servico.valor_servico) || 0;
+                            return total + valor;
+                        }, 0);
+                    } else {
+                        valorAgendamento = parseFloat(agendamento.valor_servico) || 0;
+                    }
+                    
+                    // Rastrear se o usuário tem assinatura
+                    if (agendamento.assinatura_usuario) {
+                        clientesComAssinatura.add(usuarioId);
+                    }
+                    
+                    // Adicionar ao total do usuário
+                    const totalAtual = receitaPorUsuario.get(usuarioId) || 0;
+                    receitaPorUsuario.set(usuarioId, totalAtual + valorAgendamento);
+                }
+                
+                // Buscar assinaturas dos clientes com assinatura para adicionar valor mensal
+                let receitaAssinaturas = 0;
+                
+                if (clientesComAssinatura.size > 0) {
+                    const responseAssinaturasUsuarios = await fetch(`${API_BASE_URL}/admin/assinaturas-recorrentes?limit=1000`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    
+                    if (responseAssinaturasUsuarios.ok) {
+                        const dataAssinaturas = await responseAssinaturasUsuarios.json();
+                        const assinaturasUsuarios = dataAssinaturas.data || [];
+                        
+                        const assinaturasDoMes = assinaturasUsuarios.filter(a => {
+                            const dataInicio = new Date(a.data_inicio);
+                            const dataFim = a.data_cancelamento ? new Date(a.data_cancelamento) : ultimoDoMes;
+                            
+                            return dataInicio <= ultimoDoMes && dataFim >= primeiroDoMes && clientesComAssinatura.has(a.usuario_id);
+                        });
+                        
+                        // Somar valor de cada assinatura uma única vez
+                        const assinaturasProcessadas = new Set();
+                        for (const assinatura of assinaturasDoMes) {
+                            const chave = `${assinatura.usuario_id}_${assinatura.plano_id}`;
+                            if (!assinaturasProcessadas.has(chave)) {
+                                assinaturasProcessadas.add(chave);
+                                const valorAssinatura = parseFloat(assinatura.valor) || 0;
+                                receitaAssinaturas += valorAssinatura;
+                            }
+                        }
+                    }
+                }
+                
+                // Calcular receita total
+                let receitaAgendamentos = 0;
+                receitaPorUsuario.forEach(valor => {
+                    receitaAgendamentos += valor;
+                });
+                
+                const receitaTotal = receitaAgendamentos + receitaAssinaturas;
+                
+                console.log('Cálculo de Receita Detalhado (Barbeiro):', {
+                    agendamentosMes: agendamentosMes.length,
+                    receitaAgendamentos,
+                    receitaAssinaturas,
+                    receitaTotal,
+                    clientesComAssinatura: clientesComAssinatura.size
+                });
+                
+                return {
+                    receitaTotal,
+                    receitaAgendamentos,
+                    receitaAssinaturas,
+                    numAgendamentos: agendamentosMes.length,
+                    numClientesAssinantes: clientesComAssinatura.size
+                };
+            } catch (error) {
+                console.error('Erro ao calcular receita corretamente (Barbeiro):', error);
+                return null;
+            }
+        }
+
+        async function carregarResumoGeral() {
+            try {
+                const token = localStorage.getItem('token');
+                
+                // Calcular receita corretamente considerando assinaturas
+                const receitaCorreta = await calcularReceitaCorretamente();
+                
+                // Formatar valores monetários
+                const formatarMoeda = (valor) => {
+                    return valor.toLocaleString('pt-BR', {
+                        style: 'currency',
+                        currency: 'BRL'
+                    });
+                };
+                
+                // Atualizar os cards com receita corrigida
+                if (receitaCorreta && receitaCorreta.receitaTotal !== undefined) {
+                    const el = document.getElementById('receita-mes-atual');
+                    if (el) {
+                        el.textContent = formatarMoeda(receitaCorreta.receitaTotal);
+                    }
+                }
+                
+            } catch (error) {
+                console.error('Erro ao carregar resumo geral (Barbeiro):', error);
+            }
+        }
+
         // Inicializar quando a página carregar
         document.addEventListener('DOMContentLoaded', () => {
             initBarbeiro();

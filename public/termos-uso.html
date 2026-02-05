@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Termos de Uso - Barbearia Silva</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/x-icon" href="assets/image0 (1).jpeg">
+
+    <!-- meta tags -->
+
+    <meta name="description" content="Faça login na Barbearia Silva para agendar seus cortes de cabelo, acompanhar seus agendamentos e acessar promoções exclusivas. Acesse sua conta agora!"/>
+    <meta name="keywords" content="login, barbearia, agendamento, cortes de cabelo, promoções, conta, acesso"/>
+    <meta name="author" content="LF Software"/>
+    <meta property="og:type" content="website"/>
+    <meta property="og:title" content="Termos de Uso - Barbearia Silva"/>
+    <meta property="og:description" content="Faça login na Barbearia Silva para agendar seus cortes de cabelo, acompanhar seus agendamentos e acessar promoções exclusivas. Acesse sua conta agora!"/>
+    <meta property="og:image" content="assets/image0 (1).jpeg"/>
+    <meta property="og:url" content="https://barbeariasilva.vercel.app/termos-uso.html"/>
+    <meta property="og:site_name" content="Barbearia Silva"/>
+
+    <style>
+        :root {
+            --primary-dark: #121212;
+            --card-bg: #1e1e1e;
+            --accent-gold: #d4af37;
+            --light-gray: #f5f5f5;
+            --medium-gray: #a0a0a0;
+            --border-color: #333;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: var(--primary-dark);
+            color: var(--light-gray);
+            line-height: 1.6;
+            padding: 0 1rem 4rem;
+        }
+        
+        .header {
+            background: var(--card-bg);
+            padding: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 2px solid var(--accent-gold);
+            margin-bottom: 2rem;
+        }
+        
+        .back-btn {
+            background: transparent;
+            border: none;
+            color: var(--accent-gold);
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 50%;
+            transition: background 0.3s;
+        }
+        
+        .back-btn:hover {
+            background: rgba(212, 175, 55, 0.1);
+        }
+        
+        .page-title {
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: var(--accent-gold);
+            text-align: center;
+            flex-grow: 1;
+        }
+        
+        .header-logo {
+            height: 40px;
+            border-radius: 8px;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 2.5rem;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        
+        h1 {
+            color: var(--accent-gold);
+            font-size: 2.2rem;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+        
+        h2 {
+            color: var(--accent-gold);
+            font-size: 1.5rem;
+            margin: 2.5rem 0 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        h3 {
+            color: var(--light-gray);
+            font-size: 1.2rem;
+            margin: 1.5rem 0 0.8rem;
+        }
+        
+        p {
+            margin-bottom: 1.2rem;
+            color: var(--medium-gray);
+            text-align: justify;
+        }
+        
+        ul, ol {
+            margin: 1.2rem 0;
+            padding-left: 2rem;
+            color: var(--medium-gray);
+        }
+        
+        li {
+            margin-bottom: 0.8rem;
+        }
+        
+        strong {
+            color: var(--light-gray);
+            font-weight: 600;
+        }
+        
+        .highlight-box {
+            background: rgba(212, 175, 55, 0.1);
+            border: 1px solid rgba(212, 175, 55, 0.3);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 2rem 0;
+        }
+        
+        .warning-box {
+            background: rgba(220, 53, 69, 0.1);
+            border: 1px solid rgba(220, 53, 69, 0.3);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 2rem 0;
+        }
+        
+        .info-box {
+            background: rgba(13, 110, 253, 0.1);
+            border: 1px solid rgba(13, 110, 253, 0.3);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 2rem 0;
+        }
+        
+        .acceptance-box {
+            background: rgba(40, 167, 69, 0.1);
+            border: 1px solid rgba(40, 167, 69, 0.3);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 3rem 0;
+            text-align: center;
+        }
+        
+        .contact-info {
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-color);
+        }
+        
+        .contact-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1rem;
+            color: var(--medium-gray);
+        }
+        
+        .contact-item i {
+            color: var(--accent-gold);
+            margin-right: 1rem;
+            font-size: 1.2rem;
+            width: 24px;
+        }
+        
+        .update-date {
+            text-align: center;
+            color: var(--medium-gray);
+            font-size: 0.9rem;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-color);
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 1.5rem;
+            }
+            
+            h1 {
+                font-size: 1.8rem;
+            }
+            
+            h2 {
+                font-size: 1.3rem;
+            }
+            
+            .header {
+                padding: 1rem;
+            }
+            
+            .page-title {
+                font-size: 1.5rem;
+            }
+        }
+        
+        a {
+            color: var(--accent-gold);
+            text-decoration: none;
+            transition: opacity 0.3s;
+        }
+        
+        a:hover {
+            opacity: 0.8;
+            text-decoration: underline;
+        }
+        
+        .footer {
+            text-align: center;
+            padding: 2rem 0;
+            color: var(--medium-gray);
+            font-size: 0.9rem;
+        }
+        
+        .section-number {
+            display: inline-block;
+            background: var(--accent-gold);
+            color: var(--primary-dark);
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 30px;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <button class="back-btn" onclick="window.location.href='cliente-home.html'">
+            <i class="fas fa-arrow-left"></i>
+        </button>
+        <div class="page-title">Termos de Uso</div>
+        <img src="assets/image0 (1).jpeg" alt="Barbearia Silva Logo" class="header-logo">
+    </header>
+    
+    <!-- Main Content -->
+    <main class="container">
+        <h1><i class="fas fa-file-contract"></i> Termos de Uso do Sistema</h1>
+        
+        <div class="info-box">
+            <p><strong>Última atualização:</strong> 02 de Fevereiro de 2026</p>
+            <p><strong>Versão:</strong> 1.0</p>
+            <p>Ao utilizar o sistema da Barbearia Silva, você concorda com estes Termos de Uso.</p>
+        </div>
+        
+        <div class="highlight-box">
+            <h3><i class="fas fa-info-circle"></i> Aviso Importante</h3>
+            <p>Estes Termos de Uso regulam o uso do sistema de agendamentos online da Barbearia Silva. Leia atentamente antes de utilizar nossos serviços.</p>
+        </div>
+        
+        <h2><span class="section-number">1</span> Aceitação dos Termos</h2>
+        <p>Ao criar uma conta, fazer login ou utilizar qualquer funcionalidade do sistema, você declara que:</p>
+        <ul>
+            <li>Leu, compreendeu e concorda com estes Termos de Uso</li>
+            <li>Tem pelo menos 18 anos de idade ou tem autorização dos pais/responsáveis</li>
+            <li>Fornecerá informações verdadeiras e atualizadas</li>
+            <li>É responsável por manter a confidencialidade de sua conta</li>
+        </ul>
+        
+        <h2><span class="section-number">2</span> Descrição do Serviço</h2>
+        <p>A Barbearia Silva fornece um sistema online para:</p>
+        <ul>
+            <li>Agendamento de serviços de barbearia</li>
+            <li>Gestão de horários e disponibilidade</li>
+            <li>Pagamentos online via Mercado Pago</li>
+            <li>Controle de assinaturas mensais (opcional)</li>
+            <li>Histórico de serviços realizados</li>
+        </ul>
+        
+        <h2><span class="section-number">3</span> Cadastro e Conta do Usuário</h2>
+        <p>Para usar o sistema, você precisa criar uma conta:</p>
+        <ul>
+            <li>Forneça informações verdadeiras, completas e atualizadas</li>
+            <li>Mantenha sua senha em sigilo e segurança</li>
+            <li>Notifique-nos imediatamente sobre uso não autorizado</li>
+            <li>Você é responsável por toda atividade em sua conta</li>
+        </ul>
+        
+        <h2><span class="section-number">4</span> Agendamentos e Cancelamentos</h2>
+        <p>Política de agendamentos:</p>
+        <ul>
+            <li>Os horários são disponibilizados conforme agenda da barbearia</li>
+            <li>Respeite o horário agendado para não perder sua vaga</li>
+            <li>Cancele com pelo menos 2 horas de antecedência</li>
+            <li>Ausências sem cancelamento podem resultar em restrições futuras</li>
+        </ul>
+        
+        <h2><span class="section-number">5</span> Pagamentos e Assinaturas</h2>
+        <div class="info-box">
+            <h3><i class="fas fa-shield-alt"></i> Sistema de Pagamento Seguro</h3>
+            <p>Utilizamos exclusivamente o <strong>Mercado Pago</strong> para processar pagamentos. NÃO armazenamos dados de cartão de crédito em nossos servidores.</p>
+        </div>
+        <p>Termos específicos para pagamentos:</p>
+        <ul>
+            <li>Os preços são mostrados em Reais (R$) e incluem todos os impostos</li>
+            <li>Pagamentos são processados em tempo real</li>
+            <li>Assinaturas são renovadas automaticamente mensalmente</li>
+            <li>Você pode cancelar assinaturas a qualquer momento</li>
+            <li>Reembolsos seguem a política do Mercado Pago</li>
+        </ul>
+        
+        <h2><span class="section-number">6</span> Conduta do Usuário</h2>
+        <div class="warning-box">
+            <h3><i class="fas fa-ban"></i> Condutas Proibidas</h3>
+            <p>Você NÃO pode:</p>
+        </div>
+        <ul>
+            <li>Usar o sistema para atividades ilegais ou fraudulentas</li>
+            <li>Tentar acessar contas de outros usuários</li>
+            <li>Interferir na segurança ou funcionamento do sistema</li>
+            <li>Publicar conteúdo ofensivo, difamatório ou inadequado</li>
+            <li>Usar bots, scripts ou métodos automatizados não autorizados</li>
+            <li>Realizar engenharia reversa ou descompilar o sistema</li>
+        </ul>
+        
+        <h2><span class="section-number">7</span> Propriedade Intelectual</h2>
+        <p>Todos os direitos sobre o sistema são propriedade da Barbearia Silva:</p>
+        <ul>
+            <li>Software, código-fonte, design e funcionalidades</li>
+            <li>Logotipos, marcas e elementos visuais</li>
+            <li>Conteúdo textual e documentação</li>
+            <li>Você recebe uma licença limitada para uso pessoal</li>
+        </ul>
+        
+        <h2><span class="section-number">8</span> Limitação de Responsabilidade</h2>
+        <p>A Barbearia Silva não será responsável por:</p>
+        <ul>
+            <li>Interrupções técnicas ou falhas do sistema</li>
+            <li>Danos indiretos, incidentais ou consequenciais</li>
+            <li>Perda de dados ou informações</li>
+            <li>Disputas relacionadas a pagamentos (resolvidas com o Mercado Pago)</li>
+            <li>Ações de terceiros ou usuários</li>
+        </ul>
+        
+        <h2><span class="section-number">9</span> Privacidade e Segurança</h2>
+        <div class="highlight-box">
+            <h3><i class="fas fa-user-shield"></i> Compromisso com sua Segurança</h3>
+            <p>Nosso sistema implementa as melhores práticas de segurança:</p>
+            <ul>
+                <li><strong>Criptografia:</strong> Todas as senhas são criptografadas com bcrypt</li>
+                <li><strong>SSL/TLS:</strong> Conexões seguras em todas as comunicações</li>
+                <li><strong>Autenticação:</strong> Sistema de login com tokens JWT</li>
+                <li><strong>Sem armazenamento:</strong> NÃO guardamos dados de cartão</li>
+            </ul>
+            <p>Consulte nossa <a href="politica-privacidade.html">Política de Privacidade</a> para detalhes completos.</p>
+        </div>
+        
+        <h2><span class="section-number">10</span> Modificações do Serviço</h2>
+        <p>Reservamos o direito de:</p>
+        <ul>
+            <li>Modificar, suspender ou descontinuar o sistema</li>
+            <li>Alterar estes Termos de Uso periodicamente</li>
+            <li>Atualizar funcionalidades e interfaces</li>
+            <li>Notificar sobre mudanças significativas</li>
+        </ul>
+        <p>O uso continuado após modificações constitui aceitação dos novos termos.</p>
+        
+        <h2><span class="section-number">11</span> Rescisão</h2>
+        <p>Podemos suspender ou encerrar sua conta se:</p>
+        <ul>
+            <li>Violar estes Termos de Uso</li>
+            <li>Realizar atividades fraudulentas</li>
+            <li>Causar danos ao sistema ou outros usuários</li>
+            <li>Desrespeitar nossa equipe ou outros clientes</li>
+        </ul>
+        
+        <h2><span class="section-number">12</span> Lei Aplicável</h2>
+        <p>Estes Termos são regidos pelas leis brasileiras. Qualquer disputa será resolvida no Foro da Comarca de São Paulo, SP.</p>
+        
+        <div class="acceptance-box">
+            <h3><i class="fas fa-handshake"></i> Aceitação dos Termos</h3>
+            <p>Ao utilizar o sistema da Barbearia Silva, você declara que:</p>
+            <ul style="text-align: left; display: inline-block;">
+                <li>✓ Leu e compreendeu estes Termos de Uso</li>
+                <li>✓ Concorda com todas as condições estabelecidas</li>
+                <li>✓ Reconhece nossa política de segurança e privacidade</li>
+                <li>✓ Assume responsabilidade por seu uso do sistema</li>
+            </ul>
+        </div>
+        
+        <div class="contact-info">
+            <h2><span class="section-number">13</span> Contato</h2>
+            <p>Dúvidas sobre estes Termos de Uso? Entre em contato:</p>
+            <div class="contact-item">
+                <i class="fas fa-envelope"></i>
+                <span>lfsoftware004@gmail.com</span>
+            </div>
+            <div class="contact-item">
+                <i class="fas fa-phone"></i>
+                <span>(62) 98489-4774</span>
+            </div>
+            <div class="contact-item">
+                <i class="fas fa-map-marker-alt"></i>
+                <span>Goiânia, GO - Brasil</span>
+            </div>
+        </div>
+        
+        <div class="update-date">
+            <p><i class="fas fa-history"></i> Estes Termos de Uso podem ser atualizados. A versão mais recente estará sempre disponível nesta página.</p>
+            <p>© 2026 Barbearia Silva. Todos os direitos reservados.</p>
+        </div>
+    </main>
+    
+    <footer class="footer">
+        <p>Barbearia Silva | Sistema Seguro de Agendamentos</p>
+        <p><a href="termos-uso.html">Termos de Uso</a> | <a href="politica-privacidade.html">Política de Privacidade</a></p>
+    </footer>
+</body>
+</html>

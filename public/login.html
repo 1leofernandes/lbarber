@@ -7,6 +7,18 @@
     <link rel="icon" href="assets/image0 (1).jpeg" type="image/jpeg">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- meta tags -->
+
+    <meta name="description" content="Faça login na Barbearia Silva para agendar seus cortes de cabelo, acompanhar seus agendamentos e acessar promoções exclusivas. Acesse sua conta agora!"/>
+    <meta name="keywords" content="login, barbearia, agendamento, cortes de cabelo, promoções, conta, acesso"/>
+    <meta name="author" content="LF Software"/>
+    <meta property="og:type" content="website"/>
+    <meta property="og:title" content="Login - Barbearia Silva"/>
+    <meta property="og:description" content="Faça login na Barbearia Silva para agendar seus cortes de cabelo, acompanhar seus agendamentos e acessar promoções exclusivas. Acesse sua conta agora!"/>
+    <meta property="og:image" content="assets/image0 (1).jpeg"/>
+    <meta property="og:url" content="https://barbeariasilva.vercel.app/login.html"/>
+    <meta property="og:site_name" content="Barbearia Silva"/>
     <style>
         :root {
             --primary-dark: #121212;
@@ -378,6 +390,62 @@
             70% { box-shadow: 0 0 0 10px rgba(212, 175, 55, 0); }
             100% { box-shadow: 0 0 0 0 rgba(212, 175, 55, 0); }
         }
+
+        .terms-acceptance {
+            font-size: 0.85rem;
+            color: var(--medium-gray);
+            margin-top: 0.5rem;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .floating-btn {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            background: linear-gradient(to right, var(--accent-gold), var(--dark-gold));
+            color: var(--primary-dark);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            cursor: pointer;
+            box-shadow: 0 6px 20px rgba(212, 175, 55, 0.4);
+            transition: all 0.3s ease;
+            z-index: 99;
+            border: none;
+            text-decoration: none;
+        }
+        
+        .floating-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 8px 25px rgba(212, 175, 55, 0.6);
+        }
+        
+        .floating-btn-text {
+            position: absolute;
+            right: 70px;
+            background: var(--card-bg);
+            padding: 0.6rem 1.2rem;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            white-space: nowrap;
+            opacity: 0;
+            transform: translateX(10px);
+            transition: all 0.3s ease;
+            pointer-events: none;
+            border: 1px solid rgba(212, 175, 55, 0.2);
+            color: var(--light-gray);
+        }
+        
+        .floating-btn:hover .floating-btn-text {
+            opacity: 1;
+            transform: translateX(0);
+        }
     </style>
 </head>
 <body>
@@ -430,6 +498,11 @@
                     </svg>
                     Entrar com Google
                 </a>
+
+                <div class="terms-acceptance">
+
+                    Ao continuar, você concorda com nossos <p></p><a href="termos-uso.html" style="color: var(--accent-gold); text-decoration: none;">Termos de Uso</a> e <a href="politica-privacidade.html" style="color: var(--accent-gold); text-decoration: none;">Política de Privacidade</a>.
+                </div>
                 
                 <div class="login-links">
                     <a href="registrar.html" class="login-link">
@@ -446,6 +519,7 @@
     <!-- Footer -->
     <footer class="footer">
         <p>&copy; 2026 LBarber - Sistema de Agendamento. Todos os direitos reservados.</p>
+        <a href="termos-uso.html" style="color: var(--accent-gold); text-decoration: none;">Termos de Uso</a> || <a href="politica-privacidade.html" style="color: var(--accent-gold); text-decoration: none;">Política de Privacidade</a>.
         <p> LF Software</p>
         <div class="social-links">
             <a href="mailto:lfsoftware004@gmail.com" class="social-link"><i class="fab fa-github"></i></a>
@@ -453,6 +527,11 @@
             <a href="https://wa.me/5562982594295" class="social-link"><i class="fab fa-whatsapp"></i></a>
         </div>
     </footer>
+
+    <a href="https://wa.me/5562984894774?text=Preciso%20de%20ajuda%20ou%20quero%20relatar%20um%20problema%20com%20o%20sistema%20BARBEARIA%20SILVA" class="floating-btn">
+        <i class="fas fa-question"></i>
+        <span class="floating-btn-text">Precisa de ajuda?</span>
+    </a>
 
     <script>
 

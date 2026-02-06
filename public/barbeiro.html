@@ -252,6 +252,7 @@
             display: flex;
             align-items: center;
             gap: 10px;
+            min-height: 40px;
         }
         
         .btn-icon {
@@ -977,21 +978,28 @@
         @media (max-width: 576px) {
             .navbar {
                 padding: 0.8rem;
-                flex-direction: column;
-                gap: 0.5rem;
+                flex-direction: row;
+                gap: 0;
+                justify-content: space-between;
+                align-items: center;
+                min-height: auto;
             }
             
             .navbar-left {
-                width: 100%;
+                width: auto;
+                gap: 10px;
             }
             
             .page-title {
-                font-size: 1.1rem;
+                font-size: 1rem;
                 margin: 0;
+                flex: 1;
+                margin-left: 0.5rem;
             }
             
             .menu-toggle {
                 padding: 0.5rem;
+                margin-right: 0;
             }
             
             .sidebar {
@@ -1000,6 +1008,7 @@
                 height: 100vh;
                 z-index: 1000;
                 transition: left 0.3s ease;
+                width: 250px;
             }
             
             .sidebar.active {
@@ -1296,14 +1305,7 @@
                 </button>
                 <div class="page-title" id="pageTitle">Início</div>
             </div>
-            <div class="navbar-actions">
-                <button class="btn-icon" id="notificationsBtn">
-                    <i class="fas fa-bell"></i>
-                </button>
-                <button class="btn-icon" id="helpBtn">
-                    <i class="fas fa-question-circle"></i>
-                </button>
-            </div>
+            <div class="navbar-actions"></div>
         </nav>
         
         <!-- Content Area -->
@@ -1869,16 +1871,6 @@
             // Logout
             elements.logoutBtn.addEventListener('click', logout);
             
-            // Notificações
-            document.getElementById('notificationsBtn')?.addEventListener('click', () => {
-                alert('Notificações - Em desenvolvimento');
-            });
-            
-            // Ajuda
-            document.getElementById('helpBtn')?.addEventListener('click', () => {
-                alert('Ajuda - Em desenvolvimento');
-            });
-            
             // Formulários
             document.getElementById('form-novo-agendamento')?.addEventListener('submit', handleNovoAgendamento);
             document.getElementById('form-novo-bloqueio')?.addEventListener('submit', handleNovoBloqueio);
@@ -2152,15 +2144,26 @@
                                         </div>
                                     </div>
                                     <div class="agendamento-card-footer">
-                                        <button class="btn-table btn-view" onclick="verAgendamento(${agendamento.id})" title="Ver">
-                                            <i class="fas fa-eye"></i>
-                                        </button>
-                                        <button class="btn-table btn-edit" onclick="editarAgendamento(${agendamento.id})" title="Editar">
-                                            <i class="fas fa-edit"></i>
-                                        </button>
-                                        <button class="btn-table btn-delete" onclick="excluirAgendamento(${agendamento.id})" title="Deletar">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
+                                        <div style="width: 100%; margin-bottom: 0.8rem; display: flex; flex-direction: column; gap: 0.5rem;">
+                                            <label style="font-size: 0.75rem; color: var(--medium-gray); font-weight: 600; text-transform: uppercase;">Status</label>
+                                            <select class="form-control" style="width: 100%; padding: 0.5rem; font-size: 0.9rem;" 
+                                                    onchange="atualizarStatusAgendamento(${agendamento.id}, this.value)">
+                                                <option value="confirmado" ${agendamento.status === 'confirmado' ? 'selected' : ''}>Confirmado</option>
+                                                <option value="concluido" ${agendamento.status === 'concluido' ? 'selected' : ''}>Concluído</option>
+                                                <option value="cancelado" ${agendamento.status === 'cancelado' ? 'selected' : ''}>Cancelado</option>
+                                            </select>
+                                        </div>
+                                        <div style="display: flex; gap: 0.5rem; width: 100%;">
+                                            <button class="btn-table btn-view" onclick="verAgendamento(${agendamento.id})" title="Ver" style="flex: 1;">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            <button class="btn-table btn-edit" onclick="editarAgendamento(${agendamento.id})" title="Editar" style="flex: 1;">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button class="btn-table btn-delete" onclick="excluirAgendamento(${agendamento.id})" title="Deletar" style="flex: 1;">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             </td>
@@ -3159,6 +3162,21 @@
         // Função para carregar agendamentos com filtros
         async function carregarAgendamentosComFiltro(filtros = {}) {
             try {
+                // Mostrar loading
+                const tbody = document.getElementById('todos-agendamentos');
+                if (tbody) {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="8" style="text-align: center; padding: 3rem;">
+                                <div style="display: flex; flex-direction: column; align-items: center; gap: 1rem;">
+                                    <i class="fas fa-spinner fa-spin" style="font-size: 2rem; color: var(--accent-gold);"></i>
+                                    <p>Carregando agendamentos...</p>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                }
+                
                 const token = localStorage.getItem('token');
                 
                 // Construir query string com filtros

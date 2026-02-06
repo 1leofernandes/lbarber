@@ -538,6 +538,124 @@
             color: var(--medium-gray);
             border: 1px solid rgba(108, 117, 125, 0.3);
         }
+
+        /* Status Coloridos para Agendamentos */
+        .status-confirmado {
+            background-color: rgba(40, 167, 69, 0.2) !important;
+            color: #28a745 !important;
+            border: 2px solid #28a745 !important;
+            padding: 0.5rem 1rem;
+        }
+
+        .status-concluido {
+            background-color: rgba(0, 123, 255, 0.2) !important;
+            color: #007bff !important;
+            border: 2px solid #007bff !important;
+            padding: 0.5rem 1rem;
+        }
+
+        .status-cancelado {
+            background-color: rgba(220, 53, 69, 0.2) !important;
+            color: #dc3545 !important;
+            border: 2px solid #dc3545 !important;
+            padding: 0.5rem 1rem;
+        }
+
+        /* Cards de Agendamentos para Mobile */
+        .agendamento-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-left: 4px solid var(--accent-gold);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            display: none;
+        }
+
+        .agendamento-card.confirmado {
+            border-left-color: #28a745;
+        }
+
+        .agendamento-card.concluido {
+            border-left-color: #007bff;
+        }
+
+        .agendamento-card.cancelado {
+            border-left-color: #dc3545;
+        }
+
+        .agendamento-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.8rem;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .agendamento-card-id {
+            font-size: 0.85rem;
+            color: var(--medium-gray);
+            font-weight: 600;
+        }
+
+        .agendamento-card-status {
+            font-size: 0.8rem;
+            padding: 0.4rem 0.8rem;
+            border-radius: 20px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .agendamento-card-body {
+            display: grid;
+            gap: 0.6rem;
+            margin-bottom: 0.8rem;
+        }
+
+        .agendamento-card-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.8rem;
+            font-size: 0.9rem;
+        }
+
+        .agendamento-card-item i {
+            color: var(--accent-gold);
+            min-width: 20px;
+            margin-top: 2px;
+        }
+
+        .agendamento-card-info {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .agendamento-card-label {
+            font-size: 0.75rem;
+            color: var(--medium-gray);
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+
+        .agendamento-card-value {
+            color: var(--light-gray);
+            font-weight: 500;
+        }
+
+        .agendamento-card-valor-destaque {
+            color: var(--accent-gold);
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+
+        .agendamento-card-footer {
+            display: flex;
+            gap: 0.5rem;
+            justify-content: flex-end;
+            flex-wrap: wrap;
+        }
         
         .btn-table {
             padding: 0.5rem 1rem;
@@ -824,6 +942,35 @@
             
             .form-control {
                 font-size: 16px;
+            }
+            
+            /* Smart table-to-card transformation for mobile */
+            .table {
+                width: 100%;
+            }
+            
+            .table thead {
+                display: table-header-group;
+            }
+            
+            .table tbody tr:not(.agendamento-card) {
+                display: none;
+            }
+            
+            .table tbody tr.agendamento-card {
+                display: table-row;
+                border: none;
+                padding: 0;
+            }
+            
+            .table tbody tr.agendamento-card td {
+                padding: 0;
+                border: none;
+                background: transparent;
+            }
+            
+            .agendamento-card {
+                display: block !important;
             }
         }
         
@@ -1898,59 +2045,184 @@
                 return;
             }
             
-            tbody.innerHTML = agendamentos.map(agendamento => {
-                // Calcular valor total do agendamento com desconto de assinatura
-                let valorTotal = 0;
-                let servicosTexto = 'Nenhum serviço';
-                
-                if (agendamento.servicos && Array.isArray(agendamento.servicos) && agendamento.servicos.length > 0) {
-                    // Se há array de serviços, somar valor_final de cada um
-                    servicosTexto = agendamento.servicos.map(s => s.nome_servico).join(', ');
-                    valorTotal = agendamento.servicos.reduce((total, servico) => {
-                        return total + (parseFloat(servico.valor_final !== undefined ? servico.valor_final : servico.valor_servico) || 0);
-                    }, 0);
-                } else if (agendamento.servico_nome) {
-                    // Fallback para agendamento antigo com um único serviço
-                    servicosTexto = agendamento.servico_nome;
-                    // Tentar usar valor_total (calculado com desconto), senão valor_servico
-                    valorTotal = parseFloat(agendamento.valor_total !== undefined ? agendamento.valor_total : (agendamento.valor_final !== undefined ? agendamento.valor_final : agendamento.valor_servico || 0));
-                }
-                
-                // Se ainda não consegui calcular, tenta valor_servico como último recurso
-                if (valorTotal === 0) {
-                    valorTotal = parseFloat(agendamento.valor_servico || 0);
-                }
-                
-                return `
-                    <tr>
-                        <td>${agendamento.id || ''}</td>
-                        <td>${agendamento.cliente_nome || 'Cliente'}</td>
-                        <td>${servicosTexto}</td>
-                        <td>${agendamento.barbeiro_nome || 'Barbeiro'}</td>
-                        <td>${formatDateTime(agendamento.data_agendada, agendamento.hora_inicio)}</td>
-                        <td>R$ ${valorTotal.toFixed(2)}</td>
-                        <td>
-                            <select class="form-control" style="width: 120px; padding: 0.3rem;" 
-                                    onchange="atualizarStatusAgendamento(${agendamento.id}, this.value)">
-                                <option value="confirmado" ${agendamento.status === 'confirmado' ? 'selected' : ''}>Confirmado</option>
-                                <option value="concluido" ${agendamento.status === 'concluido' ? 'selected' : ''}>Concluido</option>
-                                <option value="cancelado" ${agendamento.status === 'cancelado' ? 'selected' : ''}>Cancelado</option>
-                            </select>
-                        </td>
-                        <td>
-                            <button class="btn-table btn-view" onclick="verAgendamento(${agendamento.id})">
-                                <i class="fas fa-eye"></i>
-                            </button>
-                            <button class="btn-table btn-edit" onclick="editarAgendamento(${agendamento.id})">
-                                <i class="fas fa-edit"></i>
-                            </button>
-                            <button class="btn-table btn-delete" onclick="excluirAgendamento(${agendamento.id})">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </td>
-                    </tr>
-                `;
-            }).join('');
+            // Verificar se é mobile
+            const isMobile = window.innerWidth <= 768;
+            
+            if (isMobile) {
+                // Renderizar como cards para mobile
+                tbody.innerHTML = agendamentos.map(agendamento => {
+                    // Calcular valor total do agendamento com desconto de assinatura
+                    let valorTotal = 0;
+                    let servicosTexto = 'Nenhum serviço';
+                    
+                    if (agendamento.servicos && Array.isArray(agendamento.servicos) && agendamento.servicos.length > 0) {
+                        // Se há array de serviços, somar valor_final de cada um
+                        servicosTexto = agendamento.servicos.map(s => s.nome_servico).join(', ');
+                        valorTotal = agendamento.servicos.reduce((total, servico) => {
+                            return total + (parseFloat(servico.valor_final !== undefined ? servico.valor_final : servico.valor_servico) || 0);
+                        }, 0);
+                    } else if (agendamento.servico_nome) {
+                        // Fallback para agendamento antigo com um único serviço
+                        servicosTexto = agendamento.servico_nome;
+                        // Tentar usar valor_total (calculado com desconto), senão valor_servico
+                        valorTotal = parseFloat(agendamento.valor_total !== undefined ? agendamento.valor_total : (agendamento.valor_final !== undefined ? agendamento.valor_final : agendamento.valor_servico || 0));
+                    }
+                    
+                    // Se ainda não consegui calcular, tenta valor_servico como último recurso
+                    if (valorTotal === 0) {
+                        valorTotal = parseFloat(agendamento.valor_servico || 0);
+                    }
+                    
+                    const statusLabel = {
+                        'confirmado': 'Confirmado',
+                        'concluido': 'Concluído',
+                        'cancelado': 'Cancelado'
+                    };
+                    
+                    return `
+                        <tr style="display: none;">
+                            <td>${agendamento.id || ''}</td>
+                            <td>${agendamento.cliente_nome || 'Cliente'}</td>
+                            <td>${servicosTexto}</td>
+                            <td>${agendamento.barbeiro_nome || 'Barbeiro'}</td>
+                            <td>${formatDateTime(agendamento.data_agendada, agendamento.hora_inicio)}</td>
+                            <td>R$ ${valorTotal.toFixed(2)}</td>
+                            <td>
+                                <select class="form-control" style="width: 120px; padding: 0.3rem;" 
+                                        onchange="atualizarStatusAgendamento(${agendamento.id}, this.value)">
+                                    <option value="confirmado" ${agendamento.status === 'confirmado' ? 'selected' : ''}>Confirmado</option>
+                                    <option value="concluido" ${agendamento.status === 'concluido' ? 'selected' : ''}>Concluido</option>
+                                    <option value="cancelado" ${agendamento.status === 'cancelado' ? 'selected' : ''}>Cancelado</option>
+                                </select>
+                            </td>
+                            <td>
+                                <button class="btn-table btn-view" onclick="verAgendamento(${agendamento.id})">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button class="btn-table btn-edit" onclick="editarAgendamento(${agendamento.id})">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn-table btn-delete" onclick="excluirAgendamento(${agendamento.id})">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        <tr class="agendamento-card ${agendamento.status}">
+                            <td colspan="8" style="padding: 0; border: none;">
+                                <div class="agendamento-card">
+                                    <div class="agendamento-card-header">
+                                        <span class="agendamento-card-id">#${agendamento.id}</span>
+                                        <span class="agendamento-card-status status-${agendamento.status}">${statusLabel[agendamento.status] || agendamento.status}</span>
+                                    </div>
+                                    <div class="agendamento-card-body">
+                                        <div class="agendamento-card-item">
+                                            <i class="fas fa-user"></i>
+                                            <div class="agendamento-card-info">
+                                                <span class="agendamento-card-label">Cliente</span>
+                                                <span class="agendamento-card-value">${agendamento.cliente_nome || 'Cliente'}</span>
+                                            </div>
+                                        </div>
+                                        <div class="agendamento-card-item">
+                                            <i class="fas fa-cut"></i>
+                                            <div class="agendamento-card-info">
+                                                <span class="agendamento-card-label">Barbeiro</span>
+                                                <span class="agendamento-card-value">${agendamento.barbeiro_nome || 'Barbeiro'}</span>
+                                            </div>
+                                        </div>
+                                        <div class="agendamento-card-item">
+                                            <i class="fas fa-scissors"></i>
+                                            <div class="agendamento-card-info">
+                                                <span class="agendamento-card-label">Serviço</span>
+                                                <span class="agendamento-card-value">${servicosTexto}</span>
+                                            </div>
+                                        </div>
+                                        <div class="agendamento-card-item">
+                                            <i class="fas fa-calendar-alt"></i>
+                                            <div class="agendamento-card-info">
+                                                <span class="agendamento-card-label">Data e Hora</span>
+                                                <span class="agendamento-card-value">${formatDateTime(agendamento.data_agendada, agendamento.hora_inicio)}</span>
+                                            </div>
+                                        </div>
+                                        <div class="agendamento-card-item">
+                                            <i class="fas fa-money-bill"></i>
+                                            <div class="agendamento-card-info">
+                                                <span class="agendamento-card-label">Valor</span>
+                                                <span class="agendamento-card-valor-destaque">R$ ${valorTotal.toFixed(2)}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="agendamento-card-footer">
+                                        <button class="btn-table btn-view" onclick="verAgendamento(${agendamento.id})" title="Ver">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button class="btn-table btn-edit" onclick="editarAgendamento(${agendamento.id})" title="Editar">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn-table btn-delete" onclick="excluirAgendamento(${agendamento.id})" title="Deletar">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+            } else {
+                // Renderizar como tabela para desktop
+                tbody.innerHTML = agendamentos.map(agendamento => {
+                    // Calcular valor total do agendamento com desconto de assinatura
+                    let valorTotal = 0;
+                    let servicosTexto = 'Nenhum serviço';
+                    
+                    if (agendamento.servicos && Array.isArray(agendamento.servicos) && agendamento.servicos.length > 0) {
+                        // Se há array de serviços, somar valor_final de cada um
+                        servicosTexto = agendamento.servicos.map(s => s.nome_servico).join(', ');
+                        valorTotal = agendamento.servicos.reduce((total, servico) => {
+                            return total + (parseFloat(servico.valor_final !== undefined ? servico.valor_final : servico.valor_servico) || 0);
+                        }, 0);
+                    } else if (agendamento.servico_nome) {
+                        // Fallback para agendamento antigo com um único serviço
+                        servicosTexto = agendamento.servico_nome;
+                        // Tentar usar valor_total (calculado com desconto), senão valor_servico
+                        valorTotal = parseFloat(agendamento.valor_total !== undefined ? agendamento.valor_total : (agendamento.valor_final !== undefined ? agendamento.valor_final : agendamento.valor_servico || 0));
+                    }
+                    
+                    // Se ainda não consegui calcular, tenta valor_servico como último recurso
+                    if (valorTotal === 0) {
+                        valorTotal = parseFloat(agendamento.valor_servico || 0);
+                    }
+                    
+                    return `
+                        <tr>
+                            <td>${agendamento.id || ''}</td>
+                            <td>${agendamento.cliente_nome || 'Cliente'}</td>
+                            <td>${servicosTexto}</td>
+                            <td>${agendamento.barbeiro_nome || 'Barbeiro'}</td>
+                            <td>${formatDateTime(agendamento.data_agendada, agendamento.hora_inicio)}</td>
+                            <td>R$ ${valorTotal.toFixed(2)}</td>
+                            <td>
+                                <select class="form-control" style="width: 120px; padding: 0.3rem;" 
+                                        onchange="atualizarStatusAgendamento(${agendamento.id}, this.value)">
+                                    <option value="confirmado" ${agendamento.status === 'confirmado' ? 'selected' : ''}>Confirmado</option>
+                                    <option value="concluido" ${agendamento.status === 'concluido' ? 'selected' : ''}>Concluido</option>
+                                    <option value="cancelado" ${agendamento.status === 'cancelado' ? 'selected' : ''}>Cancelado</option>
+                                </select>
+                            </td>
+                            <td>
+                                <button class="btn-table btn-view" onclick="verAgendamento(${agendamento.id})">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button class="btn-table btn-edit" onclick="editarAgendamento(${agendamento.id})">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn-table btn-delete" onclick="excluirAgendamento(${agendamento.id})">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+            }
         }
 
         async function carregarTodosServicos() {
@@ -4784,6 +5056,22 @@
         document.addEventListener('DOMContentLoaded', () => {
             initBarbeiro();
             addModalStyles();
+            
+            // Re-render appointments on window resize for responsive layout
+            let resizeTimer;
+            window.addEventListener('resize', () => {
+                clearTimeout(resizeTimer);
+                resizeTimer = setTimeout(() => {
+                    const tbody = document.getElementById('todos-agendamentos');
+                    if (tbody && tbody.innerHTML.trim()) {
+                        // Re-load current filter to re-render with correct layout
+                        const filterBtn = document.querySelector('[data-filter]');
+                        if (filterBtn) {
+                            filterBtn.click();
+                        }
+                    }
+                }, 500);
+            });
         });
 
         async function testarFiltrosBackend() {

@@ -960,8 +960,18 @@
                 gap: 1rem;
             }
             
-            .table tbody tr:not(.agendamento-card) {
+            .table tbody tr:not(.agendamento-card):not(.table-loader):not(.list-card-row) {
                 display: none !important;
+            }
+            
+            .table tbody tr.table-loader {
+                display: table-row !important;
+                padding: 2rem 0 !important;
+            }
+            
+            .table tbody tr.table-loader td {
+                text-align: center !important;
+                padding: 2rem 1rem !important;
             }
             
             .table tbody tr.agendamento-card {
@@ -2802,7 +2812,7 @@
                             </tr>
                         </thead>
                         <tbody id="lista-servicos">
-                            <tr>
+                            <tr class="table-loader">
                                 <td colspan="6" style="text-align: center; padding: 3rem;">
                                     <i class="fas fa-spinner fa-spin"></i> Carregando serviços...
                                 </td>
@@ -2864,7 +2874,7 @@
                             </tr>
                         </thead>
                         <tbody id="lista-assinantes">
-                            <tr>
+                            <tr class="table-loader">
                                 <td colspan="7" style="text-align: center; padding: 2rem;">
                                     <i class="fas fa-spinner fa-spin" style="font-size: 1.5rem; color: var(--accent-gold);"></i>
                                     <p style="margin-top: 0.5rem;">Carregando assinantes...</p>
@@ -2884,7 +2894,7 @@
                 const token = localStorage.getItem('token');
                 
                 // Carregar planos
-                const responsePlanos = await fetch(`${API_BASE_URL}/admin/planos-assinatura`, {
+                const responsePlanos = await fetch(`${API_BASE_URL}/admin/assinaturas/planos`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 
@@ -3075,7 +3085,7 @@
                             </tr>
                         </thead>
                         <tbody id="lista-bloqueios">
-                            <tr>
+                            <tr class="table-loader">
                                 <td colspan="7" style="text-align: center; padding: 3rem;">
                                     <i class="fas fa-spinner fa-spin"></i> Carregando bloqueios...
                                 </td>
@@ -3821,7 +3831,7 @@
                 const tbody = document.getElementById('lista-bloqueios');
                 if (tbody) {
                     tbody.innerHTML = `
-                        <tr>
+                        <tr class="table-loader">
                             <td colspan="7" style="text-align: center; padding: 2rem;">
                                 <i class="fas fa-spinner fa-spin" style="font-size: 1.5rem; color: var(--accent-gold);"></i>
                                 <p style="margin-top: 0.5rem;">Carregando bloqueios...</p>

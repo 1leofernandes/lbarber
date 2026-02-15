@@ -2,7 +2,49 @@
 const pool = require('../../config/database');
 const logger = require('../../utils/logger');
 
-class AssinaturaAdminController {
+class AssinaturaController {
+    /**
+     * GET /admin/assinaturas/planos - Listar todos os planos de assinatura
+     */
+    static async listarPlanos(req, res, next) {
+        try {
+            const query = `
+                SELECT 
+                    p.id,
+                    p.nome,
+                    p.preco,
+                    p.duracao_dias,
+                    p.descricao,
+                    COUNT(CASE WHEN a.status = 'ativa' THEN 1 END) as total_assinantes
+                FROM planos_assinatura p
+                LEFT JOIN assinaturas a ON p.id = a.plano_id
+                GROUP BY p.id, p.nome, p.preco, p.duracao_dias, p.descricao
+                ORDER BY p.preco ASC
+            `;
+
+            const resultado = await pool.query(query);
+
+            res.json({
+                success: true,
+                data: resultado.rows.map(row => ({
+                    id: row.id,
+                    nome: row.nome,
+                    preco: parseFloat(row.preco),
+                    duracao_dias: row.duracao_dias,
+                    descricao: row.descricao,
+                    total_assinantes: parseInt(row.total_assinantes)
+                }))
+            });
+        } catch (error) {
+            logger.error('Erro ao listar planos:', error);
+            res.status(500).json({
+                success: false,
+                message: 'Erro ao listar planos',
+                error: error.message
+            });
+        }
+    }
+
     /**
      * GET /admin/assinaturas - Listar todas as assinaturas ativas com details
      */
@@ -189,4 +231,4 @@ class AssinaturaAdminController {
     }
 }
 
-module.exports = assinaturaAdminController = AssinaturaAdminController;
+module.exports = AssinaturaController;

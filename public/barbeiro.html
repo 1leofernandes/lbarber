@@ -951,27 +951,94 @@
             }
             
             .table thead {
-                display: table-header-group;
+                display: none !important;
+            }
+            
+            .table tbody {
+                display: flex !important;
+                flex-direction: column;
+                gap: 1rem;
             }
             
             .table tbody tr:not(.agendamento-card) {
-                display: none;
+                display: none !important;
             }
             
             .table tbody tr.agendamento-card {
-                display: table-row;
-                border: none;
-                padding: 0;
+                display: block !important;
+                border: none !important;
+                padding: 0 !important;
+                margin-bottom: 0 !important;
             }
             
             .table tbody tr.agendamento-card td {
-                padding: 0;
-                border: none;
-                background: transparent;
+                padding: 0 !important;
+                border: none !important;
+                background: transparent !important;
+                display: block !important;
+                width: 100% !important;
             }
             
             .agendamento-card {
                 display: block !important;
+            }
+            
+            /* Generic mobile card styles for lists */
+            .list-card {
+                background: rgba(255, 255, 255, 0.05);
+                border-left: 4px solid var(--accent-gold);
+                border-radius: 8px;
+                padding: 1rem;
+                margin-bottom: 1rem;
+            }
+            
+            .list-card-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 0.8rem;
+                flex-wrap: wrap;
+            }
+            
+            .list-card-title {
+                font-weight: 600;
+                color: var(--light-gray);
+            }
+            
+            .list-card-body {
+                display: grid;
+                gap: 0.6rem;
+                margin-bottom: 0.8rem;
+            }
+            
+            .list-card-item {
+                display: flex;
+                align-items: flex-start;
+                gap: 0.8rem;
+                font-size: 0.9rem;
+            }
+            
+            .list-card-item i {
+                color: var(--accent-gold);
+                min-width: 20px;
+            }
+            
+            .list-card-label {
+                font-size: 0.75rem;
+                color: var(--medium-gray);
+                text-transform: uppercase;
+                font-weight: 600;
+            }
+            
+            .list-card-value {
+                color: var(--light-gray);
+                font-weight: 500;
+            }
+            
+            .list-card-footer {
+                display: flex;
+                gap: 0.5rem;
+                flex-wrap: wrap;
             }
         }
         
@@ -2773,79 +2840,16 @@
                     <p class="welcome-subtitle">Gerencie os planos de assinatura recorrente</p>
                 </div>
                 
-                <div class="admin-cards">
-                    <div class="admin-card fade-in">
-                        <div class="admin-card-header">
-                            <div class="admin-card-icon">
-                                <i class="fas fa-crown"></i>
-                            </div>
-                            <div class="admin-card-title">Plano Básico</div>
-                        </div>
-                        <div class="admin-card-content">
-                            <ul style="color: var(--medium-gray); margin-left: 1rem;">
-                                <li>1 Corte por mês</li>
-                                <li>10% de desconto em produtos</li>
-                                <li>Agendamento prioritário</li>
-                            </ul>
-                        </div>
-                        <div class="admin-card-stats">
-                            <div class="stat-item">
-                                <span class="stat-value">R$ 49,90</span>
-                                <span class="stat-label">Mensalidade</span>
-                            </div>
-                            <div class="stat-item">
-                                <span class="stat-value">12</span>
-                                <span class="stat-label">Assinantes</span>
-                            </div>
-                        </div>
-                        <button class="btn btn-secondary" style="width: 100%; margin-top: 1rem;" onclick="editarPlano(1)">
-                            <i class="fas fa-edit"></i>
-                            Editar Plano
-                        </button>
-                    </div>
-                    
-                    <div class="admin-card fade-in" style="border-color: var(--accent-gold);">
-                        <div class="admin-card-header">
-                            <div class="admin-card-icon" style="background: linear-gradient(135deg, rgba(212, 175, 55, 0.2), transparent);">
-                                <i class="fas fa-gem"></i>
-                            </div>
-                            <div class="admin-card-title">Plano Premium</div>
-                            <span class="badge" style="background: var(--accent-gold); color: var(--primary-dark);">Popular</span>
-                        </div>
-                        <div class="admin-card-content">
-                            <ul style="color: var(--medium-gray); margin-left: 1rem;">
-                                <li>Corte ilimitado</li>
-                                <li>Barba ilimitada</li>
-                                <li>20% de desconto em produtos</li>
-                                <li>Prioridade máxima</li>
-                            </ul>
-                        </div>
-                        <div class="admin-card-stats">
-                            <div class="stat-item">
-                                <span class="stat-value">R$ 89,90</span>
-                                <span class="stat-label">Mensalidade</span>
-                            </div>
-                            <div class="stat-item">
-                                <span class="stat-value">24</span>
-                                <span class="stat-label">Assinantes</span>
-                            </div>
-                        </div>
-                        <button class="btn btn-primary" style="width: 100%; margin-top: 1rem;" onclick="editarPlano(2)">
-                            <i class="fas fa-edit"></i>
-                            Editar Plano
-                        </button>
+                <div id="planos-container" class="admin-cards" style="min-height: 200px; display: flex; justify-content: center; align-items: center;">
+                    <div style="text-align: center;">
+                        <i class="fas fa-spinner fa-spin" style="font-size: 2rem; color: var(--accent-gold); margin-bottom: 1rem;"></i>
+                        <p style="margin-top: 0.5rem;">Carregando planos...</p>
                     </div>
                 </div>
                 
                 <div class="table-container fade-in">
                     <div class="table-header">
                         <div class="table-title">Assinantes Ativos</div>
-                        <div>
-                            <button class="btn btn-primary" onclick="openModal('nova-assinatura')">
-                                <i class="fas fa-plus"></i>
-                                Novo Plano
-                            </button>
-                        </div>
                     </div>
                     <table class="table">
                         <thead>
@@ -2861,8 +2865,9 @@
                         </thead>
                         <tbody id="lista-assinantes">
                             <tr>
-                                <td colspan="7" style="text-align: center; padding: 3rem;">
-                                    <i class="fas fa-spinner fa-spin"></i> Carregando assinantes...
+                                <td colspan="7" style="text-align: center; padding: 2rem;">
+                                    <i class="fas fa-spinner fa-spin" style="font-size: 1.5rem; color: var(--accent-gold);"></i>
+                                    <p style="margin-top: 0.5rem;">Carregando assinantes...</p>
                                 </td>
                             </tr>
                         </tbody>
@@ -2870,40 +2875,146 @@
                 </div>
             `;
             
-            // Carregar assinantes
-            setTimeout(() => {
-                const assinantes = [
-                    { id: 1, cliente: 'João Silva', plano: 'Premium', valor: 89.90, inicio: '01/01/2024', proxima: '01/02/2024', status: 'ativo' },
-                    { id: 2, cliente: 'Maria Santos', plano: 'Básico', valor: 49.90, inicio: '15/01/2024', proxima: '15/02/2024', status: 'ativo' },
-                    { id: 3, cliente: 'José Oliveira', plano: 'Premium', valor: 89.90, inicio: '01/12/2023', proxima: '01/02/2024', status: 'pendente' }
-                ];
+            // Carregar planos e assinantes
+            await carregarPlanosEAssinantes();
+        }
+        
+        async function carregarPlanosEAssinantes() {
+            try {
+                const token = localStorage.getItem('token');
                 
-                const tbody = document.getElementById('lista-assinantes');
-                if (tbody) {
-                    tbody.innerHTML = assinantes.map(assinante => `
-                        <tr>
-                            <td>${assinante.cliente}</td>
-                            <td>${assinante.plano}</td>
-                            <td>R$ ${assinante.valor.toFixed(2)}</td>
-                            <td>${assinante.inicio}</td>
-                            <td>${assinante.proxima}</td>
-                            <td>
-                                <span class="status-badge ${assinante.status === 'ativo' ? 'status-active' : 'status-pending'}">
-                                    ${assinante.status === 'ativo' ? 'Ativo' : 'Pendente'}
-                                </span>
-                            </td>
-                            <td>
-                                <button class="btn-table btn-view" onclick="verAssinatura(${assinante.id})">
-                                    <i class="fas fa-eye"></i>
-                                </button>
-                                <button class="btn-table btn-edit" onclick="editarAssinatura(${assinante.id})">
-                                    <i class="fas fa-edit"></i>
-                                </button>
-                            </td>
-                        </tr>
+                // Carregar planos
+                const responsePlanos = await fetch(`${API_BASE_URL}/admin/planos-assinatura`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                let planosHTML = '';
+                if (responsePlanos && responsePlanos.ok) {
+                    const resultPlanos = await responsePlanos.json();
+                    const planos = resultPlanos.data || resultPlanos || [];
+                    
+                    planosHTML = planos.map(plano => `
+                        <div class="admin-card fade-in">
+                            <div class="admin-card-header">
+                                <div class="admin-card-icon">
+                                    <i class="fas fa-crown"></i>
+                                </div>
+                                <div class="admin-card-title">${plano.nome || 'Plano'}</div>
+                            </div>
+                            <div class="admin-card-content">
+                                <p style="color: var(--medium-gray); margin-bottom: 0.5rem;">${plano.descricao || 'Plano de assinatura'}</p>
+                                <ul style="color: var(--medium-gray); margin-left: 1rem;">
+                                    <li>${plano.duracao_dias || 30} dias de duração</li>
+                                </ul>
+                            </div>
+                            <div class="admin-card-stats">
+                                <div class="stat-item">
+                                    <span class="stat-value">R$ ${parseFloat(plano.preco || 0).toFixed(2)}</span>
+                                    <span class="stat-label">Valor</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-value" id="assinantes-plano-${plano.id}">0</span>
+                                    <span class="stat-label">Assinantes</span>
+                                </div>
+                            </div>
+                        </div>
                     `).join('');
                 }
-            }, 1000);
+                
+                // Mostrar planos
+                const planosContainer = document.getElementById('planos-container');
+                if (planosContainer) {
+                    planosContainer.innerHTML = planosHTML || '<p style="text-align: center; color: var(--medium-gray);">Nenhum plano encontrado</p>';
+                }
+                
+                // Carregar assinantes
+                const responseAssinantes = await fetch(`${API_BASE_URL}/admin/assinaturas`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                const tbodyAssinantes = document.getElementById('lista-assinantes');
+                if (!tbodyAssinantes) return;
+                
+                if (responseAssinantes && responseAssinantes.ok) {
+                    const resultAssinantes = await responseAssinantes.json();
+                    const assinantes = resultAssinantes.data || [];
+                    
+                    if (assinantes.length === 0) {
+                        tbodyAssinantes.innerHTML = `
+                            <tr>
+                                <td colspan="7" style="text-align: center; padding: 3rem;">
+                                    <i class="fas fa-inbox"></i>
+                                    <p style="margin-top: 1rem;">Nenhum assinante ativo</p>
+                                </td>
+                            </tr>
+                        `;
+                        return;
+                    }
+                    
+                    tbodyAssinantes.innerHTML = assinantes.map(assinante => {
+                        // Atualizar contador de assinantes por plano
+                        const container = document.getElementById(`assinantes-plano-${assinante.plano_id}`);
+                        if (container) {
+                            container.textContent = (parseInt(container.textContent) || 0) + 1;
+                        }
+                        
+                        const dataInicio = new Date(assinante.data_inicio).toLocaleDateString('pt-BR');
+                        const dataProxima = assinante.proxima_cobranca ? new Date(assinante.proxima_cobranca).toLocaleDateString('pt-BR') : 'N/A';
+                        const statusClass = assinante.status === 'ativa' ? 'status-active' : (assinante.status === 'pausada' ? 'status-pending' : 'status-inactive');
+                        const statusText = assinante.status === 'ativa' ? 'Ativa' : (assinante.status === 'pausada' ? 'Pausada' : 'Cancelada');
+                        
+                        return `
+                            <tr>
+                                <td>${assinante.usuario_nome || 'Usuário'}</td>
+                                <td>${assinante.plano_nome || 'Plano'}</td>
+                                <td>R$ ${parseFloat(assinante.valor || 0).toFixed(2)}</td>
+                                <td>${dataInicio}</td>
+                                <td>${dataProxima}</td>
+                                <td>
+                                    <span class="status-badge ${statusClass}">
+                                        ${statusText}
+                                    </span>
+                                </td>
+                                <td>
+                                    <button class="btn-table btn-view" onclick="verAssinatura(${assinante.id})">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button class="btn-table btn-edit" onclick="editarAssinatura(${assinante.id})">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        `;
+                    }).join('');
+                } else {
+                    tbodyAssinantes.innerHTML = `
+                        <tr>
+                            <td colspan="7" style="text-align: center; padding: 3rem; color: #dc3545;">
+                                <i class="fas fa-exclamation-circle"></i>
+                                <p style="margin-top: 1rem;">Erro ao carregar assinantes</p>
+                            </td>
+                        </tr>
+                    `;
+                }
+            } catch (error) {
+                console.error('Erro ao carregar planos e assinantes:', error);
+                const planosContainer = document.getElementById('planos-container');
+                if (planosContainer) {
+                    planosContainer.innerHTML = '<p style="text-align: center; color: var(--error);">Erro ao carregar planos</p>';
+                }
+                
+                const tbodyAssinantes = document.getElementById('lista-assinantes');
+                if (tbodyAssinantes) {
+                    tbodyAssinantes.innerHTML = `
+                        <tr>
+                            <td colspan="7" style="text-align: center; padding: 3rem; color: #dc3545;">
+                                <i class="fas fa-exclamation-circle"></i>
+                                <p style="margin-top: 1rem;">Erro de conexão</p>
+                            </td>
+                        </tr>
+                    `;
+                }
+            }
         }
         
         async function loadBloqueiosPage() {
@@ -3706,6 +3817,19 @@
         // Função para carregar todos os bloqueios
         async function carregarTodosBloqueios() {
             try {
+                // Mostrar loading
+                const tbody = document.getElementById('lista-bloqueios');
+                if (tbody) {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="7" style="text-align: center; padding: 2rem;">
+                                <i class="fas fa-spinner fa-spin" style="font-size: 1.5rem; color: var(--accent-gold);"></i>
+                                <p style="margin-top: 0.5rem;">Carregando bloqueios...</p>
+                            </td>
+                        </tr>
+                    `;
+                }
+                
                 const token = localStorage.getItem('token');
                 const response = await fetch(`${API_BASE_URL}/admin/bloqueios`, {
                     headers: { 'Authorization': `Bearer ${token}` }
@@ -3741,6 +3865,9 @@
                 return;
             }
             
+            // Verificar se é mobile
+            const isMobile = window.innerWidth <= 768;
+            
             tbody.innerHTML = bloqueios.map(bloqueio => {
                 // Formatar tipo
                 let tipoTexto = 'Horário Específico';
@@ -3772,31 +3899,94 @@
                 const statusClass = bloqueio.ativo ? 'status-active' : 'status-inactive';
                 const statusText = bloqueio.ativo ? 'Ativo' : 'Inativo';
                 
-                return `
-                    <tr>
-                        <td>${tipoTexto}</td>
-                        <td>${periodoTexto}</td>
-                        <td>${horarioTexto}</td>
-                        <td>${aplicadoPara}</td>
-                        <td>${bloqueio.motivo || 'Sem motivo especificado'}</td>
-                        <td>
-                            <span class="status-badge ${statusClass}">
-                                ${statusText}
-                            </span>
-                        </td>
-                        <td>
-                            <div style="display: flex; gap: 5px;">
-                                <button class="btn-table btn-edit" onclick="editarBloqueio(${bloqueio.id})">
-                                    <i class="fas fa-edit"></i>
-                                </button>
-                                <button class="btn-table btn-delete" onclick="excluirBloqueio(${bloqueio.id})">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </div>
-                        </td>
-                    </tr>
-                `;
+                if (isMobile) {
+                    // Renderizar como card para mobile
+                    return `
+                        <tr class="list-card-row" style="display: none;">
+                            <td colspan="7" style="padding: 0; border: none;">
+                                <div class="list-card">
+                                    <div class="list-card-header">
+                                        <div class="list-card-title">${tipoTexto}</div>
+                                        <span class="status-badge ${statusClass}" style="font-size: 0.7rem;">
+                                            ${statusText}
+                                        </span>
+                                    </div>
+                                    <div class="list-card-body">
+                                        <div class="list-card-item">
+                                            <i class="fas fa-calendar"></i>
+                                            <div>
+                                                <div class="list-card-label">Período</div>
+                                                <div class="list-card-value">${periodoTexto}</div>
+                                            </div>
+                                        </div>
+                                        <div class="list-card-item">
+                                            <i class="fas fa-clock"></i>
+                                            <div>
+                                                <div class="list-card-label">Horário</div>
+                                                <div class="list-card-value">${horarioTexto}</div>
+                                            </div>
+                                        </div>
+                                        <div class="list-card-item">
+                                            <i class="fas fa-user"></i>
+                                            <div>
+                                                <div class="list-card-label">Aplicado</div>
+                                                <div class="list-card-value">${aplicadoPara}</div>
+                                            </div>
+                                        </div>
+                                        <div class="list-card-item">
+                                            <i class="fas fa-pencil"></i>
+                                            <div>
+                                                <div class="list-card-label">Motivo</div>
+                                                <div class="list-card-value">${bloqueio.motivo || 'Sem motivo especificado'}</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="list-card-footer">
+                                        <button class="btn-table btn-edit" onclick="editarBloqueio(${bloqueio.id})" style="flex: 1;">
+                                            <i class="fas fa-edit"></i> Editar
+                                        </button>
+                                        <button class="btn-table btn-delete" onclick="excluirBloqueio(${bloqueio.id})" style="flex: 1;">
+                                            <i class="fas fa-trash"></i> Deletar
+                                        </button>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                } else {
+                    // Renderizar como tabela para desktop
+                    return `
+                        <tr>
+                            <td>${tipoTexto}</td>
+                            <td>${periodoTexto}</td>
+                            <td>${horarioTexto}</td>
+                            <td>${aplicadoPara}</td>
+                            <td>${bloqueio.motivo || 'Sem motivo especificado'}</td>
+                            <td>
+                                <span class="status-badge ${statusClass}">
+                                    ${statusText}
+                                </span>
+                            </td>
+                            <td>
+                                <div style="display: flex; gap: 5px;">
+                                    <button class="btn-table btn-edit" onclick="editarBloqueio(${bloqueio.id})">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="btn-table btn-delete" onclick="excluirBloqueio(${bloqueio.id})">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                }
             }).join('');
+            
+            // Se é mobile, mostrar os cards
+            if (isMobile) {
+                const rows = tbody.querySelectorAll('.list-card-row');
+                rows.forEach(row => row.style.display = 'table-row');
+            }
         }
         
 
@@ -4158,12 +4348,24 @@
 
         async function carregarBarbeiros() {
             try {
+                // Mostrar loading
+                const tbody = document.getElementById('lista-barbeiros');
+                if (tbody) {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="6" style="text-align: center; padding: 2rem;">
+                                <i class="fas fa-spinner fa-spin" style="font-size: 1.5rem; color: var(--accent-gold);"></i>
+                                <p style="margin-top: 0.5rem;">Carregando barbeiros...</p>
+                            </td>
+                        </tr>
+                    `;
+                }
+                
                 const token = localStorage.getItem('token');
                 const response = await fetch(`${API_BASE_URL}/admin/barbeiros`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 
-                const tbody = document.getElementById('lista-barbeiros');
                 if (!tbody) return;
                 
                 if (response.ok) {
@@ -4182,27 +4384,84 @@
                         return;
                     }
                     
+                    // Verificar se é mobile
+                    const isMobile = window.innerWidth <= 768;
+                    
                     tbody.innerHTML = barbeiros.map(barbeiro => {
                         const status = barbeiro.status || 'ativo';
-                        return `
-                            <tr>
-                                <td><strong>${barbeiro.nome}</strong></td>
-                                <td>${barbeiro.email}</td>
-                                <td>${barbeiro.telefone || ''}</td>
-                                <td>${barbeiro.agendamentosHoje || 0}</td>
-                                <td>
-                                    <span class="status-badge ${status === 'ativo' ? 'status-active' : 'status-inactive'}">
-                                        ${status === 'ativo' ? 'Ativo' : 'Inativo'}
-                                    </span>
-                                </td>
-                                <td>
-                                    <button class="btn-table btn-delete" onclick="excluirBarbeiro(${barbeiro.id})">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </td>
-                            </tr>
-                        `;
+                        
+                        if (isMobile) {
+                            // Renderizar como card para mobile
+                            return `
+                                <tr class="list-card-row" style="display: none;">
+                                    <td colspan="6" style="padding: 0; border: none;">
+                                        <div class="list-card">
+                                            <div class="list-card-header">
+                                                <div class="list-card-title">${barbeiro.nome}</div>
+                                                <span class="status-badge ${status === 'ativo' ? 'status-active' : 'status-inactive'}" style="font-size: 0.7rem;">
+                                                    ${status === 'ativo' ? 'Ativo' : 'Inativo'}
+                                                </span>
+                                            </div>
+                                            <div class="list-card-body">
+                                                <div class="list-card-item">
+                                                    <i class="fas fa-envelope"></i>
+                                                    <div>
+                                                        <div class="list-card-label">Email</div>
+                                                        <div class="list-card-value">${barbeiro.email}</div>
+                                                    </div>
+                                                </div>
+                                                <div class="list-card-item">
+                                                    <i class="fas fa-phone"></i>
+                                                    <div>
+                                                        <div class="list-card-label">Telefone</div>
+                                                        <div class="list-card-value">${barbeiro.telefone || 'Não informado'}</div>
+                                                    </div>
+                                                </div>
+                                                <div class="list-card-item">
+                                                    <i class="fas fa-calendar"></i>
+                                                    <div>
+                                                        <div class="list-card-label">Agendamentos Hoje</div>
+                                                        <div class="list-card-value">${barbeiro.agendamentosHoje || 0}</div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="list-card-footer">
+                                                <button class="btn-table btn-delete" onclick="excluirBarbeiro(${barbeiro.id})" style="flex: 1;">
+                                                    <i class="fas fa-trash"></i> Deletar
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            `;
+                        } else {
+                            // Renderizar como tabela para desktop
+                            return `
+                                <tr>
+                                    <td><strong>${barbeiro.nome}</strong></td>
+                                    <td>${barbeiro.email}</td>
+                                    <td>${barbeiro.telefone || ''}</td>
+                                    <td>${barbeiro.agendamentosHoje || 0}</td>
+                                    <td>
+                                        <span class="status-badge ${status === 'ativo' ? 'status-active' : 'status-inactive'}">
+                                            ${status === 'ativo' ? 'Ativo' : 'Inativo'}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <button class="btn-table btn-delete" onclick="excluirBarbeiro(${barbeiro.id})">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            `;
+                        }
                     }).join('');
+                    
+                    // Se é mobile, mostrar os cards
+                    if (isMobile) {
+                        const rows = tbody.querySelectorAll('.list-card-row');
+                        rows.forEach(row => row.style.display = 'table-row');
+                    }
                 } else {
                     tbody.innerHTML = `
                         <tr>
@@ -4464,6 +4723,9 @@
                 return;
             }
             
+            // Verificar se é mobile
+            const isMobile = window.innerWidth <= 768;
+            
             tbody.innerHTML = servicos.map(servico => {
                 // Formatar valor monetário
                 const valorFormatado = parseFloat(servico.valor_servico || 0).toFixed(2);
@@ -4474,26 +4736,86 @@
                     planosTexto = `${servico.assinatura_ids.length} plano(s)`;
                 }
                 
-                return `
-                    <tr>
-                        <td><strong>${servico.nome_servico}</strong></td>
-                        <td>${servico.duracao_servico} min</td>
-                        <td>R$ ${valorFormatado}</td>
-                        <td>${servico.descricao || 'Sem descrição'}</td>
-                        <td>${planosTexto}</td>
-                        <td>
-                            <div style="display: flex; gap: 5px;">
-                                <button class="btn-table btn-edit" onclick="editarServico(${servico.id})">
-                                    <i class="fas fa-edit"></i>
-                                </button>
-                                <button class="btn-table btn-delete" onclick="excluirServico(${servico.id})">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </div>
-                        </td>
-                    </tr>
-                `;
+                if (isMobile) {
+                    // Renderizar como card para mobile
+                    return `
+                        <tr class="list-card-row" style="display: none;">
+                            <td colspan="6" style="padding: 0; border: none;">
+                                <div class="list-card">
+                                    <div class="list-card-header">
+                                        <div class="list-card-title">${servico.nome_servico}</div>
+                                    </div>
+                                    <div class="list-card-body">
+                                        <div class="list-card-item">
+                                            <i class="fas fa-clock"></i>
+                                            <div>
+                                                <div class="list-card-label">Duração</div>
+                                                <div class="list-card-value">${servico.duracao_servico} minutos</div>
+                                            </div>
+                                        </div>
+                                        <div class="list-card-item">
+                                            <i class="fas fa-money-bill"></i>
+                                            <div>
+                                                <div class="list-card-label">Valor</div>
+                                                <div class="list-card-value">R$ ${valorFormatado}</div>
+                                            </div>
+                                        </div>
+                                        <div class="list-card-item">
+                                            <i class="fas fa-file-alt"></i>
+                                            <div>
+                                                <div class="list-card-label">Descrição</div>
+                                                <div class="list-card-value">${servico.descricao || 'Sem descrição'}</div>
+                                            </div>
+                                        </div>
+                                        <div class="list-card-item">
+                                            <i class="fas fa-crown"></i>
+                                            <div>
+                                                <div class="list-card-label">Planos Inclusos</div>
+                                                <div class="list-card-value">${planosTexto}</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="list-card-footer">
+                                        <button class="btn-table btn-edit" onclick="editarServico(${servico.id})" style="flex: 1;">
+                                            <i class="fas fa-edit"></i> Editar
+                                        </button>
+                                        <button class="btn-table btn-delete" onclick="excluirServico(${servico.id})" style="flex: 1;">
+                                            <i class="fas fa-trash"></i> Deletar
+                                        </button>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                } else {
+                    // Renderizar como tabela para desktop
+                    return `
+                        <tr>
+                            <td><strong>${servico.nome_servico}</strong></td>
+                            <td>${servico.duracao_servico} min</td>
+                            <td>R$ ${valorFormatado}</td>
+                            <td>${servico.descricao || 'Sem descrição'}</td>
+                            <td>${planosTexto}</td>
+                            <td>
+                                <div style="display: flex; gap: 5px;">
+                                    <button class="btn-table btn-edit" onclick="editarServico(${servico.id})">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="btn-table btn-delete" onclick="excluirServico(${servico.id})">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                }
             }).join('');
+            
+            // Se é mobile, mostrar os cards
+            if (isMobile) {
+                const rows = tbody.querySelectorAll('.list-card-row');
+                rows.forEach(row => row.style.display = 'table-row');
+            }
         }
 
         // Função para filtrar serviços

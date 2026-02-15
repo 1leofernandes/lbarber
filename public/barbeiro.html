@@ -2864,11 +2864,11 @@
                     <table class="table">
                         <thead>
                             <tr>
-                                <th>Cliente</th>
+                                <th>Nome</th>
+                                <th>Email</th>
                                 <th>Plano</th>
                                 <th>Valor</th>
-                                <th>Início</th>
-                                <th>Próxima Cobrança</th>
+                                <th>Telefone</th>
                                 <th>Status</th>
                                 <th>Ações</th>
                             </tr>
@@ -2901,34 +2901,46 @@
                 let planosHTML = '';
                 if (responsePlanos && responsePlanos.ok) {
                     const resultPlanos = await responsePlanos.json();
-                    const planos = resultPlanos.data || resultPlanos || [];
+                    const planos = resultPlanos.data || [];
                     
-                    planosHTML = planos.map(plano => `
-                        <div class="admin-card fade-in">
-                            <div class="admin-card-header">
-                                <div class="admin-card-icon">
-                                    <i class="fas fa-crown"></i>
+                    planosHTML = planos.map(plano => {
+                        const diasSemana = plano.dias_semana && Array.isArray(plano.dias_semana) 
+                            ? plano.dias_semana.map(d => ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab', 'Dom'][d - 1]).join(', ')
+                            : 'Todos os dias';
+                        
+                        const servicos = plano.servicos_inclusos && Array.isArray(plano.servicos_inclusos) && plano.servicos_inclusos.length > 0
+                            ? plano.servicos_inclusos.join(', ')
+                            : 'Nenhum serviço específico';
+                        
+                        return `
+                            <div class="admin-card fade-in">
+                                <div class="admin-card-header">
+                                    <div class="admin-card-icon">
+                                        <i class="fas fa-crown"></i>
+                                    </div>
+                                    <div class="admin-card-title">${plano.nome_plano}</div>
                                 </div>
-                                <div class="admin-card-title">${plano.nome || 'Plano'}</div>
-                            </div>
-                            <div class="admin-card-content">
-                                <p style="color: var(--medium-gray); margin-bottom: 0.5rem;">${plano.descricao || 'Plano de assinatura'}</p>
-                                <ul style="color: var(--medium-gray); margin-left: 1rem;">
-                                    <li>${plano.duracao_dias || 30} dias de duração</li>
-                                </ul>
-                            </div>
-                            <div class="admin-card-stats">
-                                <div class="stat-item">
-                                    <span class="stat-value">R$ ${parseFloat(plano.preco || 0).toFixed(2)}</span>
-                                    <span class="stat-label">Valor</span>
+                                <div class="admin-card-content">
+                                    <p style="color: var(--medium-gray); margin-bottom: 0.5rem;">${plano.descricao || 'Plano de assinatura'}</p>
+                                    <ul style="color: var(--medium-gray); margin-left: 1rem; font-size: 0.9rem;">
+                                        <li><strong>Dias:</strong> ${diasSemana}</li>
+                                        <li><strong>Serviços:</strong> ${servicos}</li>
+                                        <li><strong>Status:</strong> ${plano.status === 'ativo' ? '✓ Ativo' : '✗ Inativo'}</li>
+                                    </ul>
                                 </div>
-                                <div class="stat-item">
-                                    <span class="stat-value" id="assinantes-plano-${plano.id}">0</span>
-                                    <span class="stat-label">Assinantes</span>
+                                <div class="admin-card-stats">
+                                    <div class="stat-item">
+                                        <span class="stat-value">R$ ${parseFloat(plano.valor).toFixed(2)}</span>
+                                        <span class="stat-label">Valor/Mês</span>
+                                    </div>
+                                    <div class="stat-item">
+                                        <span class="stat-value" id="assinantes-plano-${plano.id}">${plano.total_assinantes}</span>
+                                        <span class="stat-label">Assinantes</span>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    `).join('');
+                        `;
+                    }).join('');
                 }
                 
                 // Mostrar planos
@@ -2962,36 +2974,16 @@
                     }
                     
                     tbodyAssinantes.innerHTML = assinantes.map(assinante => {
-                        // Atualizar contador de assinantes por plano
-                        const container = document.getElementById(`assinantes-plano-${assinante.plano_id}`);
-                        if (container) {
-                            container.textContent = (parseInt(container.textContent) || 0) + 1;
-                        }
-                        
-                        const dataInicio = new Date(assinante.data_inicio).toLocaleDateString('pt-BR');
-                        const dataProxima = assinante.proxima_cobranca ? new Date(assinante.proxima_cobranca).toLocaleDateString('pt-BR') : 'N/A';
-                        const statusClass = assinante.status === 'ativa' ? 'status-active' : (assinante.status === 'pausada' ? 'status-pending' : 'status-inactive');
-                        const statusText = assinante.status === 'ativa' ? 'Ativa' : (assinante.status === 'pausada' ? 'Pausada' : 'Cancelada');
-                        
                         return `
                             <tr>
-                                <td>${assinante.usuario_nome || 'Usuário'}</td>
-                                <td>${assinante.plano_nome || 'Plano'}</td>
+                                <td>${assinante.nome || 'N/A'}</td>
+                                <td>${assinante.email || 'N/A'}</td>
+                                <td>${assinante.plano_nome || 'N/A'}</td>
                                 <td>R$ ${parseFloat(assinante.valor || 0).toFixed(2)}</td>
-                                <td>${dataInicio}</td>
-                                <td>${dataProxima}</td>
+                                <td>${assinante.telefone || 'N/A'}</td>
+                                <td><button class="btn btn-sm btn-info" onclick="verAssinante('${assinante.id}')">${assinante.plano_status || 'Ativo'}</button></td>
                                 <td>
-                                    <span class="status-badge ${statusClass}">
-                                        ${statusText}
-                                    </span>
-                                </td>
-                                <td>
-                                    <button class="btn-table btn-view" onclick="verAssinatura(${assinante.id})">
-                                        <i class="fas fa-eye"></i>
-                                    </button>
-                                    <button class="btn-table btn-edit" onclick="editarAssinatura(${assinante.id})">
-                                        <i class="fas fa-edit"></i>
-                                    </button>
+                                    <button class="btn btn-sm btn-info" onclick="verAssinante('${assinante.id}')" data-toggle="tooltip" title="Visualizar"><i class="fas fa-eye"></i></button>
                                 </td>
                             </tr>
                         `;

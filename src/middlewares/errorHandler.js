@@ -21,7 +21,7 @@ const errorHandler = (err, req, res, next) => {
   if (err.status === 401) {
     return res.status(401).json({
       success: false,
-      message: 'Não autenticado'
+      message: err.message || 'Não autenticado'
     });
   }
 

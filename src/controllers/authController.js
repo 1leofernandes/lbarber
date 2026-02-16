@@ -86,8 +86,16 @@ class AuthController {
     try {
       const { email, senha } = req.body;
 
+      logger.debug('Requisição de login recebida', {
+        email,
+        senhaLength: senha ? senha.length : 0,
+        hasEmail: !!email,
+        hasSenha: !!senha
+      });
+
       const errors = validateRequired(['email', 'senha'], req.body);
       if (errors.length > 0) {
+        logger.warn('Validação de login falhou', { email, errors });
         return res.status(400).json({
           success: false,
           message: 'Email e senha obrigatórios',
@@ -96,8 +104,15 @@ class AuthController {
       }
 
       const result = await AuthService.login(email, senha);
+      logger.info('Login realizado com sucesso', { email, userId: result.id });
       res.json(result);
     } catch (err) {
+      logger.error('Erro no controller de login', {
+        email: req.body.email,
+        errorMessage: err.message,
+        errorStatus: err.status,
+        stack: err.stack
+      });
       next(err);
     }
   }

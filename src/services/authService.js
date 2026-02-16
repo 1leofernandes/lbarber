@@ -126,10 +126,92 @@ class AuthService {
       };
     }
 
-    const user = await User.findByEmail(email);
+    // Normalizar email (lowercase e trim)
+    const emailNormalizado = email.toLowerCase().trim();
+    
+    logger.info('Iniciando processo de login', { 
+      emailOriginal: email,
+      emailNormalizado,
+      senhaLength: senha ? senha.length : 0
+    });
 
-    if (!user || !(await bcrypt.compare(senha, user.senha))) {
-      logger.warn('Tentativa de login inválida', { email });
+    const user = await User.findByEmail(emailNormalizado);
+
+    if (!user) {
+      logger.warn('Tentativa de login inválida - usuário não encontrado', { email });
+      throw {
+        status: 401,
+        message: 'Email ou senha inválidos'
+      };
+    }
+
+    logger.info('Usuário encontrado no banco', {
+      userId: user.id,
+      email: user.email,
+      senhaHashExists: !!user.senha,
+      senhaHashLength: user.senha ? user.senha.length : 0,
+      senhaHashPrefix: user.senha ? user.senha.substring(0, 20) + '...' : 'null'
+    });
+
+    // Verificar se a senha do banco está no formato correto (bcrypt hash começa com $2a$, $2b$ ou $2y$)
+    if (!user.senha || (!user.senha.startsWith('$2a$') && !user.senha.startsWith('$2b$') && !user.senha.startsWith('$2y$'))) {
+      logger.error('Senha no banco não está no formato bcrypt válido', {
+        userId: user.id,
+        email: user.email,
+        senhaFormat: user.senha ? user.senha.substring(0, 10) : 'null'
+      });
+      throw {
+        status: 401,
+        message: 'Email ou senha inválidos'
+      };
+    }
+
+    // Remover espaços em branco da senha recebida (caso haja)
+    const senhaLimpa = senha.trim();
+    
+    // Limpar possíveis espaços na senha do banco (caso tenha sido armazenada incorretamente)
+    const senhaHashLimpa = user.senha.trim();
+    
+    logger.info('Comparando senhas', {
+      userId: user.id,
+      senhaRecebidaLength: senhaLimpa.length,
+      senhaHashLength: senhaHashLimpa.length,
+      senhaHashStartsWith: senhaHashLimpa.substring(0, 7)
+    });
+
+    let senhaValida = false;
+    try {
+      senhaValida = await bcrypt.compare(senhaLimpa, senhaHashLimpa);
+      
+      logger.info('Resultado da comparação bcrypt', {
+        userId: user.id,
+        senhaValida,
+        senhaHashPrefix: senhaHashLimpa.substring(0, 20),
+        senhaHashLength: senhaHashLimpa.length,
+        senhaRecebidaLength: senhaLimpa.length
+      });
+    } catch (bcryptError) {
+      logger.error('Erro ao comparar senha com bcrypt', {
+        userId: user.id,
+        email: user.email,
+        error: bcryptError.message,
+        stack: bcryptError.stack,
+        senhaHashLength: senhaHashLimpa.length,
+        senhaHashPrefix: senhaHashLimpa.substring(0, 20),
+        senhaRecebidaLength: senhaLimpa.length
+      });
+      throw {
+        status: 401,
+        message: 'Email ou senha inválidos'
+      };
+    }
+
+    if (!senhaValida) {
+      logger.warn('Tentativa de login inválida - senha incorreta', { 
+        email,
+        userId: user.id,
+        senhaHashPrefix: user.senha.substring(0, 20)
+      });
       throw {
         status: 401,
         message: 'Email ou senha inválidos'

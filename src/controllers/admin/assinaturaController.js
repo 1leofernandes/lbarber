@@ -371,13 +371,6 @@ class AssinaturaController {
             });
         }
     }
-            res.status(500).json({
-                success: false,
-                message: 'Erro ao deletar plano',
-                error: error.message
-            });
-        }
-    }
 
     /**
      * GET /admin/assinaturas - Listar assinantes (alias para listarAssinantesAtivos)

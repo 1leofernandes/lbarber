@@ -22,6 +22,7 @@
 
     <!-- Toastify -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
 
     <style>
         :root {
@@ -1373,6 +1374,104 @@
             color: white;
             border-color: var(--primary-color);
         }
+
+        /* Grid para Planos de Assinatura */
+        #planos-container {
+            display: grid !important;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)) !important;
+            gap: 1.5rem !important;
+            width: 100% !important;
+            flex: none !important;
+        }
+
+        #planos-container .plan-card {
+            display: flex !important;
+            flex-direction: column !important;
+            height: 100% !important;
+            min-width: 0 !important;
+            background: linear-gradient(145deg, var(--card-bg), #191919);
+            border: 2px solid rgba(212, 175, 55, 0.2);
+            border-radius: 16px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        #planos-container .plan-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--accent-gold);
+            box-shadow: 0 10px 30px rgba(212, 175, 55, 0.2);
+        }
+
+        /* Cards de Assinantes para Mobile */
+        .assinante-card {
+            background: linear-gradient(145deg, var(--card-bg), #191919);
+            border: 1px solid rgba(212, 175, 55, 0.15);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .assinante-card:hover {
+            border-color: var(--accent-gold);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .assinante-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid rgba(212, 175, 55, 0.1);
+        }
+
+        .assinante-card-nome {
+            font-weight: 600;
+            color: var(--light-gray);
+            font-size: 1.1rem;
+        }
+
+        .assinante-card-status {
+            padding: 0.3rem 0.8rem;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .assinante-card-body {
+            margin-bottom: 1rem;
+        }
+
+        .assinante-card-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 0;
+            color: var(--medium-gray);
+            font-size: 0.95rem;
+        }
+
+        .assinante-card-item span:last-child {
+            font-weight: 500;
+            color: var(--light-gray);
+        }
+
+        .assinante-card-footer {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .assinante-card-footer .btn-table {
+            flex: 1;
+        }
+
+        @media (max-width: 768px) {
+            #planos-container {
+                grid-template-columns: 1fr !important;
+            }
+        }
     </style>
 </head>
 <body>
@@ -1429,10 +1528,10 @@
                     <i class="fas fa-crown"></i>
                     <span class="menu-item-text">Assinaturas</span>
                 </a>
-                <a href="#" class="menu-item" data-page="pagamentos">
+                <!-- <a href="#" class="menu-item" data-page="pagamentos">
                     <i class="fas fa-credit-card"></i>
                     <span class="menu-item-text">Pagamentos</span>
-                </a>
+                </a> -->
             </div>
             
             <div class="menu-section">
@@ -2354,9 +2453,9 @@
                 case 'assinaturas':
                     loadAssinaturasPage();
                     break;
-                case 'pagamentos':
-                    loadPagamentosPage();
-                    break;
+                // case 'pagamentos':
+                //     loadPagamentosPage();
+                //     break;
                 case 'bloqueios':
                     loadBloqueiosPage();
                     break;
@@ -3541,14 +3640,24 @@
                     <p class="welcome-subtitle">Gerencie os planos de assinatura recorrente</p>
                 </div>
                 
-                <div id="planos-container" class="admin-cards" style="min-height: 200px; display: flex; justify-content: center; align-items: center;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; margin-top: 2rem;">
+                    <div class="section-title">
+                        <i class="fas fa-crown"></i>
+                        Planos de Assinatura
+                    </div>
+                    <button class="btn btn-primary" onclick="abrirModalNovoPlano()" style="padding: 0.7rem 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                        <i class="fas fa-plus"></i> Novo Plano
+                    </button>
+                </div>
+                
+                <div id="planos-container" style="min-height: 200px; display: flex; justify-content: center; align-items: center;">
                     <div style="text-align: center;">
                         <i class="fas fa-spinner fa-spin" style="font-size: 2rem; color: var(--accent-gold); margin-bottom: 1rem;"></i>
                         <p style="margin-top: 0.5rem;">Carregando planos...</p>
                     </div>
                 </div>
                 
-                <div class="table-container fade-in">
+                <div class="table-container fade-in" style="margin-top: 3rem;">
                     <div class="table-header">
                         <div class="table-title">Assinantes Ativos</div>
                     </div>
@@ -3599,41 +3708,50 @@
                             ? plano.dias_semana.map(d => ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab', 'Dom'][d - 1]).join(', ')
                             : 'Todos os dias';
                         
-                        const servicos = plano.servicos_inclusos && Array.isArray(plano.servicos_inclusos) && plano.servicos_inclusos.length > 0
-                            ? plano.servicos_inclusos.join(', ')
-                            : 'Nenhum serviço específico';
+                        // Melhor tratamento para serviços
+                        let servicos = 'Nenhum serviço específico';
+                        if (plano.servicos && Array.isArray(plano.servicos)) {
+                            servicos = plano.servicos.map(s => s.nome_servico || s).join(', ');
+                        } else if (plano.servicos_inclusos && Array.isArray(plano.servicos_inclusos) && plano.servicos_inclusos.length > 0) {
+                            servicos = plano.servicos_inclusos.join(', ');
+                        }
                         
                         return `
-                            <div class="admin-card fade-in">
-                                <div class="admin-card-header">
-                                    <div class="admin-card-icon">
-                                        <i class="fas fa-crown"></i>
+                            <div class="plan-card fade-in" style="border: 2px solid rgba(212, 175, 55, 0.2); border-radius: 16px; padding: 1.5rem;">
+                                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
+                                    <div>
+                                        <h3 style="color: var(--light-gray); font-size: 1.3rem; margin-bottom: 0.5rem;">${plano.nome_plano}</h3>
+                                        <p style="color: var(--medium-gray); font-size: 0.9rem;">${plano.descricao || 'Plano de assinatura'}</p>
                                     </div>
-                                    <div class="admin-card-title">${plano.nome_plano}</div>
-                                    <button class="btn-table btn-edit" onclick="abrirModalEditarPlano(${plano.id})" style="padding: 0.4rem 0.6rem; margin-left: auto;">
-                                        <i class="fas fa-edit"></i>
-                                    </button>
                                 </div>
-                                <div class="admin-card-content">
-                                    <p style="color: var(--medium-gray); margin-bottom: 0.5rem;">${plano.descricao || 'Plano de assinatura'}</p>
-                                    <ul style="color: var(--medium-gray); margin-left: 1rem; font-size: 0.9rem;">
-                                        <li><strong>Dias:</strong> ${diasSemana}</li>
-                                        <li><strong>Serviços:</strong> ${servicos}</li>
-                                        <li><strong>Status:</strong> ${plano.status === 'ativo' ? '✓ Ativo' : '✗ Inativo'}</li>
+                                <div style="margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid rgba(212, 175, 55, 0.1);">
+                                    <div style="font-size: 2.2rem; font-weight: 700; color: var(--accent-gold); margin-bottom: 0.3rem;">
+                                        R$ ${parseFloat(plano.valor).toFixed(2)}
+                                    </div>
+                                    <div style="color: var(--medium-gray); font-size: 0.9rem;">/mês</div>
+                                </div>
+                                <div style="margin-bottom: 1.5rem;">
+                                    <ul style="color: var(--medium-gray); list-style: none; font-size: 0.95rem;">
+                                        <li style="margin-bottom: 0.5rem;"><i class="fas fa-check" style="color: var(--accent-gold); margin-right: 0.5rem;"></i><strong>Dias:</strong> ${diasSemana}</li>
+                                        <li style="margin-bottom: 0.5rem;"><i class="fas fa-check" style="color: var(--accent-gold); margin-right: 0.5rem;"></i><strong>Serviços:</strong> ${servicos}</li>
+                                        <li><i class="fas fa-check" style="color: var(--accent-gold); margin-right: 0.5rem;"></i><strong>Status:</strong> ${plano.status === 'ativo' ? '<span style="color: var(--success);">✓ Ativo</span>' : '<span style="color: var(--error);">✗ Inativo</span>'}</li>
                                     </ul>
                                 </div>
-                                <div class="admin-card-stats">
-                                    <div class="stat-item">
-                                        <span class="stat-value">R$ ${parseFloat(plano.valor).toFixed(2)}</span>
-                                        <span class="stat-label">Valor/Mês</span>
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-bottom: 1.5rem; padding: 1rem; background: rgba(212, 175, 55, 0.05); border-radius: 8px;">
+                                    <div style="text-align: center;">
+                                        <div style="font-size: 1.5rem; font-weight: 700; color: var(--accent-gold);">${plano.total_assinantes || 0}</div>
+                                        <div style="color: var(--medium-gray); font-size: 0.85rem;">Assinantes</div>
                                     </div>
-                                    <div class="stat-item">
-                                        <span class="stat-value" id="assinantes-plano-${plano.id}">${plano.total_assinantes}</span>
-                                        <span class="stat-label">Assinantes</span>
+                                    <div style="text-align: center;">
+                                        <div style="font-size: 1.5rem; font-weight: 700; color: var(--accent-gold);">R$ ${(parseFloat(plano.valor) * (plano.total_assinantes || 0)).toFixed(2)}</div>
+                                        <div style="color: var(--medium-gray); font-size: 0.85rem;">Receita/Mês</div>
                                     </div>
                                 </div>
-                                <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
-                                    <button class="btn-table btn-delete" onclick="deletarPlano(${plano.id})" style="flex: 1;">
+                                <div style="display: flex; gap: 0.5rem;">
+                                    <button class="btn btn-primary" onclick="abrirModalEditarPlano(${plano.id})" style="flex: 1; padding: 0.7rem; font-size: 0.9rem;">
+                                        <i class="fas fa-edit"></i> Editar
+                                    </button>
+                                    <button class="btn btn-secondary" onclick="deletarPlano(${plano.id})" style="flex: 1; padding: 0.7rem; font-size: 0.9rem;">
                                         <i class="fas fa-trash"></i> Deletar
                                     </button>
                                 </div>
@@ -3642,11 +3760,11 @@
                     }).join('');
                     
                     planosHTML += `
-                        <div class="admin-card fade-in" style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 200px; cursor: pointer; opacity: 0.7;" onclick="abrirModalNovoPlano()">
-                            <div class="admin-card-icon" style="font-size: 2.5rem; margin-bottom: 1rem;">
+                        <div class="plan-card fade-in" style="border: 2px dashed rgba(212, 175, 55, 0.3); display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2rem; cursor: pointer; transition: all 0.3s ease;" onmouseover="this.style.borderColor='var(--accent-gold)'" onmouseout="this.style.borderColor='rgba(212, 175, 55, 0.3)'" onclick="abrirModalNovoPlano()">
+                            <div style="font-size: 2.5rem; color: var(--accent-gold); margin-bottom: 1rem;">
                                 <i class="fas fa-plus-circle"></i>
                             </div>
-                            <span style="color: var(--medium-gray);">Adicionar Novo Plano</span>
+                            <span style="color: var(--medium-gray); font-size: 1.1rem; font-weight: 600;">Novo Plano</span>
                         </div>
                     `;
                 }
@@ -3654,7 +3772,7 @@
                 // Mostrar planos
                 const planosContainer = document.getElementById('planos-container');
                 if (planosContainer) {
-                    planosContainer.innerHTML = planosHTML || '<p style="text-align: center; color: var(--medium-gray);">Nenhum plano encontrado</p>';
+                    planosContainer.innerHTML = planosHTML || '<p style="text-align: center; color: var(--medium-gray); grid-column: 1 / -1;">Nenhum plano encontrado</p>';
                 }
                 
                 // Carregar assinantes
@@ -3789,141 +3907,141 @@
         }
         
         
-        async function loadPagamentosPage() {
-            const page = document.getElementById('page-pagamentos');
-            page.innerHTML = `
-                <div class="welcome-section">
-                    <h1 class="welcome-title">Gestão de Pagamentos</h1>
-                    <p class="welcome-subtitle">Controle financeiro e recebimentos</p>
-                </div>
+        // async function loadPagamentosPage() {
+        //     const page = document.getElementById('page-pagamentos');
+        //     page.innerHTML = `
+        //         <div class="welcome-section">
+        //             <h1 class="welcome-title">Gestão de Pagamentos</h1>
+        //             <p class="welcome-subtitle">Controle financeiro e recebimentos</p>
+        //         </div>
                 
-                <div class="admin-cards">
-                    <div class="admin-card fade-in">
-                        <div class="admin-card-header">
-                            <div class="admin-card-icon">
-                                <i class="fas fa-money-check-alt"></i>
-                            </div>
-                            <div class="admin-card-title">Recebimentos Hoje</div>
-                        </div>
-                        <div class="admin-card-stats">
-                            <div class="stat-item">
-                                <span class="stat-value">R$ 450,00</span>
-                                <span class="stat-label">Total</span>
-                            </div>
-                            <div class="stat-item">
-                                <span class="stat-value">8</span>
-                                <span class="stat-label">Transações</span>
-                            </div>
-                        </div>
-                    </div>
+        //         <div class="admin-cards">
+        //             <div class="admin-card fade-in">
+        //                 <div class="admin-card-header">
+        //                     <div class="admin-card-icon">
+        //                         <i class="fas fa-money-check-alt"></i>
+        //                     </div>
+        //                     <div class="admin-card-title">Recebimentos Hoje</div>
+        //                 </div>
+        //                 <div class="admin-card-stats">
+        //                     <div class="stat-item">
+        //                         <span class="stat-value">R$ 450,00</span>
+        //                         <span class="stat-label">Total</span>
+        //                     </div>
+        //                     <div class="stat-item">
+        //                         <span class="stat-value">8</span>
+        //                         <span class="stat-label">Transações</span>
+        //                     </div>
+        //                 </div>
+        //             </div>
                     
-                    <div class="admin-card fade-in">
-                        <div class="admin-card-header">
-                            <div class="admin-card-icon">
-                                <i class="fas fa-calendar-alt"></i>
-                            </div>
-                            <div class="admin-card-title">Receita Mensal</div>
-                        </div>
-                        <div class="admin-card-stats">
-                            <div class="stat-item">
-                                <span class="stat-value">R$ 8.450,00</span>
-                                <span class="stat-label">Este Mês</span>
-                            </div>
-                            <div class="stat-item">
-                                <span class="stat-value">+12%</span>
-                                <span class="stat-label">Crescimento</span>
-                            </div>
-                        </div>
-                    </div>
+        //             <div class="admin-card fade-in">
+        //                 <div class="admin-card-header">
+        //                     <div class="admin-card-icon">
+        //                         <i class="fas fa-calendar-alt"></i>
+        //                     </div>
+        //                     <div class="admin-card-title">Receita Mensal</div>
+        //                 </div>
+        //                 <div class="admin-card-stats">
+        //                     <div class="stat-item">
+        //                         <span class="stat-value">R$ 8.450,00</span>
+        //                         <span class="stat-label">Este Mês</span>
+        //                     </div>
+        //                     <div class="stat-item">
+        //                         <span class="stat-value">+12%</span>
+        //                         <span class="stat-label">Crescimento</span>
+        //                     </div>
+        //                 </div>
+        //             </div>
                     
-                    <div class="admin-card fade-in">
-                        <div class="admin-card-header">
-                            <div class="admin-card-icon">
-                                <i class="fas fa-credit-card"></i>
-                            </div>
-                            <div class="admin-card-title">Configurações</div>
-                        </div>
-                        <div class="admin-card-content">
-                            Configure as opções de pagamento e conta bancária para recebimentos.
-                        </div>
-                        <button class="btn btn-primary" style="width: 100%; margin-top: 1rem;" onclick="openModal('config-pagamentos')">
-                            <i class="fas fa-cog"></i>
-                            Configurar Pagamentos
-                        </button>
-                    </div>
-                </div>
+        //             <div class="admin-card fade-in">
+        //                 <div class="admin-card-header">
+        //                     <div class="admin-card-icon">
+        //                         <i class="fas fa-credit-card"></i>
+        //                     </div>
+        //                     <div class="admin-card-title">Configurações</div>
+        //                 </div>
+        //                 <div class="admin-card-content">
+        //                     Configure as opções de pagamento e conta bancária para recebimentos.
+        //                 </div>
+        //                 <button class="btn btn-primary" style="width: 100%; margin-top: 1rem;" onclick="openModal('config-pagamentos')">
+        //                     <i class="fas fa-cog"></i>
+        //                     Configurar Pagamentos
+        //                 </button>
+        //             </div>
+        //         </div>
                 
-                <div class="table-container fade-in">
-                    <div class="table-header">
-                        <div class="table-title">Histórico de Pagamentos</div>
-                        <div style="display: flex; gap: 10px;">
-                            <select class="form-control" style="width: 150px;" id="filter-tipo-pagamento">
-                                <option value="">Todos os tipos</option>
-                                <option value="assinatura">Assinatura</option>
-                                <option value="agendamento">Agendamento</option>
-                            </select>
-                            <button class="btn btn-secondary" onclick="exportarPagamentos()">
-                                <i class="fas fa-download"></i>
-                                Exportar
-                            </button>
-                        </div>
-                    </div>
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th>Data</th>
-                                <th>Cliente</th>
-                                <th>Tipo</th>
-                                <th>Descrição</th>
-                                <th>Valor</th>
-                                <th>Status</th>
-                                <th>Método</th>
-                            </tr>
-                        </thead>
-                        <tbody id="historico-pagamentos">
-                            <tr>
-                                <td colspan="7" style="text-align: center; padding: 3rem;">
-                                    <i class="fas fa-spinner fa-spin"></i> Carregando pagamentos...
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            `;
+        //         <div class="table-container fade-in">
+        //             <div class="table-header">
+        //                 <div class="table-title">Histórico de Pagamentos</div>
+        //                 <div style="display: flex; gap: 10px;">
+        //                     <select class="form-control" style="width: 150px;" id="filter-tipo-pagamento">
+        //                         <option value="">Todos os tipos</option>
+        //                         <option value="assinatura">Assinatura</option>
+        //                         <option value="agendamento">Agendamento</option>
+        //                     </select>
+        //                     <button class="btn btn-secondary" onclick="exportarPagamentos()">
+        //                         <i class="fas fa-download"></i>
+        //                         Exportar
+        //                     </button>
+        //                 </div>
+        //             </div>
+        //             <table class="table">
+        //                 <thead>
+        //                     <tr>
+        //                         <th>Data</th>
+        //                         <th>Cliente</th>
+        //                         <th>Tipo</th>
+        //                         <th>Descrição</th>
+        //                         <th>Valor</th>
+        //                         <th>Status</th>
+        //                         <th>Método</th>
+        //                     </tr>
+        //                 </thead>
+        //                 <tbody id="historico-pagamentos">
+        //                     <tr>
+        //                         <td colspan="7" style="text-align: center; padding: 3rem;">
+        //                             <i class="fas fa-spinner fa-spin"></i> Carregando pagamentos...
+        //                         </td>
+        //                     </tr>
+        //                 </tbody>
+        //             </table>
+        //         </div>
+        //     `;
             
-            // Carregar histórico de pagamentos
-            setTimeout(() => {
-                const pagamentos = [
-                    { data: '22/01/2024', cliente: 'João Silva', tipo: 'Agendamento', descricao: 'Corte Social', valor: 45.00, status: 'pago', metodo: 'Cartão' },
-                    { data: '22/01/2024', cliente: 'Maria Santos', tipo: 'Assinatura', descricao: 'Plano Premium', valor: 89.90, status: 'pago', metodo: 'PIX' },
-                    { data: '21/01/2024', cliente: 'José Oliveira', tipo: 'Agendamento', descricao: 'Corte + Barba', valor: 70.00, status: 'pendente', metodo: 'Cartão' },
-                    { data: '20/01/2024', cliente: 'Ana Costa', tipo: 'Assinatura', descricao: 'Plano Básico', valor: 49.90, status: 'pago', metodo: 'Cartão' }
-                ];
+        //     // Carregar histórico de pagamentos
+        //     setTimeout(() => {
+        //         const pagamentos = [
+        //             { data: '22/01/2024', cliente: 'João Silva', tipo: 'Agendamento', descricao: 'Corte Social', valor: 45.00, status: 'pago', metodo: 'Cartão' },
+        //             { data: '22/01/2024', cliente: 'Maria Santos', tipo: 'Assinatura', descricao: 'Plano Premium', valor: 89.90, status: 'pago', metodo: 'PIX' },
+        //             { data: '21/01/2024', cliente: 'José Oliveira', tipo: 'Agendamento', descricao: 'Corte + Barba', valor: 70.00, status: 'pendente', metodo: 'Cartão' },
+        //             { data: '20/01/2024', cliente: 'Ana Costa', tipo: 'Assinatura', descricao: 'Plano Básico', valor: 49.90, status: 'pago', metodo: 'Cartão' }
+        //         ];
                 
-                const tbody = document.getElementById('historico-pagamentos');
-                if (tbody) {
-                    tbody.innerHTML = pagamentos.map(pagamento => `
-                        <tr>
-                            <td>${pagamento.data}</td>
-                            <td>${pagamento.cliente}</td>
-                            <td>
-                                <span class="status-badge ${pagamento.tipo === 'Assinatura' ? 'status-active' : 'status-pending'}">
-                                    ${pagamento.tipo}
-                                </span>
-                            </td>
-                            <td>${pagamento.descricao}</td>
-                            <td>R$ ${pagamento.valor.toFixed(2)}</td>
-                            <td>
-                                <span class="status-badge ${pagamento.status === 'pago' ? 'status-active' : 'status-pending'}">
-                                    ${pagamento.status === 'pago' ? 'Pago' : 'Pendente'}
-                                </span>
-                            </td>
-                            <td>${pagamento.metodo}</td>
-                        </tr>
-                    `).join('');
-                }
-            }, 1000);
-        }
+        //         const tbody = document.getElementById('historico-pagamentos');
+        //         if (tbody) {
+        //             tbody.innerHTML = pagamentos.map(pagamento => `
+        //                 <tr>
+        //                     <td>${pagamento.data}</td>
+        //                     <td>${pagamento.cliente}</td>
+        //                     <td>
+        //                         <span class="status-badge ${pagamento.tipo === 'Assinatura' ? 'status-active' : 'status-pending'}">
+        //                             ${pagamento.tipo}
+        //                         </span>
+        //                     </td>
+        //                     <td>${pagamento.descricao}</td>
+        //                     <td>R$ ${pagamento.valor.toFixed(2)}</td>
+        //                     <td>
+        //                         <span class="status-badge ${pagamento.status === 'pago' ? 'status-active' : 'status-pending'}">
+        //                             ${pagamento.status === 'pago' ? 'Pago' : 'Pendente'}
+        //                         </span>
+        //                     </td>
+        //                     <td>${pagamento.metodo}</td>
+        //                 </tr>
+        //             `).join('');
+        //         }
+        //     }, 1000);
+        // }
         
         async function loadBloqueiosPage() {
             const page = document.getElementById('page-bloqueios');
@@ -4005,80 +4123,81 @@
                     <p class="welcome-subtitle">Configure as informações públicas da sua barbearia</p>
                 </div>
                 
-                <div class="admin-cards">
-                    <div class="admin-card fade-in">
-                        <div class="admin-card-header">
-                            <div class="admin-card-icon">
-                                <i class="fas fa-clock"></i>
-                            </div>
-                            <div class="admin-card-title">Horários de Funcionamento</div>
-                        </div>
-                        <div class="admin-card-content">
-                            <p style="color: var(--medium-gray); margin-bottom: 1rem;">Defina os horários de atendimento para cada dia da semana.</p>
-                            <button class="btn btn-secondary" style="width: 100%;" onclick="openModal('editar-horarios')">
-                                <i class="fas fa-edit"></i>
-                                Editar Horários
-                            </button>
-                        </div>
-                    </div>
-                    
-                    <div class="admin-card fade-in">
-                        <div class="admin-card-header">
-                            <div class="admin-card-icon">
-                                <i class="fas fa-map-marker-alt"></i>
-                            </div>
-                            <div class="admin-card-title">Localização</div>
-                        </div>
-                        <div class="admin-card-content">
-                            <p style="color: var(--medium-gray); margin-bottom: 1rem;">Configure o endereço e informações de contato.</p>
-                            <button class="btn btn-secondary" style="width: 100%;" onclick="openModal('editar-localizacao')">
-                                <i class="fas fa-edit"></i>
-                                Editar Localização
-                            </button>
-                        </div>
-                    </div>
-                    
-                    <div class="admin-card fade-in">
-                        <div class="admin-card-header">
-                            <div class="admin-card-icon">
+                <div class="modal-overlay" id="informacoesModal">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h2 class="modal-title">
                                 <i class="fas fa-info-circle"></i>
-                            </div>
-                            <div class="admin-card-title">Sobre a Barbearia</div>
-                        </div>
-                        <div class="admin-card-content">
-                            <p style="color: var(--medium-gray); margin-bottom: 1rem;">Adicione uma descrição sobre sua barbearia e seus valores.</p>
-                            <button class="btn btn-secondary" style="width: 100%;" onclick="openModal('editar-sobre')">
-                                <i class="fas fa-edit"></i>
-                                Editar Sobre
+                                Informações da Barbearia
+                            </h2>
+                            <button class="modal-close" id="closeInfoModal">
+                                <i class="fas fa-times"></i>
                             </button>
                         </div>
-                    </div>
-                </div>
-                
-                <div class="quick-actions fade-in">
-                    <h2 class="section-title">
-                        <i class="fas fa-shield-alt"></i>
-                        Políticas e Termos
-                    </h2>
-                    <div class="actions-grid">
-                        <button class="action-btn" onclick="openModal('editar-politicas')">
-                            <div class="action-icon">
-                                <i class="fas fa-file-contract"></i>
+                        <div class="modal-body">
+                            <div class="info-grid">
+                                <div class="info-item">
+                                    <h3 class="info-item-title">
+                                        <i class="fas fa-clock"></i>
+                                        Horário de Funcionamento
+                                    </h3>
+                                    <div class="info-item-content">
+                                        <p><strong>Segunda a Sexta:</strong> 08:30 - 19:00</p>
+                                        <p><strong>Sábado:</strong> 08:30 - 18:30</p>
+                                        <p><strong>Domingo:</strong> Fechado</p>
+                                    </div>
+                                </div>
+                                
+                                <div class="info-item">
+                                    <h3 class="info-item-title">
+                                        <i class="fas fa-map-marker-alt"></i>
+                                        Localização
+                                    </h3>
+                                    <div class="info-item-content">
+                                        <p><strong>Endereço:</strong> Av. Esmeraldas QD 28 LT 02</p>
+                                        <p><strong>Setor:</strong> Recanto das Minas Gerais</p>
+                                        <p><strong>Cidade:</strong> Goiânia - GO</p>
+                                    </div>
+                                </div>
+                                
+                                <div class="info-item">
+                                    <h3 class="info-item-title">
+                                        <i class="fas fa-phone"></i>
+                                        Contato
+                                    </h3>
+                                    <div class="info-item-content">
+                                        <p><strong>Instagram:</strong> sillvabarbearia</p>
+                                        <p><strong>WhatsApp:</strong> (62) 9 8259-4295</p>
+                                        <p><strong>E-mail:</strong> contato@barbeariasilva.com</p>
+                                    </div>
+                                </div>
+                                
+                                <div class="info-item">
+                                    <h3 class="info-item-title">
+                                        <i class="fas fa-star"></i>
+                                        Nossos Valores
+                                    </h3>
+                                    <div class="info-item-content">
+                                        <p>• Atendimento personalizado</p>
+                                        <p>• Produtos de qualidade premium</p>
+                                        <p>• Ambiente climatizado e aconchegante</p>
+                                        <p>• Profissionais especializados</p>
+                                    </div>
+                                </div>
                             </div>
-                            <span class="action-text">Política de Cancelamento</span>
-                        </button>
-                        <button class="action-btn" onclick="openModal('editar-termos')">
-                            <div class="action-icon">
-                                <i class="fas fa-gavel"></i>
+                            
+                            <div style="margin-top: 2rem;">
+                                <h3 class="info-item-title">
+                                    <i class="fas fa-shield-alt"></i>
+                                    Políticas
+                                </h3>
+                                <div class="info-item-content">
+                                    <p><strong>Cancelamento:</strong> Até 2 horas antes do horário marcado.</p>
+                                    <p><strong>Atraso:</strong> Tolerância de 15 minutos.</p>
+                                    <p><strong>Pagamento:</strong> Aceitamos todas as bandeiras.</p>
+                                </div>
                             </div>
-                            <span class="action-text">Termos de Uso</span>
-                        </button>
-                        <button class="action-btn" onclick="openModal('editar-privacidade')">
-                            <div class="action-icon">
-                                <i class="fas fa-user-shield"></i>
-                            </div>
-                            <span class="action-text">Política de Privacidade</span>
-                        </button>
+                        </div>
                     </div>
                 </div>
             `;
@@ -6891,13 +7010,17 @@
 
         function verAssinante(assinanteId) {
             console.log('Visualizando assinante:', assinanteId);
-            Toastify({
-                text: 'Recurso em desenvolvimento',
-                duration: 2000,
-                gravity: 'top',
-                position: 'right',
-                backgroundColor: '#17a2b8'
-            }).showToast();
+            if (typeof Toastify !== 'undefined') {
+                Toastify({
+                    text: 'Recurso em desenvolvimento',
+                    duration: 2000,
+                    gravity: 'top',
+                    position: 'right',
+                    backgroundColor: '#17a2b8'
+                }).showToast();
+            } else {
+                alert('Recurso em desenvolvimento');
+            }
         }
     </script>
 </body>

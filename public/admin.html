@@ -3657,7 +3657,7 @@
                     </div>
                 </div>
                 
-                <div class="table-container fade-in" style="margin-top: 3rem;">
+                <div class="table-container fade-in" style="margin-top: 3rem;" id="container-assinantes-desktop">
                     <div class="table-header">
                         <div class="table-title">Assinantes Ativos</div>
                     </div>
@@ -3682,6 +3682,20 @@
                             </tr>
                         </tbody>
                     </table>
+                </div>
+                
+                <div class="fade-in" style="margin-top: 3rem; display: none;" id="container-assinantes-mobile">
+                    <div style="margin-bottom: 1.5rem;">
+                        <h3 style="color: var(--light-gray); font-size: 1.3rem; margin-bottom: 1rem;">
+                            <i class="fas fa-users"></i> Assinantes Ativos
+                        </h3>
+                    </div>
+                    <div id="lista-assinantes-mobile" style="display: flex; flex-direction: column; gap: 1rem;">
+                        <div style="text-align: center; padding: 2rem;">
+                            <i class="fas fa-spinner fa-spin" style="font-size: 1.5rem; color: var(--accent-gold); margin-bottom: 1rem;"></i>
+                            <p>Carregando assinantes...</p>
+                        </div>
+                    </div>
                 </div>
             `;
             
@@ -3804,52 +3818,53 @@
                     
                     if (isMobile) {
                         // Renderizar como cards em mobile
-                        tbodyAssinantes.innerHTML = assinantes.map(assinante => `
-                            <tr style="display: flex; flex-direction: column; border: none; padding: 0;">
-                                <td style="display: none;"></td>
-                                <td style="display: none;"></td>
-                                <td style="display: none;"></td>
-                                <td style="display: none;"></td>
-                                <td style="display: none;"></td>
-                                <td style="display: none;"></td>
-                                <td style="display: none;"></td>
-                                <td colspan="7" style="padding: 0;">
-                                    <div class="assinante-card">
-                                        <div class="assinante-card-header">
-                                            <div class="assinante-card-nome">${assinante.nome}</div>
-                                            <span class="assinante-card-status status-badge ${assinante.plano_status === 'ativo' ? 'status-active' : 'status-inactive'}">
-                                                ${assinante.plano_status === 'ativo' ? 'Ativo' : 'Inativo'}
-                                            </span>
+                        const mobileContainer = document.getElementById('lista-assinantes-mobile');
+                        const desktopContainer = document.getElementById('container-assinantes-desktop');
+                        
+                        if (mobileContainer) {
+                            mobileContainer.innerHTML = assinantes.map(assinante => `
+                                <div class="assinante-card">
+                                    <div class="assinante-card-header">
+                                        <div class="assinante-card-nome">${assinante.nome}</div>
+                                        <span class="assinante-card-status status-badge ${assinante.plano_status === 'ativo' ? 'status-active' : 'status-inactive'}">
+                                            ${assinante.plano_status === 'ativo' ? 'Ativo' : 'Inativo'}
+                                        </span>
+                                    </div>
+                                    <div class="assinante-card-body">
+                                        <div class="assinante-card-item">
+                                            <span><strong>Email:</strong></span>
+                                            <span>${assinante.email}</span>
                                         </div>
-                                        <div class="assinante-card-body">
-                                            <div class="assinante-card-item">
-                                                <span><strong>Email:</strong></span>
-                                                <span>${assinante.email}</span>
-                                            </div>
-                                            <div class="assinante-card-item">
-                                                <span><strong>Plano:</strong></span>
-                                                <span>${assinante.plano_nome || 'Sem plano'}</span>
-                                            </div>
-                                            <div class="assinante-card-item">
-                                                <span><strong>Valor:</strong></span>
-                                                <span>R$ ${assinante.valor ? parseFloat(assinante.valor).toFixed(2) : '0.00'}</span>
-                                            </div>
-                                            <div class="assinante-card-item">
-                                                <span><strong>Telefone:</strong></span>
-                                                <span>${assinante.telefone || '-'}</span>
-                                            </div>
+                                        <div class="assinante-card-item">
+                                            <span><strong>Plano:</strong></span>
+                                            <span>${assinante.plano_nome || 'Sem plano'}</span>
                                         </div>
-                                        <div class="assinante-card-footer">
-                                            <button class="btn-table btn-view" onclick="verAssinante(${assinante.id})" style="width: 100%;">
-                                                <i class="fas fa-eye"></i> Visualizar
-                                            </button>
+                                        <div class="assinante-card-item">
+                                            <span><strong>Valor:</strong></span>
+                                            <span>R$ ${assinante.valor ? parseFloat(assinante.valor).toFixed(2) : '0.00'}</span>
+                                        </div>
+                                        <div class="assinante-card-item">
+                                            <span><strong>Telefone:</strong></span>
+                                            <span>${assinante.telefone || '-'}</span>
                                         </div>
                                     </div>
-                                </td>
-                            </tr>
-                        `).join('');
+                                    <div class="assinante-card-footer">
+                                        <button class="btn-table btn-view" onclick="verAssinante(${assinante.id})" style="width: 100%;">
+                                            <i class="fas fa-eye"></i> Visualizar
+                                        </button>
+                                    </div>
+                                </div>
+                            `).join('');
+                        }
+                        if (desktopContainer) desktopContainer.style.display = 'none';
+                        if (mobileContainer?.parentElement) mobileContainer.parentElement.style.display = 'block';
                     } else {
                         // Renderizar como tabela em desktop
+                        const desktopContainer = document.getElementById('container-assinantes-desktop');
+                        if (desktopContainer) desktopContainer.style.display = 'block';
+                        const mobileContainer = document.getElementById('lista-assinantes-mobile');
+                        if (mobileContainer?.parentElement) mobileContainer.parentElement.style.display = 'none';
+                        
                         tbodyAssinantes.innerHTML = assinantes.map(assinante => {
                             const statusClass = assinante.plano_status === 'ativo' ? 'status-active' : 'status-inactive';
                             const statusText = assinante.plano_status === 'ativo' ? 'Ativo' : 'Inativo';
@@ -4120,83 +4135,87 @@
             page.innerHTML = `
                 <div class="welcome-section">
                     <h1 class="welcome-title">Informações da Barbearia</h1>
-                    <p class="welcome-subtitle">Configure as informações públicas da sua barbearia</p>
+                    <p class="welcome-subtitle">Visualize as informações públicas da sua barbearia</p>
                 </div>
                 
-                <div class="modal-overlay" id="informacoesModal">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h2 class="modal-title">
-                                <i class="fas fa-info-circle"></i>
-                                Informações da Barbearia
-                            </h2>
-                            <button class="modal-close" id="closeInfoModal">
-                                <i class="fas fa-times"></i>
-                            </button>
+                <div class="admin-cards" style="margin-bottom: 2rem;">
+                    <div class="admin-card fade-in">
+                        <div class="admin-card-header">
+                            <div class="admin-card-icon">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                            <div class="admin-card-title">Horário de Funcionamento</div>
                         </div>
-                        <div class="modal-body">
-                            <div class="info-grid">
-                                <div class="info-item">
-                                    <h3 class="info-item-title">
-                                        <i class="fas fa-clock"></i>
-                                        Horário de Funcionamento
-                                    </h3>
-                                    <div class="info-item-content">
-                                        <p><strong>Segunda a Sexta:</strong> 08:30 - 19:00</p>
-                                        <p><strong>Sábado:</strong> 08:30 - 18:30</p>
-                                        <p><strong>Domingo:</strong> Fechado</p>
-                                    </div>
-                                </div>
-                                
-                                <div class="info-item">
-                                    <h3 class="info-item-title">
-                                        <i class="fas fa-map-marker-alt"></i>
-                                        Localização
-                                    </h3>
-                                    <div class="info-item-content">
-                                        <p><strong>Endereço:</strong> Av. Esmeraldas QD 28 LT 02</p>
-                                        <p><strong>Setor:</strong> Recanto das Minas Gerais</p>
-                                        <p><strong>Cidade:</strong> Goiânia - GO</p>
-                                    </div>
-                                </div>
-                                
-                                <div class="info-item">
-                                    <h3 class="info-item-title">
-                                        <i class="fas fa-phone"></i>
-                                        Contato
-                                    </h3>
-                                    <div class="info-item-content">
-                                        <p><strong>Instagram:</strong> sillvabarbearia</p>
-                                        <p><strong>WhatsApp:</strong> (62) 9 8259-4295</p>
-                                        <p><strong>E-mail:</strong> contato@barbeariasilva.com</p>
-                                    </div>
-                                </div>
-                                
-                                <div class="info-item">
-                                    <h3 class="info-item-title">
-                                        <i class="fas fa-star"></i>
-                                        Nossos Valores
-                                    </h3>
-                                    <div class="info-item-content">
-                                        <p>• Atendimento personalizado</p>
-                                        <p>• Produtos de qualidade premium</p>
-                                        <p>• Ambiente climatizado e aconchegante</p>
-                                        <p>• Profissionais especializados</p>
-                                    </div>
-                                </div>
+                        <div class="admin-card-content">
+                            <p style="margin-bottom: 0.5rem;"><strong>Segunda a Sexta:</strong> 08:30 - 19:00</p>
+                            <p style="margin-bottom: 0.5rem;"><strong>Sábado:</strong> 08:30 - 18:30</p>
+                            <p><strong>Domingo:</strong> Fechado</p>
+                        </div>
+                    </div>
+                    
+                    <div class="admin-card fade-in">
+                        <div class="admin-card-header">
+                            <div class="admin-card-icon">
+                                <i class="fas fa-map-marker-alt"></i>
                             </div>
-                            
-                            <div style="margin-top: 2rem;">
-                                <h3 class="info-item-title">
-                                    <i class="fas fa-shield-alt"></i>
-                                    Políticas
-                                </h3>
-                                <div class="info-item-content">
-                                    <p><strong>Cancelamento:</strong> Até 2 horas antes do horário marcado.</p>
-                                    <p><strong>Atraso:</strong> Tolerância de 15 minutos.</p>
-                                    <p><strong>Pagamento:</strong> Aceitamos todas as bandeiras.</p>
-                                </div>
+                            <div class="admin-card-title">Localização</div>
+                        </div>
+                        <div class="admin-card-content">
+                            <p style="margin-bottom: 0.5rem;"><strong>Endereço:</strong> Av. Esmeraldas QD 28 LT 02</p>
+                            <p style="margin-bottom: 0.5rem;"><strong>Setor:</strong> Recanto das Minas Gerais</p>
+                            <p><strong>Cidade:</strong> Goiânia - GO</p>
+                        </div>
+                    </div>
+                    
+                    <div class="admin-card fade-in">
+                        <div class="admin-card-header">
+                            <div class="admin-card-icon">
+                                <i class="fas fa-phone"></i>
                             </div>
+                            <div class="admin-card-title">Contato</div>
+                        </div>
+                        <div class="admin-card-content">
+                            <p style="margin-bottom: 0.5rem;"><strong>Instagram:</strong> sillvabarbearia</p>
+                            <p style="margin-bottom: 0.5rem;"><strong>WhatsApp:</strong> (62) 9 8259-4295</p>
+                            <p><strong>E-mail:</strong> contato@barbeariasilva.com</p>
+                        </div>
+                    </div>
+                    
+                    <div class="admin-card fade-in">
+                        <div class="admin-card-header">
+                            <div class="admin-card-icon">
+                                <i class="fas fa-star"></i>
+                            </div>
+                            <div class="admin-card-title">Nossos Valores</div>
+                        </div>
+                        <div class="admin-card-content">
+                            <p style="margin-bottom: 0.5rem;">• Atendimento personalizado</p>
+                            <p style="margin-bottom: 0.5rem;">• Produtos de qualidade premium</p>
+                            <p style="margin-bottom: 0.5rem;">• Ambiente climatizado e aconchegante</p>
+                            <p>• Profissionais especializados</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="admin-card fade-in" style="margin-bottom: 2rem;">
+                    <div class="admin-card-header">
+                        <div class="admin-card-icon">
+                            <i class="fas fa-shield-alt"></i>
+                        </div>
+                        <div class="admin-card-title">Políticas e Termos</div>
+                    </div>
+                    <div class="admin-card-content">
+                        <div style="margin-bottom: 1.5rem;">
+                            <h4 style="color: var(--accent-gold); margin-bottom: 0.5rem;">Cancelamento</h4>
+                            <p>Até 2 horas antes do horário marcado.</p>
+                        </div>
+                        <div style="margin-bottom: 1.5rem;">
+                            <h4 style="color: var(--accent-gold); margin-bottom: 0.5rem;">Atraso</h4>
+                            <p>Tolerância de 15 minutos.</p>
+                        </div>
+                        <div>
+                            <h4 style="color: var(--accent-gold); margin-bottom: 0.5rem;">Pagamento</h4>
+                            <p>Aceitamos todas as bandeiras e PIX.</p>
                         </div>
                     </div>
                 </div>

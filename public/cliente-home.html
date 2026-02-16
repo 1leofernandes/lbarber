@@ -1436,6 +1436,16 @@
         localStorage.setItem('nome', userData.nome);
         localStorage.setItem('role', userData.role);
         localStorage.setItem('roles', userData.roles);
+
+        // Redirecionar admin ou barbeiro para suas páginas (cliente-home é apenas para cliente)
+        if (userData.roles === 'admin') {
+            window.location.href = 'admin.html';
+            return;
+        }
+        if (userData.role === 'barbeiro') {
+            window.location.href = 'barbeiro.html';
+            return;
+        }
         
         // Estado do usuário
         let usuario = {

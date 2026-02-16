@@ -3417,9 +3417,31 @@
                 const token = localStorage.getItem('token');
                 
                 // Carregar planos
-                const responsePlanos = await fetch(`${API_BASE_URL}/admin/assinaturas/planos`, {
+                const responsePlanos = await fetch(`${API_BASE_URL}/api/subscricoes-recorrentes/planos`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
+
+
+        //         async function carregarPlanos() {
+        //     try {
+        //         const response = await fetch(`${API_BASE_URL}/api/subscricoes-recorrentes/planos`, {
+        //             headers: {
+        //                 'Authorization': `Bearer ${localStorage.getItem('token')}`
+        //             }
+        //         });
+                
+        //         if (response.ok) {
+        //             const data = await response.json();
+        //             planos = data.planos || data || [];
+        //             renderizarPlanos();
+        //         } else {
+        //             throw new Error('Erro ao carregar planos');
+        //         }
+        //     } catch (error) {
+        //         console.error('Erro ao carregar planos:', error);
+        //         toast('Erro ao carregar planos', 'error');
+        //     }
+        // }
                 
                 let planosHTML = '';
                 if (responsePlanos && responsePlanos.ok) {

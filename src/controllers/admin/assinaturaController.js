@@ -360,11 +360,7 @@ class AssinaturaController {
      * GET /admin/assinaturas - Listar assinantes (alias para listarAssinantesAtivos)
      */
     static async listarAssinaturas(req, res, next) {
-        return AssinaturaController.listarAssinantesAtivos(req, res, next);
-    }
-}
-
-module.exports = AssinaturaController;
+        // return AssinaturaController.listarAssinantesAtivos(req, res, next);
         try {
             const { status = 'ativa', limit = 50, offset = 0 } = req.query;
 
@@ -385,7 +381,7 @@ module.exports = AssinaturaController;
                     p.preco as valor,
                     p.duracao_dias,
                     p.descricao
-                FROM assinaturas a
+                FROM assinatura a
                 JOIN usuarios u ON a.usuario_id = u.id
                 JOIN planos_assinatura p ON a.plano_id = p.id
                 ${status ? "WHERE a.status = '" + status + "'" : ''}
@@ -449,7 +445,7 @@ module.exports = AssinaturaController;
                     p.duracao_dias,
                     p.descricao,
                     COUNT(ag.id) as total_agendamentos
-                FROM assinaturas a
+                FROM assinatura a
                 JOIN usuarios u ON a.usuario_id = u.id
                 JOIN planos_assinatura p ON a.plano_id = p.id
                 LEFT JOIN agendamentos ag ON a.usuario_id = ag.usuario_id AND ag.data_agendada >= NOW()::date
@@ -544,7 +540,9 @@ module.exports = AssinaturaController;
                 error: error.message
             });
         }
+    
     }
 }
 
 module.exports = AssinaturaController;
+        

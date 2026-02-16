@@ -172,11 +172,11 @@ class BarbeiroService {
             }
         }
         
-        if (!isUpdate || telefone !== undefined) {
-            if (telefone && !/^\(\d{2}\) \d{5}-\d{4}$/.test(telefone)) {
-                throw new Error('Telefone inválido. Use o formato (99) 99999-9999');
-            }
-        }
+        // if (!isUpdate || telefone !== undefined) {
+        //     if (telefone && !/^\(\d{2}\) \d{5}-\d{4}$/.test(telefone)) {
+        //         throw new Error('Telefone inválido. Use o formato (99) 99999-9999');
+        //     }
+        // }
         
         if (!isUpdate && !senha) {
             throw new Error('Senha é obrigatória');

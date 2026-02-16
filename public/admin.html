@@ -20,6 +20,8 @@
     <meta property="og:url" content="https://barbeariasilva.vercel.app/admin.html"/>
     <meta property="og:site_name" content="Barbearia Silva"/>
 
+    <!-- Toastify -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
 
     <style>
         :root {
@@ -1234,6 +1236,80 @@
             .action-text {
                 font-size: 0.75rem;
             }
+
+            /* Responsividade para Cards de Planos em Mobile */
+            .admin-cards {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+
+            .admin-card-header {
+                display: flex;
+                flex-direction: row;
+                align-items: center;
+                gap: 10px;
+                justify-content: space-between;
+            }
+
+            /* Cards de Assinantes em Mobile */
+            .assinante-card {
+                display: block;
+                border: 1px solid rgba(212, 175, 55, 0.2);
+                border-radius: 8px;
+                padding: 1rem;
+                margin-bottom: 1rem;
+                background: var(--card-bg);
+            }
+
+            .assinante-card-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 1rem;
+                padding-bottom: 0.5rem;
+                border-bottom: 1px solid rgba(212, 175, 55, 0.1);
+            }
+
+            .assinante-card-nome {
+                font-weight: 600;
+                color: var(--light-gray);
+                font-size: 1rem;
+            }
+
+            .assinante-card-status {
+                display: inline-block;
+                padding: 0.3rem 0.8rem;
+                border-radius: 4px;
+                font-size: 0.8rem;
+            }
+
+            .assinante-card-body {
+                display: flex;
+                flex-direction: column;
+                gap: 0.5rem;
+                font-size: 0.9rem;
+            }
+
+            .assinante-card-item {
+                display: flex;
+                justify-content: space-between;
+                color: var(--medium-gray);
+            }
+
+            .assinante-card-item strong {
+                color: var(--light-gray);
+            }
+
+            .assinante-card-footer {
+                display: flex;
+                gap: 0.5rem;
+                margin-top: 1rem;
+                justify-content: center;
+            }
+
+            .assinante-card-footer .btn-table {
+                flex: 1;
+            }
         }
         
         /* Animations */
@@ -1890,6 +1966,98 @@
                     <button type="submit" class="btn btn-primary">
                         <i class="fas fa-save"></i>
                         Salvar Serviço
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal para Novo/Editar Plano -->
+    <div id="modal-novo-plano" class="modal-overlay">
+        <div class="modal-content" style="max-width: 700px;">
+            <div class="modal-header">
+                <h2 id="modal-plano-titulo">Novo Plano de Assinatura</h2>
+                <button class="modal-close" onclick="closeModal('novo-plano')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form id="form-novo-plano">
+                <div class="modal-body">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="plano-nome" class="form-label">Nome do Plano *</label>
+                            <input type="text" class="form-control" id="plano-nome" name="nome_plano" required 
+                                placeholder="Ex: Plano Bronze, Plano Silver, etc.">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="plano-valor" class="form-label">Valor Mensal (R$) *</label>
+                            <input type="number" class="form-control" id="plano-valor" name="valor" 
+                                min="0" step="0.01" required placeholder="0.00">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="plano-descricao" class="form-label">Descrição</label>
+                        <textarea class="form-control" id="plano-descricao" name="descricao" 
+                            rows="2" placeholder="Descreva o plano..."></textarea>
+                    </div>
+
+                    <!-- Dias da Semana -->
+                    <div class="form-group">
+                        <label class="form-label"><i class="fas fa-calendar"></i> Dias de Cobertura *</label>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)); gap: 0.5rem; margin-top: 0.5rem;">
+                            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                                <input type="checkbox" name="dias_semana" value="1" class="dia-checkbox">
+                                <span>Seg</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                                <input type="checkbox" name="dias_semana" value="2" class="dia-checkbox">
+                                <span>Ter</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                                <input type="checkbox" name="dias_semana" value="3" class="dia-checkbox">
+                                <span>Qua</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                                <input type="checkbox" name="dias_semana" value="4" class="dia-checkbox">
+                                <span>Qui</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                                <input type="checkbox" name="dias_semana" value="5" class="dia-checkbox">
+                                <span>Sex</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                                <input type="checkbox" name="dias_semana" value="6" class="dia-checkbox">
+                                <span>Sab</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                                <input type="checkbox" name="dias_semana" value="7" class="dia-checkbox">
+                                <span>Dom</span>
+                            </label>
+                        </div>
+                        <small style="color: #28a745; margin-top: 0.5rem; display: block;"><i class="fas fa-info-circle"></i> Selecione os dias que este plano está ativo</small>
+                    </div>
+
+                    <!-- Serviços -->
+                    <div class="form-group">
+                        <label class="form-label"><i class="fas fa-scissors"></i> Serviços Inclusos *</label>
+                        <div style="max-height: 250px; overflow-y: auto; border: 1px solid rgba(212, 175, 55, 0.2); border-radius: 5px; padding: 1rem; background: rgba(30, 30, 30, 0.5);">
+                            <div id="modal-servicos-container">
+                                <p style="color: var(--medium-gray); text-align: center;">Carregando serviços...</p>
+                            </div>
+                        </div>
+                        <small style="color: #17a2b8; margin-top: 0.5rem; display: block;"><i class="fas fa-info-circle"></i> Selecione os serviços que este plano oferece</small>
+                    </div>
+                </div>
+                <div class="modal-footer" style="display: flex; gap: 0.5rem; padding-top: 1.5rem; border-top: 1px solid rgba(212, 175, 55, 0.1);">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('novo-plano')">
+                        <i class="fas fa-times"></i>
+                        Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i>
+                        Salvar Plano
                     </button>
                 </div>
             </form>
@@ -3421,28 +3589,6 @@
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
 
-
-        //         async function carregarPlanos() {
-        //     try {
-        //         const response = await fetch(`${API_BASE_URL}/api/subscricoes-recorrentes/planos`, {
-        //             headers: {
-        //                 'Authorization': `Bearer ${localStorage.getItem('token')}`
-        //             }
-        //         });
-                
-        //         if (response.ok) {
-        //             const data = await response.json();
-        //             planos = data.planos || data || [];
-        //             renderizarPlanos();
-        //         } else {
-        //             throw new Error('Erro ao carregar planos');
-        //         }
-        //     } catch (error) {
-        //         console.error('Erro ao carregar planos:', error);
-        //         toast('Erro ao carregar planos', 'error');
-        //     }
-        // }
-                
                 let planosHTML = '';
                 if (responsePlanos && responsePlanos.ok) {
                     const resultPlanos = await responsePlanos.json();
@@ -3464,7 +3610,7 @@
                                         <i class="fas fa-crown"></i>
                                     </div>
                                     <div class="admin-card-title">${plano.nome_plano}</div>
-                                    <button class="btn-table btn-edit" onclick="abrirModalEditarPlano(${plano.id})" style="padding: 0.4rem 0.6rem;">
+                                    <button class="btn-table btn-edit" onclick="abrirModalEditarPlano(${plano.id})" style="padding: 0.4rem 0.6rem; margin-left: auto;">
                                         <i class="fas fa-edit"></i>
                                     </button>
                                 </div>
@@ -3496,7 +3642,7 @@
                     }).join('');
                     
                     planosHTML += `
-                        <div class="admin-card fade-in" style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 200px; cursor: pointer; opacity: 0.7; hover: opacity: 1;" onclick="abrirModalNovoPlano()">
+                        <div class="admin-card fade-in" style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 200px; cursor: pointer; opacity: 0.7;" onclick="abrirModalNovoPlano()">
                             <div class="admin-card-icon" style="font-size: 2.5rem; margin-bottom: 1rem;">
                                 <i class="fas fa-plus-circle"></i>
                             </div>
@@ -3535,30 +3681,82 @@
                         return;
                     }
                     
-                    tbodyAssinantes.innerHTML = assinantes.map(assinante => {
-                        const statusClass = assinante.plano_status === 'ativo' ? 'status-active' : 'status-inactive';
-                        const statusText = assinante.plano_status === 'ativo' ? 'Ativo' : 'Inativo';
-                        
-                        return `
-                            <tr>
-                                <td>${assinante.nome}</td>
-                                <td>${assinante.email}</td>
-                                <td>${assinante.plano_nome || 'Sem plano'}</td>
-                                <td>R$ ${assinante.valor ? parseFloat(assinante.valor).toFixed(2) : '0.00'}</td>
-                                <td>${assinante.telefone || '-'}</td>
-                                <td>
-                                    <span class="status-badge ${statusClass}">
-                                        ${statusText}
-                                    </span>
-                                </td>
-                                <td>
-                                    <button class="btn-table btn-view" onclick="verAssinante(${assinante.id})">
-                                        <i class="fas fa-eye"></i>
-                                    </button>
+                    // Detectar se está em mobile
+                    const isMobile = window.innerWidth <= 576;
+                    
+                    if (isMobile) {
+                        // Renderizar como cards em mobile
+                        tbodyAssinantes.innerHTML = assinantes.map(assinante => `
+                            <tr style="display: flex; flex-direction: column; border: none; padding: 0;">
+                                <td style="display: none;"></td>
+                                <td style="display: none;"></td>
+                                <td style="display: none;"></td>
+                                <td style="display: none;"></td>
+                                <td style="display: none;"></td>
+                                <td style="display: none;"></td>
+                                <td style="display: none;"></td>
+                                <td colspan="7" style="padding: 0;">
+                                    <div class="assinante-card">
+                                        <div class="assinante-card-header">
+                                            <div class="assinante-card-nome">${assinante.nome}</div>
+                                            <span class="assinante-card-status status-badge ${assinante.plano_status === 'ativo' ? 'status-active' : 'status-inactive'}">
+                                                ${assinante.plano_status === 'ativo' ? 'Ativo' : 'Inativo'}
+                                            </span>
+                                        </div>
+                                        <div class="assinante-card-body">
+                                            <div class="assinante-card-item">
+                                                <span><strong>Email:</strong></span>
+                                                <span>${assinante.email}</span>
+                                            </div>
+                                            <div class="assinante-card-item">
+                                                <span><strong>Plano:</strong></span>
+                                                <span>${assinante.plano_nome || 'Sem plano'}</span>
+                                            </div>
+                                            <div class="assinante-card-item">
+                                                <span><strong>Valor:</strong></span>
+                                                <span>R$ ${assinante.valor ? parseFloat(assinante.valor).toFixed(2) : '0.00'}</span>
+                                            </div>
+                                            <div class="assinante-card-item">
+                                                <span><strong>Telefone:</strong></span>
+                                                <span>${assinante.telefone || '-'}</span>
+                                            </div>
+                                        </div>
+                                        <div class="assinante-card-footer">
+                                            <button class="btn-table btn-view" onclick="verAssinante(${assinante.id})" style="width: 100%;">
+                                                <i class="fas fa-eye"></i> Visualizar
+                                            </button>
+                                        </div>
+                                    </div>
                                 </td>
                             </tr>
-                        `;
-                    }).join('');
+                        `).join('');
+                    } else {
+                        // Renderizar como tabela em desktop
+                        tbodyAssinantes.innerHTML = assinantes.map(assinante => {
+                            const statusClass = assinante.plano_status === 'ativo' ? 'status-active' : 'status-inactive';
+                            const statusText = assinante.plano_status === 'ativo' ? 'Ativo' : 'Inativo';
+                            
+                            return `
+                                <tr>
+                                    <td>${assinante.nome}</td>
+                                    <td>${assinante.email}</td>
+                                    <td>${assinante.plano_nome || 'Sem plano'}</td>
+                                    <td>R$ ${assinante.valor ? parseFloat(assinante.valor).toFixed(2) : '0.00'}</td>
+                                    <td>${assinante.telefone || '-'}</td>
+                                    <td>
+                                        <span class="status-badge ${statusClass}">
+                                            ${statusText}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <button class="btn-table btn-view" onclick="verAssinante(${assinante.id})">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            `;
+                        }).join('');
+                    }
                 } else {
                     tbodyAssinantes.innerHTML = `
                         <tr>
@@ -6453,138 +6651,253 @@
 
         // ==================== FUNÇÕES DE ASSINATURAS ====================
 
-        function abrirModalNovoPlano() {
-            console.log('Abrindo modal de novo plano');
-            // Placeholder para modal de novo plano
-            const nome_plano = prompt('Nome do plano:');
-            if (!nome_plano) return;
+        async function abrirModalNovoPlano() {
+            openModal('novo-plano');
+            document.getElementById('modal-plano-titulo').textContent = 'Novo Plano de Assinatura';
+            document.getElementById('form-novo-plano').reset();
             
-            const valor = prompt('Valor mensal (R$):');
-            if (!valor) return;
+            // Limpar ID se estiver editando
+            const planoIdInput = document.getElementById('plano-id');
+            if (planoIdInput) planoIdInput.remove();
             
-            criarPlano({
-                nome_plano,
-                valor: parseFloat(valor),
-                descricao: prompt('Descrição (opcional):') || '',
-                dias_semana: [1, 2, 3, 4, 5], // padrão seg-sex
-                servicos: []
-            });
+            // Desselecionar todos os checkboxes
+            document.querySelectorAll('.dia-checkbox').forEach(cb => cb.checked = false);
+            
+            // Carregar serviços
+            await carregarServicosModal();
         }
 
-        function abrirModalEditarPlano(planoId) {
-            console.log('Abrindo modal de edição do plano:', planoId);
-            // Placeholder para modal de edição
-            const novoNome = prompt('Novo nome do plano:');
-            if (novoNome) {
-                editarPlano(planoId, { nome_plano: novoNome });
+        async function abrirModalEditarPlano(planoId) {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_BASE_URL}/admin/assinaturas/planos/${planoId}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (!response.ok) throw new Error('Plano não encontrado');
+                
+                const result = await response.json();
+                const plano = result.data;
+                
+                // Abrir modal
+                openModal('novo-plano');
+                document.getElementById('modal-plano-titulo').textContent = 'Editar Plano de Assinatura';
+                
+                // Preencher formulário
+                document.getElementById('plano-nome').value = plano.nome_plano;
+                document.getElementById('plano-valor').value = plano.valor;
+                document.getElementById('plano-descricao').value = plano.descricao || '';
+                
+                // Marcar dias
+                document.querySelectorAll('.dia-checkbox').forEach(cb => {
+                    cb.checked = plano.dias_semana.includes(parseInt(cb.value));
+                });
+                
+                // Carregar serviços
+                await carregarServicosModal();
+                
+                // Marcar serviços do plano
+                if (plano.servicos && plano.servicos.length > 0) {
+                    setTimeout(() => {
+                        plano.servicos.forEach(servico => {
+                            const checkbox = document.querySelector(`input[name="servicos"][value="${servico.id}"]`);
+                            if (checkbox) checkbox.checked = true;
+                        });
+                    }, 200);
+                }
+                
+                // Adicionar ID do plano ao formulário
+                let idInput = document.getElementById('plano-id');
+                if (!idInput) {
+                    idInput = document.createElement('input');
+                    idInput.type = 'hidden';
+                    idInput.id = 'plano-id';
+                    document.getElementById('form-novo-plano').appendChild(idInput);
+                }
+                idInput.value = planoId;
+                
+            } catch (error) {
+                console.error('Erro ao carregar plano:', error);
+                Toastify({
+                    text: 'Erro ao carregar plano',
+                    duration: 3000,
+                    gravity: 'top',
+                    position: 'right',
+                    backgroundColor: '#dc3545'
+                }).showToast();
+            }
+        }
+
+        async function carregarServicosModal() {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_BASE_URL}/admin/servicos`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (!response.ok) throw new Error('Erro ao carregar serviços');
+                
+                const result = await response.json();
+                const servicos = result.data || [];
+                const container = document.getElementById('modal-servicos-container');
+                
+                if (servicos.length === 0) {
+                    container.innerHTML = '<p style="color: var(--medium-gray); text-align: center;">Nenhum serviço cadastrado</p>';
+                    return;
+                }
+                
+                container.innerHTML = servicos.map(servico => `
+                    <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; padding: 0.5rem; margin-bottom: 0.25rem;">
+                        <input type="checkbox" name="servicos" value="${servico.id}" class="servico-checkbox">
+                        <span><strong>${servico.nome_servico}</strong> - ${servico.duracao_servico}min - R$ ${parseFloat(servico.valor_servico).toFixed(2)}</span>
+                    </label>
+                `).join('');
+            } catch (error) {
+                console.error('Erro ao carregar serviços:', error);
+                document.getElementById('modal-servicos-container').innerHTML = '<p style="color: #dc3545;">Erro ao carregar serviços</p>';
             }
         }
 
         async function deletarPlano(planoId) {
-            if (!confirm('Tem certeza que deseja deletar este plano?')) return;
+            Toastify({
+                text: 'Tem certeza que deseja deletar este plano?',
+                duration: 5000,
+                gravity: 'top',
+                position: 'center',
+                backgroundColor: '#ffc107',
+                close: true,
+                onClick: async () => {
+                    try {
+                        const token = localStorage.getItem('token');
+                        const response = await fetch(`${API_BASE_URL}/admin/assinaturas/planos/${planoId}`, {
+                            method: 'DELETE',
+                            headers: { 'Authorization': `Bearer ${token}` }
+                        });
+
+                        const result = await response.json();
+                        
+                        if (response.ok) {
+                            Toastify({
+                                text: 'Plano deletado com sucesso!',
+                                duration: 3000,
+                                gravity: 'top',
+                                position: 'right',
+                                backgroundColor: '#28a745'
+                            }).showToast();
+                            carregarPlanosEAssinantes();
+                        } else {
+                            Toastify({
+                                text: result.message || 'Erro ao deletar plano',
+                                duration: 3000,
+                                gravity: 'top',
+                                position: 'right',
+                                backgroundColor: '#dc3545'
+                            }).showToast();
+                        }
+                    } catch (error) {
+                        console.error('Erro ao deletar plano:', error);
+                        Toastify({
+                            text: 'Erro ao conectar com servidor',
+                            duration: 3000,
+                            gravity: 'top',
+                            position: 'right',
+                            backgroundColor: '#dc3545'
+                        }).showToast();
+                    }
+                }
+            }).showToast();
+        }
+
+        document.getElementById('form-novo-plano')?.addEventListener('submit', async (e) => {
+            e.preventDefault();
             
             try {
-                const token = localStorage.getItem('token');
-                const response = await fetch(`${API_BASE_URL}/admin/assinaturas/planos/${planoId}`, {
-                    method: 'DELETE',
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-
-                const result = await response.json();
+                const nome_plano = document.getElementById('plano-nome').value;
+                const valor = document.getElementById('plano-valor').value;
+                const descricao = document.getElementById('plano-descricao').value;
                 
-                if (response.ok) {
-                    showNotification('Plano deletado com sucesso!', 'success');
-                    carregarPlanosEAssinantes(); // Recarregar lista
-                } else {
-                    showNotification(result.message || 'Erro ao deletar plano', 'error');
+                const diasSemana = Array.from(document.querySelectorAll('.dia-checkbox:checked'))
+                    .map(cb => parseInt(cb.value));
+                
+                const servicos = Array.from(document.querySelectorAll('.servico-checkbox:checked'))
+                    .map(cb => parseInt(cb.value));
+                
+                if (!nome_plano || !valor || diasSemana.length === 0 || servicos.length === 0) {
+                    Toastify({
+                        text: 'Preencha todos os campos obrigatórios! Selecione pelo menos um dia e um serviço.',
+                        duration: 3000,
+                        gravity: 'top',
+                        position: 'right',
+                        backgroundColor: '#ffc107'
+                    }).showToast();
+                    return;
                 }
-            } catch (error) {
-                console.error('Erro ao deletar plano:', error);
-                showNotification('Erro ao conectar com servidor', 'error');
-            }
-        }
-
-        async function criarPlano(dados) {
-            try {
+                
+                const planoId = document.getElementById('plano-id')?.value;
+                const method = planoId ? 'PUT' : 'POST';
+                const url = planoId 
+                    ? `${API_BASE_URL}/admin/assinaturas/planos/${planoId}`
+                    : `${API_BASE_URL}/admin/assinaturas/planos`;
+                
                 const token = localStorage.getItem('token');
-                const response = await fetch(`${API_BASE_URL}/admin/assinaturas/planos`, {
-                    method: 'POST',
+                const response = await fetch(url, {
+                    method,
                     headers: {
                         'Authorization': `Bearer ${token}`,
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify(dados)
+                    body: JSON.stringify({
+                        nome_plano,
+                        valor: parseFloat(valor),
+                        descricao,
+                        dias_semana: diasSemana,
+                        servicos
+                    })
                 });
 
                 const result = await response.json();
                 
                 if (response.ok) {
-                    showNotification('Plano criado com sucesso!', 'success');
-                    carregarPlanosEAssinantes(); // Recarregar lista
+                    Toastify({
+                        text: planoId ? 'Plano atualizado com sucesso!' : 'Plano criado com sucesso!',
+                        duration: 3000,
+                        gravity: 'top',
+                        position: 'right',
+                        backgroundColor: '#28a745'
+                    }).showToast();
+                    
+                    closeModal('novo-plano');
+                    carregarPlanosEAssinantes();
                 } else {
-                    showNotification(result.message || 'Erro ao criar plano', 'error');
+                    Toastify({
+                        text: result.message || 'Erro ao salvar plano',
+                        duration: 3000,
+                        gravity: 'top',
+                        position: 'right',
+                        backgroundColor: '#dc3545'
+                    }).showToast();
                 }
             } catch (error) {
-                console.error('Erro ao criar plano:', error);
-                showNotification('Erro ao conectar com servidor', 'error');
+                console.error('Erro ao salvar plano:', error);
+                Toastify({
+                    text: 'Erro ao conectar com servidor',
+                    duration: 3000,
+                    gravity: 'top',
+                    position: 'right',
+                    backgroundColor: '#dc3545'
+                }).showToast();
             }
-        }
-
-        async function editarPlano(planoId, dados) {
-            try {
-                const token = localStorage.getItem('token');
-                const response = await fetch(`${API_BASE_URL}/admin/assinaturas/planos/${planoId}`, {
-                    method: 'PUT',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(dados)
-                });
-
-                const result = await response.json();
-                
-                if (response.ok) {
-                    showNotification('Plano atualizado com sucesso!', 'success');
-                    carregarPlanosEAssinantes(); // Recarregar lista
-                } else {
-                    showNotification(result.message || 'Erro ao editar plano', 'error');
-                }
-            } catch (error) {
-                console.error('Erro ao editar plano:', error);
-                showNotification('Erro ao conectar com servidor', 'error');
-            }
-        }
+        });
 
         function verAssinante(assinanteId) {
             console.log('Visualizando assinante:', assinanteId);
-            alert('Detalhes do assinante ID: ' + assinanteId);
-            // TODO: Implementar modal com detalhes do assinante
-        }
-
-        function showNotification(message, type = 'info') {
-            // Usar toastify ou criar notificação simples
-            const color = type === 'success' ? '#4CAF50' : type === 'error' ? '#f44336' : '#2196F3';
-            const bgColor = type === 'success' ? 'rgba(76, 175, 80, 0.1)' : type === 'error' ? 'rgba(244, 67, 54, 0.1)' : 'rgba(33, 150, 243, 0.1)';
-            
-            const notify = document.createElement('div');
-            notify.style.cssText = `
-                position: fixed;
-                top: 20px;
-                right: 20px;
-                background: ${bgColor};
-                color: ${color};
-                padding: 15px 20px;
-                border-radius: 8px;
-                border-left: 4px solid ${color};
-                z-index: 10000;
-                box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-                animation: slideIn 0.3s ease;
-            `;
-            notify.textContent = message;
-            document.body.appendChild(notify);
-            
-            setTimeout(() => notify.remove(), 3000);
+            Toastify({
+                text: 'Recurso em desenvolvimento',
+                duration: 2000,
+                gravity: 'top',
+                position: 'right',
+                backgroundColor: '#17a2b8'
+            }).showToast();
         }
     </script>
 </body>

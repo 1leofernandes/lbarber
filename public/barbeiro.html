@@ -1767,6 +1767,26 @@
             menuItems: document.querySelectorAll('.menu-item'),
             pageContents: document.querySelectorAll('.page-content')
         };
+
+        // ============ CAPTURAR TOKEN DA URL (GOOGLE OAUTH) ============
+        (function() {
+            // Extrair token da URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const tokenFromUrl = urlParams.get('token');
+            
+            if (tokenFromUrl) {
+                // Salvar no localStorage
+                localStorage.setItem('token', tokenFromUrl);
+                
+                // Remover o token da URL para não ficar exposto
+                const cleanUrl = window.location.protocol + "//" + 
+                                window.location.host + 
+                                window.location.pathname;
+                window.history.replaceState({}, document.title, cleanUrl);
+                
+                console.log('Token capturado da URL e salvo no localStorage');
+            }
+        })();
         
         // ============ INICIALIZAÇÃO ============
         

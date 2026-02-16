@@ -17,8 +17,8 @@ class AssinaturaController {
                     a.status,
                     a.created_at,
                     COUNT(DISTINCT u.id) as total_assinantes,
-                    ARRAY_AGG(DISTINCT ads.dia_semana ORDER BY ads.dia_semana) as dias_semana,
-                    ARRAY_AGG(DISTINCT s.nome_servico) as servicos_inclusos
+                    ARRAY_AGG(DISTINCT ads.dia_semana ORDER BY ads.dia_semana) FILTER (WHERE ads.dia_semana IS NOT NULL) as dias_semana,
+                    ARRAY_AGG(DISTINCT s.nome_servico) FILTER (WHERE s.nome_servico IS NOT NULL) as servicos_inclusos
                 FROM assinatura a
                 LEFT JOIN usuarios u ON u.assinatura_id = a.id AND u.assinante = true
                 LEFT JOIN assinatura_dias_semana ads ON a.id = ads.assinatura_id
@@ -38,7 +38,7 @@ class AssinaturaController {
                     valor: parseFloat(row.valor),
                     descricao: row.descricao,
                     status: row.status,
-                    total_assinantes: parseInt(row.total_assinantes),
+                    total_assinantes: parseInt(row.total_assinantes || 0),
                     dias_semana: row.dias_semana || [],
                     servicos_inclusos: (row.servicos_inclusos || []).filter(s => s),
                     created_at: row.created_at
@@ -116,8 +116,8 @@ class AssinaturaController {
                     a.status,
                     a.created_at,
                     COUNT(DISTINCT u.id) as total_assinantes,
-                    ARRAY_AGG(DISTINCT ads.dia_semana ORDER BY ads.dia_semana) as dias_semana,
-                    JSON_AGG(JSON_BUILD_OBJECT('id', s.id, 'nome', s.nome_servico) ORDER BY s.nome_servico) as servicos
+                    ARRAY_AGG(DISTINCT ads.dia_semana ORDER BY ads.dia_semana) FILTER (WHERE ads.dia_semana IS NOT NULL) as dias_semana,
+                    JSON_AGG(JSON_BUILD_OBJECT('id', s.id, 'nome', s.nome_servico) ORDER BY s.nome_servico) FILTER (WHERE s.id IS NOT NULL) as servicos
                 FROM assinatura a
                 LEFT JOIN usuarios u ON u.assinatura_id = a.id AND u.assinante = true
                 LEFT JOIN assinatura_dias_semana ads ON a.id = ads.assinatura_id
@@ -254,32 +254,47 @@ class AssinaturaController {
             // 1. Atualizar plano
             const queryUpdate = `
                 UPDATE assinatura 
-                SET nome_plano = $1, valor = $2, descricao = $3, updated_at = CURRENT_TIMESTAMP
+                SET nome_plano = $1, valor = $2, descricao = $3
                 WHERE id = $4
+                RETURNING id
             `;
-            await client.query(queryUpdate, [nome_plano, valor, descricao || null, parseInt(planoId)]);
+            const updateResult = await client.query(queryUpdate, [nome_plano, valor, descricao || null, parseInt(planoId)]);
+            
+            if (updateResult.rows.length === 0) {
+                await client.query('ROLLBACK');
+                return res.status(404).json({
+                    success: false,
+                    message: 'Plano não encontrado'
+                });
+            }
 
-            // 2. Limpar e reinserir dias da semana
-            await client.query('DELETE FROM assinatura_dias_semana WHERE assinatura_id = $1', [parseInt(planoId)]);
-            if (dias_semana && Array.isArray(dias_semana) && dias_semana.length > 0) {
-                for (const dia of dias_semana) {
-                    const queryDia = `
-                        INSERT INTO assinatura_dias_semana (assinatura_id, dia_semana)
-                        VALUES ($1, $2)
-                    `;
-                    await client.query(queryDia, [parseInt(planoId), dia]);
+            // 2. Limpar e reinserir dias da semana (se fornecidos)
+            if (dias_semana !== undefined) {
+                await client.query('DELETE FROM assinatura_dias_semana WHERE assinatura_id = $1', [parseInt(planoId)]);
+                if (dias_semana && Array.isArray(dias_semana) && dias_semana.length > 0) {
+                    for (const dia of dias_semana) {
+                        const queryDia = `
+                            INSERT INTO assinatura_dias_semana (assinatura_id, dia_semana)
+                            VALUES ($1, $2)
+                            ON CONFLICT (assinatura_id, dia_semana) DO NOTHING
+                        `;
+                        await client.query(queryDia, [parseInt(planoId), dia]);
+                    }
                 }
             }
 
-            // 3. Limpar e reinserir serviços
-            await client.query('DELETE FROM assinatura_servico WHERE assinatura_id = $1', [parseInt(planoId)]);
-            if (servicos && Array.isArray(servicos) && servicos.length > 0) {
-                for (const servicoId of servicos) {
-                    const queryServico = `
-                        INSERT INTO assinatura_servico (assinatura_id, servico_id)
-                        VALUES ($1, $2)
-                    `;
-                    await client.query(queryServico, [parseInt(planoId), servicoId]);
+            // 3. Limpar e reinserir serviços (se fornecidos)
+            if (servicos !== undefined) {
+                await client.query('DELETE FROM assinatura_servico WHERE assinatura_id = $1', [parseInt(planoId)]);
+                if (servicos && Array.isArray(servicos) && servicos.length > 0) {
+                    for (const servicoId of servicos) {
+                        const queryServico = `
+                            INSERT INTO assinatura_servico (assinatura_id, servico_id)
+                            VALUES ($1, $2)
+                            ON CONFLICT (assinatura_id, servico_id) DO NOTHING
+                        `;
+                        await client.query(queryServico, [parseInt(planoId), servicoId]);
+                    }
                 }
             }
 
@@ -310,7 +325,7 @@ class AssinaturaController {
     }
 
     /**
-     * DELETE /admin/assinaturas/:planoId - Deletar plano
+     * DELETE /admin/assinaturas/planos/:planoId - Deletar plano
      */
     static async deletarPlano(req, res, next) {
         try {
@@ -320,7 +335,7 @@ class AssinaturaController {
             const checkQuery = `
                 SELECT COUNT(*) as total FROM usuarios WHERE assinatura_id = $1 AND assinante = true
             `;
-            const checkResult = await client.query(checkQuery, [parseInt(planoId)]);
+            const checkResult = await pool.query(checkQuery, [parseInt(planoId)]);
 
             if (parseInt(checkResult.rows[0].total) > 0) {
                 return res.status(400).json({
@@ -332,10 +347,11 @@ class AssinaturaController {
             // Deletar plano (constraints fazem cascade automático)
             const deleteQuery = `
                 DELETE FROM assinatura WHERE id = $1
+                RETURNING id
             `;
             const result = await pool.query(deleteQuery, [parseInt(planoId)]);
 
-            if (result.rowCount === 0) {
+            if (result.rows.length === 0) {
                 return res.status(404).json({
                     success: false,
                     message: 'Plano não encontrado'
@@ -355,145 +371,19 @@ class AssinaturaController {
             });
         }
     }
-
-    /**
-     * GET /admin/assinaturas - Listar assinantes (alias para listarAssinantesAtivos)
-     */
-    static async listarAssinaturas(req, res, next) {
-        // return AssinaturaController.listarAssinantesAtivos(req, res, next);
-        try {
-            const { status = 'ativa', limit = 50, offset = 0 } = req.query;
-
-            const query = `
-                SELECT 
-                    a.id,
-                    a.usuario_id,
-                    a.plano_id,
-                    a.status,
-                    a.stripe_subscription_id,
-                    a.data_inicio,
-                    a.data_proxima_cobranca,
-                    a.created_at,
-                    u.nome as usuario_nome,
-                    u.email as usuario_email,
-                    u.telefone as usuario_telefone,
-                    p.nome as plano_nome,
-                    p.preco as valor,
-                    p.duracao_dias,
-                    p.descricao
-                FROM assinatura a
-                JOIN usuarios u ON a.usuario_id = u.id
-                JOIN planos_assinatura p ON a.plano_id = p.id
-                ${status ? "WHERE a.status = '" + status + "'" : ''}
-                ORDER BY a.created_at DESC
-                LIMIT $1 OFFSET $2
-            `;
-
-            const resultado = await pool.query(query, [parseInt(limit), parseInt(offset)]);
-
-            res.json({
-                success: true,
-                totalRecords: resultado.rows.length,
-                data: resultado.rows.map(row => ({
-                    id: row.id,
-                    usuario_id: row.usuario_id,
-                    usuario_nome: row.usuario_nome,
-                    usuario_email: row.usuario_email,
-                    plano_id: row.plano_id,
-                    plano_nome: row.plano_nome,
-                    valor: parseFloat(row.valor),
-                    status: row.status,
-                    data_inicio: row.data_inicio,
-                    proxima_cobranca: row.data_proxima_cobranca,
-                    criada_em: row.created_at
-                }))
-            });
-        } catch (error) {
-            logger.error('Erro ao listar assinaturas:', error);
             res.status(500).json({
                 success: false,
-                message: 'Erro ao listar assinaturas',
+                message: 'Erro ao deletar plano',
                 error: error.message
             });
         }
     }
 
     /**
-     * GET /admin/assinaturas/:assinaturaId - Obter detalhes de uma assinatura
+     * GET /admin/assinaturas - Listar assinantes (alias para listarAssinantesAtivos)
      */
-    static async obterDetalhesAssinatura(req, res, next) {
-        try {
-            const { assinaturaId } = req.params;
-
-            const query = `
-                SELECT 
-                    a.id,
-                    a.usuario_id,
-                    a.plano_id,
-                    a.status,
-                    a.stripe_subscription_id,
-                    a.data_inicio,
-                    a.data_proxima_cobranca,
-                    a.data_cancelamento,
-                    a.created_at,
-                    a.updated_at,
-                    u.nome as usuario_nome,
-                    u.email as usuario_email,
-                    u.telefone as usuario_telefone,
-                    p.nome as plano_nome,
-                    p.preco as valor,
-                    p.duracao_dias,
-                    p.descricao,
-                    COUNT(ag.id) as total_agendamentos
-                FROM assinatura a
-                JOIN usuarios u ON a.usuario_id = u.id
-                JOIN planos_assinatura p ON a.plano_id = p.id
-                LEFT JOIN agendamentos ag ON a.usuario_id = ag.usuario_id AND ag.data_agendada >= NOW()::date
-                WHERE a.id = $1
-                GROUP BY a.id, u.id, p.id
-            `;
-
-            const resultado = await pool.query(query, [parseInt(assinaturaId)]);
-
-            if (resultado.rows.length === 0) {
-                return res.status(404).json({
-                    success: false,
-                    message: 'Assinatura não encontrada'
-                });
-            }
-
-            const row = resultado.rows[0];
-
-            res.json({
-                success: true,
-                data: {
-                    id: row.id,
-                    usuario_id: row.usuario_id,
-                    usuario_nome: row.usuario_nome,
-                    usuario_email: row.usuario_email,
-                    usuario_telefone: row.usuario_telefone,
-                    plano_id: row.plano_id,
-                    plano_nome: row.plano_nome,
-                    valor: parseFloat(row.valor),
-                    duracao_dias: row.duracao_dias,
-                    descricao: row.descricao,
-                    status: row.status,
-                    data_inicio: row.data_inicio,
-                    proxima_cobranca: row.data_proxima_cobranca,
-                    data_cancelamento: row.data_cancelamento,
-                    total_agendamentos_pendentes: parseInt(row.total_agendamentos),
-                    criada_em: row.created_at,
-                    atualizada_em: row.updated_at
-                }
-            });
-        } catch (error) {
-            logger.error('Erro ao obter detalhes da assinatura:', error);
-            res.status(500).json({
-                success: false,
-                message: 'Erro ao obter detalhes da assinatura',
-                error: error.message
-            });
-        }
+    static async listarAssinaturas(req, res, next) {
+        return AssinaturaController.listarAssinantesAtivos(req, res, next);
     }
 
     /**
@@ -503,18 +393,15 @@ class AssinaturaController {
         try {
             const resumoQuery = `
                 SELECT 
-                    p.id,
-                    p.nome,
-                    p.preco,
-                    COUNT(CASE WHEN a.status = 'ativa' THEN 1 END) as assinantes_ativos,
-                    COUNT(CASE WHEN a.status = 'cancelada' THEN 1 END) as assinantes_cancelados,
-                    COUNT(CASE WHEN a.status = 'pausada' THEN 1 END) as assinantes_pausados,
-                    COUNT(a.id) as total_assinantes,
-                    COALESCE(SUM(CASE WHEN a.status = 'ativa' THEN p.preco ELSE 0 END), 0) as receita_esperada_mensal
-                FROM planos_assinatura p
-                LEFT JOIN assinaturas a ON p.id = a.plano_id
-                GROUP BY p.id, p.nome, p.preco
-                ORDER BY p.preco ASC
+                    a.id,
+                    a.nome_plano,
+                    a.valor,
+                    COUNT(DISTINCT u.id) as total_assinantes,
+                    COALESCE(SUM(CASE WHEN u.assinante = true THEN a.valor ELSE 0 END), 0) as receita_esperada_mensal
+                FROM assinatura a
+                LEFT JOIN usuarios u ON u.assinatura_id = a.id
+                GROUP BY a.id
+                ORDER BY a.valor ASC
             `;
 
             const resultado = await pool.query(resumoQuery);
@@ -523,11 +410,8 @@ class AssinaturaController {
                 success: true,
                 data: resultado.rows.map(row => ({
                     plano_id: row.id,
-                    plano_nome: row.nome,
-                    preco_mensal: parseFloat(row.preco),
-                    assinantes_ativos: parseInt(row.assinantes_ativos),
-                    assinantes_cancelados: parseInt(row.assinantes_cancelados),
-                    assinantes_pausados: parseInt(row.assinantes_pausados),
+                    plano_nome: row.nome_plano,
+                    preco_mensal: parseFloat(row.valor),
                     total_assinantes: parseInt(row.total_assinantes),
                     receita_esperada_mensal: parseFloat(row.receita_esperada_mensal)
                 }))
@@ -540,7 +424,6 @@ class AssinaturaController {
                 error: error.message
             });
         }
-    
     }
 }
 

@@ -6450,6 +6450,142 @@
 
         // No setupEventListeners, adicione:
         document.getElementById('form-novo-bloqueio')?.addEventListener('submit', handleNovoBloqueio);
+
+        // ==================== FUNÇÕES DE ASSINATURAS ====================
+
+        function abrirModalNovoPlano() {
+            console.log('Abrindo modal de novo plano');
+            // Placeholder para modal de novo plano
+            const nome_plano = prompt('Nome do plano:');
+            if (!nome_plano) return;
+            
+            const valor = prompt('Valor mensal (R$):');
+            if (!valor) return;
+            
+            criarPlano({
+                nome_plano,
+                valor: parseFloat(valor),
+                descricao: prompt('Descrição (opcional):') || '',
+                dias_semana: [1, 2, 3, 4, 5], // padrão seg-sex
+                servicos: []
+            });
+        }
+
+        function abrirModalEditarPlano(planoId) {
+            console.log('Abrindo modal de edição do plano:', planoId);
+            // Placeholder para modal de edição
+            const novoNome = prompt('Novo nome do plano:');
+            if (novoNome) {
+                editarPlano(planoId, { nome_plano: novoNome });
+            }
+        }
+
+        async function deletarPlano(planoId) {
+            if (!confirm('Tem certeza que deseja deletar este plano?')) return;
+            
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_BASE_URL}/admin/assinaturas/planos/${planoId}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showNotification('Plano deletado com sucesso!', 'success');
+                    carregarPlanosEAssinantes(); // Recarregar lista
+                } else {
+                    showNotification(result.message || 'Erro ao deletar plano', 'error');
+                }
+            } catch (error) {
+                console.error('Erro ao deletar plano:', error);
+                showNotification('Erro ao conectar com servidor', 'error');
+            }
+        }
+
+        async function criarPlano(dados) {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_BASE_URL}/admin/assinaturas/planos`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(dados)
+                });
+
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showNotification('Plano criado com sucesso!', 'success');
+                    carregarPlanosEAssinantes(); // Recarregar lista
+                } else {
+                    showNotification(result.message || 'Erro ao criar plano', 'error');
+                }
+            } catch (error) {
+                console.error('Erro ao criar plano:', error);
+                showNotification('Erro ao conectar com servidor', 'error');
+            }
+        }
+
+        async function editarPlano(planoId, dados) {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_BASE_URL}/admin/assinaturas/planos/${planoId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(dados)
+                });
+
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showNotification('Plano atualizado com sucesso!', 'success');
+                    carregarPlanosEAssinantes(); // Recarregar lista
+                } else {
+                    showNotification(result.message || 'Erro ao editar plano', 'error');
+                }
+            } catch (error) {
+                console.error('Erro ao editar plano:', error);
+                showNotification('Erro ao conectar com servidor', 'error');
+            }
+        }
+
+        function verAssinante(assinanteId) {
+            console.log('Visualizando assinante:', assinanteId);
+            alert('Detalhes do assinante ID: ' + assinanteId);
+            // TODO: Implementar modal com detalhes do assinante
+        }
+
+        function showNotification(message, type = 'info') {
+            // Usar toastify ou criar notificação simples
+            const color = type === 'success' ? '#4CAF50' : type === 'error' ? '#f44336' : '#2196F3';
+            const bgColor = type === 'success' ? 'rgba(76, 175, 80, 0.1)' : type === 'error' ? 'rgba(244, 67, 54, 0.1)' : 'rgba(33, 150, 243, 0.1)';
+            
+            const notify = document.createElement('div');
+            notify.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: ${bgColor};
+                color: ${color};
+                padding: 15px 20px;
+                border-radius: 8px;
+                border-left: 4px solid ${color};
+                z-index: 10000;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+                animation: slideIn 0.3s ease;
+            `;
+            notify.textContent = message;
+            document.body.appendChild(notify);
+            
+            setTimeout(() => notify.remove(), 3000);
+        }
     </script>
 </body>
 </html>

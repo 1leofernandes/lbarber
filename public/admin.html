@@ -3417,7 +3417,7 @@
                 const token = localStorage.getItem('token');
                 
                 // Carregar planos
-                const responsePlanos = await fetch(`${API_BASE_URL}/api/subscricoes-recorrentes/planos`, {
+                const responsePlanos = await fetch(`${API_BASE_URL}/admin/assinaturas/planos`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
 

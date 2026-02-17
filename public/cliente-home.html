@@ -1422,1058 +1422,1056 @@
         
         if (!token) {
             window.location.href = 'login.html';
-        }
-        
-        function parseJwt(token) {
-            const base64Url = token.split('.')[1];
-            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-            return JSON.parse(atob(base64));
-        }
-
-        document.getElementById('welcomeTitle').textContent = `bem-vindo, ${nomeUsuario}`;
-
-        const userData = parseJwt(token);
-        localStorage.setItem('nome', userData.nome);
-        localStorage.setItem('role', userData.role);
-        localStorage.setItem('roles', userData.roles);
-
-        // Redirecionar admin ou barbeiro para suas páginas (cliente-home é apenas para cliente)
-        if (userData.roles === 'admin') {
-            window.location.href = 'admin.html';
-            return;
-        }
-        if (userData.role === 'barbeiro') {
-            window.location.href = 'barbeiro.html';
-            return;
-        }
-        
-        // Estado do usuário
-        let usuario = {
-            nome: nomeUsuario,
-            assinante: false,
-            assinatura_id: null,
-            plano: null
-        };
-
-        // Estado para controle de histórico
-        let mostrarHistorico = false;
-        let todosAgendamentos = []; // Para armazenar todos os agendamentos
-        
-        // Dados de agendamentos
-        const agendamentos = [];
-        
-        // Elementos DOM
-        const sidebar = document.getElementById('sidebar');
-        const menuToggle = document.getElementById('menuToggle');
-        const overlay = document.getElementById('overlay');
-        const pageTitle = document.getElementById('pageTitle');
-        const welcomeTitle = document.getElementById('welcomeTitle');
-        const planCard = document.getElementById('planCard');
-        const planStatus = document.getElementById('planStatus');
-        const planDescription = document.getElementById('planDescription');
-        const planActionBtn = document.getElementById('planActionBtn');
-        const agendamentosList = document.getElementById('agendamentosList');
-        const logoutBtn = document.getElementById('logoutBtn');
-        const menuItems = document.querySelectorAll('.menu-item');
-        
-        // Modal Elements
-        const perfilModal = document.getElementById('perfilModal');
-        const informacoesModal = document.getElementById('informacoesModal');
-        const openPerfilModalBtn = document.getElementById('openPerfilModal');
-        const openInfoModalBtn = document.getElementById('openInfoModal');
-        const closePerfilModalBtn = document.getElementById('closePerfilModal');
-        const closeInfoModalBtn = document.getElementById('closeInfoModal');
-        const saveProfileBtn = document.getElementById('saveProfileBtn');
-        const profileName = document.getElementById('profileName');
-        const profileEmail = document.getElementById('profileEmail');
-        const profilePhone = document.getElementById('profilePhone');
-
-        const confirmDeleteModal = document.getElementById('confirmDeleteModal');
-        const deleteAccountBtn = document.getElementById('deleteAccountBtn');
-        const closeDeleteModalBtn = document.getElementById('closeDeleteModal');
-        const cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
-        const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
-        const confirmPassword = document.getElementById('confirmPassword');
-        
-        // Inicializar página
-        function initPage() {
-            // Atualizar nome do usuário
-            welcomeTitle.textContent = `Bem-vindo, ${usuario.nome}`;
-            
-            // Carregar dados do perfil (que inclui dados de assinatura)
-            loadProfileData();
-            
-            // Carregar agendamentos
-            loadAgendamentos();
-            
-            // Configurar eventos
-            setupEventListeners();
-        }
-        
-        // Configurar plano do usuário
-        function setupUserPlan() {
-            if (usuario.assinante && usuario.plano) {
-                planCard.classList.add('plan-highlight');
-                planStatus.textContent = 'Ativo';
-                planStatus.className = 'plan-status status-active';
-                
-                // Construir descrição com nome do plano
-                const nomePlano = usuario.plano.nome_plano || 'Plano';
-                planDescription.textContent = `Você está aproveitando as vantagens do "${nomePlano}"`;
-                
-                planActionBtn.innerHTML = '<i class="fas fa-info-circle"></i> Detalhes sobre o plano';
-                planActionBtn.onclick = () => {
-                    // let detalhes = `Detalhes da Assinatura:\n\n`;
-                    // detalhes += `Plano: ${usuario.plano.nome_plano || 'Não especificado'}\n`;
-                    // if (usuario.plano.descricao) {
-                    //     detalhes += `Descrição: ${usuario.plano.descricao}\n`;
-                    // }
-                    // if (usuario.plano.servicos) {
-                    //     detalhes += `Serviços: ${usuario.plano.servicos}\n`;
-                    // }
-                    // if (usuario.plano.valor) {
-                    //     detalhes += `Valor: R$ ${parseFloat(usuario.plano.valor).toFixed(2)}/mês`;
-                    // }
-                    // alert(detalhes);
-                    window.location.href = 'minha-assinatura.html';
-                };
-            } else {
-                planCard.classList.remove('plan-highlight');
-                planStatus.textContent = 'Inativo';
-                planStatus.className = 'plan-status status-inactive';
-                planDescription.textContent = 'Aproveite diversos benefícios com uma assinatura recorrente';
-                planActionBtn.innerHTML = '<i class="fas fa-gem"></i> Se torne um assinante';
-                planActionBtn.onclick = () => {
-                    window.location.href = 'assinatura.html';
-                };
+        } else {
+            function parseJwt(token) {
+                const base64Url = token.split('.')[1];
+                const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+                return JSON.parse(atob(base64));
             }
-        }
-        
-        // Carregar dados do perfil do localStorage
-        async function loadProfileData() {
-            try {
-                // Buscar dados da API
-                const response = await fetch(`${API_BASE_URL}/usuarios/me`, {
-                    headers: { 
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    }
-                });
+
+            document.getElementById('welcomeTitle').textContent = `bem-vindo, ${nomeUsuario}`;
+
+            const userData = parseJwt(token);
+            localStorage.setItem('nome', userData.nome);
+            localStorage.setItem('role', userData.role);
+            localStorage.setItem('roles', userData.roles);
+
+            // Redirecionar admin ou barbeiro para suas páginas (cliente-home é apenas para cliente)
+            if (userData.roles === 'admin') {
+                window.location.href = 'admin.html';
+            } else if (userData.role === 'barbeiro') {
+                window.location.href = 'barbeiro.html';
+            } else {
+            
+                // Estado do usuário
+                let usuario = {
+                    nome: nomeUsuario,
+                    assinante: false,
+                    assinatura_id: null,
+                    plano: null
+                };
+
+                // Estado para controle de histórico
+                let mostrarHistorico = false;
+                let todosAgendamentos = []; // Para armazenar todos os agendamentos
                 
-                if (response.ok) {
-                    const userDataFromAPI = await response.json();
+                // Dados de agendamentos
+                const agendamentos = [];
+                
+                // Elementos DOM
+                const sidebar = document.getElementById('sidebar');
+                const menuToggle = document.getElementById('menuToggle');
+                const overlay = document.getElementById('overlay');
+                const pageTitle = document.getElementById('pageTitle');
+                const welcomeTitle = document.getElementById('welcomeTitle');
+                const planCard = document.getElementById('planCard');
+                const planStatus = document.getElementById('planStatus');
+                const planDescription = document.getElementById('planDescription');
+                const planActionBtn = document.getElementById('planActionBtn');
+                const agendamentosList = document.getElementById('agendamentosList');
+                const logoutBtn = document.getElementById('logoutBtn');
+                const menuItems = document.querySelectorAll('.menu-item');
+                
+                // Modal Elements
+                const perfilModal = document.getElementById('perfilModal');
+                const informacoesModal = document.getElementById('informacoesModal');
+                const openPerfilModalBtn = document.getElementById('openPerfilModal');
+                const openInfoModalBtn = document.getElementById('openInfoModal');
+                const closePerfilModalBtn = document.getElementById('closePerfilModal');
+                const closeInfoModalBtn = document.getElementById('closeInfoModal');
+                const saveProfileBtn = document.getElementById('saveProfileBtn');
+                const profileName = document.getElementById('profileName');
+                const profileEmail = document.getElementById('profileEmail');
+                const profilePhone = document.getElementById('profilePhone');
+
+                const confirmDeleteModal = document.getElementById('confirmDeleteModal');
+                const deleteAccountBtn = document.getElementById('deleteAccountBtn');
+                const closeDeleteModalBtn = document.getElementById('closeDeleteModal');
+                const cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
+                const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+                const confirmPassword = document.getElementById('confirmPassword');
+                
+                // Inicializar página
+                function initPage() {
+                    // Atualizar nome do usuário
+                    welcomeTitle.textContent = `Bem-vindo, ${usuario.nome}`;
                     
-                    // Atualizar dados do usuário
-                    usuario.nome = userDataFromAPI.nome;
-                    usuario.assinante = userDataFromAPI.assinante || false;
-                    usuario.assinatura_id = userDataFromAPI.assinatura_id;
+                    // Carregar dados do perfil (que inclui dados de assinatura)
+                    loadProfileData();
                     
-                    // Se o usuário é assinante, extrair dados da assinatura
-                    if (usuario.assinante && userDataFromAPI.plano_id) {
-                        usuario.plano = {
-                            id: userDataFromAPI.plano_id,
-                            nome_plano: userDataFromAPI.nome_plano,
-                            descricao: userDataFromAPI.descricao,
-                            servicos: userDataFromAPI.servicos,
-                            valor: userDataFromAPI.valor,
-                            status: userDataFromAPI.plano_status
+                    // Carregar agendamentos
+                    loadAgendamentos();
+                    
+                    // Configurar eventos
+                    setupEventListeners();
+                }
+                
+                // Configurar plano do usuário
+                function setupUserPlan() {
+                    if (usuario.assinante && usuario.plano) {
+                        planCard.classList.add('plan-highlight');
+                        planStatus.textContent = 'Ativo';
+                        planStatus.className = 'plan-status status-active';
+                        
+                        // Construir descrição com nome do plano
+                        const nomePlano = usuario.plano.nome_plano || 'Plano';
+                        planDescription.textContent = `Você está aproveitando as vantagens do "${nomePlano}"`;
+                        
+                        planActionBtn.innerHTML = '<i class="fas fa-info-circle"></i> Detalhes sobre o plano';
+                        planActionBtn.onclick = () => {
+                            // let detalhes = `Detalhes da Assinatura:\n\n`;
+                            // detalhes += `Plano: ${usuario.plano.nome_plano || 'Não especificado'}\n`;
+                            // if (usuario.plano.descricao) {
+                            //     detalhes += `Descrição: ${usuario.plano.descricao}\n`;
+                            // }
+                            // if (usuario.plano.servicos) {
+                            //     detalhes += `Serviços: ${usuario.plano.servicos}\n`;
+                            // }
+                            // if (usuario.plano.valor) {
+                            //     detalhes += `Valor: R$ ${parseFloat(usuario.plano.valor).toFixed(2)}/mês`;
+                            // }
+                            // alert(detalhes);
+                            window.location.href = 'minha-assinatura.html';
+                        };
+                    } else {
+                        planCard.classList.remove('plan-highlight');
+                        planStatus.textContent = 'Inativo';
+                        planStatus.className = 'plan-status status-inactive';
+                        planDescription.textContent = 'Aproveite diversos benefícios com uma assinatura recorrente';
+                        planActionBtn.innerHTML = '<i class="fas fa-gem"></i> Se torne um assinante';
+                        planActionBtn.onclick = () => {
+                            window.location.href = 'assinatura.html';
                         };
                     }
-                    
-                    // Atualizar o card do plano com os dados reais
-                    setupUserPlan();
-                    
-                    // Preencher campos com dados da API
-                    if (userDataFromAPI.nome) {
-                        profileName.value = userDataFromAPI.nome;
-                    }
-                    if (userDataFromAPI.email) {
-                        profileEmail.value = userDataFromAPI.email;
-                    }
-                    if (userDataFromAPI.telefone) {
-                        profilePhone.value = userDataFromAPI.telefone;
-                    }
-                    
-                    // Salvar no localStorage para cache
-                    localStorage.setItem('userName', userDataFromAPI.nome || '');
-                    localStorage.setItem('userEmail', userDataFromAPI.email || '');
-                    localStorage.setItem('userPhone', userDataFromAPI.telefone || '');
-                    localStorage.setItem('assinante', usuario.assinante);
-                    localStorage.setItem('assinatura_id', usuario.assinatura_id || '');
-                    
-                } else {
-                    // Se API falhar, usar dados do localStorage ou token
-                    console.log('API falhou, usando cache...');
-                    useFallbackData();
                 }
-            } catch (error) {
-                console.error('Erro ao carregar perfil:', error);
-                useFallbackData();
-            }
-        }
+                
+                // Carregar dados do perfil do localStorage
+                async function loadProfileData() {
+                    try {
+                        // Buscar dados da API
+                        const response = await fetch(`${API_BASE_URL}/usuarios/me`, {
+                            headers: { 
+                                'Authorization': `Bearer ${token}`,
+                                'Content-Type': 'application/json'
+                            }
+                        });
+                        
+                        if (response.ok) {
+                            const userDataFromAPI = await response.json();
+                            
+                            // Atualizar dados do usuário
+                            usuario.nome = userDataFromAPI.nome;
+                            usuario.assinante = userDataFromAPI.assinante || false;
+                            usuario.assinatura_id = userDataFromAPI.assinatura_id;
+                            
+                            // Se o usuário é assinante, extrair dados da assinatura
+                            if (usuario.assinante && userDataFromAPI.plano_id) {
+                                usuario.plano = {
+                                    id: userDataFromAPI.plano_id,
+                                    nome_plano: userDataFromAPI.nome_plano,
+                                    descricao: userDataFromAPI.descricao,
+                                    servicos: userDataFromAPI.servicos,
+                                    valor: userDataFromAPI.valor,
+                                    status: userDataFromAPI.plano_status
+                                };
+                            }
+                            
+                            // Atualizar o card do plano com os dados reais
+                            setupUserPlan();
+                            
+                            // Preencher campos com dados da API
+                            if (userDataFromAPI.nome) {
+                                profileName.value = userDataFromAPI.nome;
+                            }
+                            if (userDataFromAPI.email) {
+                                profileEmail.value = userDataFromAPI.email;
+                            }
+                            if (userDataFromAPI.telefone) {
+                                profilePhone.value = userDataFromAPI.telefone;
+                            }
+                            
+                            // Salvar no localStorage para cache
+                            localStorage.setItem('userName', userDataFromAPI.nome || '');
+                            localStorage.setItem('userEmail', userDataFromAPI.email || '');
+                            localStorage.setItem('userPhone', userDataFromAPI.telefone || '');
+                            localStorage.setItem('assinante', usuario.assinante);
+                            localStorage.setItem('assinatura_id', usuario.assinatura_id || '');
+                            
+                        } else {
+                            // Se API falhar, usar dados do localStorage ou token
+                            console.log('API falhou, usando cache...');
+                            useFallbackData();
+                        }
+                    } catch (error) {
+                        console.error('Erro ao carregar perfil:', error);
+                        useFallbackData();
+                    }
+                }
 
-        function useFallbackData() {
-            const savedName = localStorage.getItem('userName');
-            const savedEmail = localStorage.getItem('userEmail');
-            const savedPhone = localStorage.getItem('userPhone');
-            
-            if (savedName) profileName.value = savedName;
-            if (savedEmail) profileEmail.value = savedEmail;
-            if (savedPhone) profilePhone.value = savedPhone;
-            
-            // Usar dados do token como fallback
-            if (!savedName && userData.nome) {
-                profileName.value = userData.nome;
-            }
-            if (!savedEmail && userData.email) {
-                profileEmail.value = userData.email;
-            }
-            if (!savedPhone && userData.telefone) {
-                profilePhone.value = userData.telefone;
-            }
-        }
-        
-        // Salvar dados do perfil
-        async function saveProfileData() {
-            const dadosAtualizados = {
-                nome: profileName.value.trim(),
-                email: profileEmail.value.trim(),
-                telefone: profilePhone.value.trim()
-            };
-            
-            // Validação básica
-            if (!dadosAtualizados.nome || !dadosAtualizados.email) {
-                showNotification('Nome e email são obrigatórios', 'error');
-                return;
-            }
-            
-            try {
-                const response = await fetch(`${API_BASE_URL}/usuarios/me`, {
-                    method: 'PUT',
-                    headers: { 
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(dadosAtualizados)
-                });
-                
-                const data = await response.json();
-                
-                if (response.ok) {
-                    // Atualizar localStorage
-                    localStorage.setItem('userName', dadosAtualizados.nome);
-                    localStorage.setItem('userEmail', dadosAtualizados.email);
-                    localStorage.setItem('userPhone', dadosAtualizados.telefone || '');
+                function useFallbackData() {
+                    const savedName = localStorage.getItem('userName');
+                    const savedEmail = localStorage.getItem('userEmail');
+                    const savedPhone = localStorage.getItem('userPhone');
                     
-                    showNotification('Perfil atualizado com sucesso!', 'success');
+                    if (savedName) profileName.value = savedName;
+                    if (savedEmail) profileEmail.value = savedEmail;
+                    if (savedPhone) profilePhone.value = savedPhone;
                     
-                    setTimeout(() => {
-                        closeModal(perfilModal);
-                    }, 1500);
-                } else {
-                    showNotification(data.error || 'Erro ao atualizar perfil', 'error');
-                }
-            } catch (error) {
-                console.error('Erro ao salvar perfil:', error);
-                showNotification('Erro de conexão. Tente novamente.', 'error');
-            }
-        }
-
-        async function deleteAccount() {
-
-            const originalText = confirmDeleteBtn.innerHTML;
-            confirmDeleteBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Excluindo...';
-            confirmDeleteBtn.disabled = true;
-            
-            try {
-                const response = await fetch(`${API_BASE_URL}/usuarios/me`, {
-                    method: 'DELETE',
-                    headers: { 
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    },
-                });
-                
-                const data = await response.json();
-                
-                if (response.ok) {
-                    showNotification('Conta excluída com sucesso', 'success');
-                    
-                    // Limpar localStorage e redirecionar
-                    setTimeout(() => {
-                        localStorage.clear();
-                        window.location.href = 'login.html';
-                    }, 2000);
-                    
-                } else {
-                    showNotification(data.error || 'Erro ao excluir conta', 'error');
-                }
-            } catch (error) {
-                console.error('Erro ao excluir conta:', error);
-                showNotification('Erro de conexão. Tente novamente.', 'error');
-            }
-        }
-        
-        // Mostrar notificação
-        function showNotification(message, type = 'success') {
-            // Remover notificação anterior se existir
-            const existingNotification = document.querySelector('.notification');
-            if (existingNotification) {
-                existingNotification.remove();
-            }
-            
-            const notification = document.createElement('div');
-            notification.className = `notification notification-${type}`;
-            notification.innerHTML = `
-                <div style="position: fixed; top: 20px; right: 20px; background: ${type === 'success' ? '#28a745' : '#dc3545'}; 
-                     color: white; padding: 1rem 1.5rem; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); 
-                     z-index: 3000; display: flex; align-items: center; gap: 10px; animation: slideIn 0.3s ease;">
-                    <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i>
-                    ${message}
-                </div>
-            `;
-            
-            document.body.appendChild(notification);
-            
-            // Remover após 3 segundos
-            setTimeout(() => {
-                notification.style.animation = 'slideOut 0.3s ease';
-                setTimeout(() => {
-                    notification.remove();
-                }, 300);
-            }, 3000);
-            
-            // Adicionar animação CSS
-            const style = document.createElement('style');
-            style.textContent = `
-                @keyframes slideIn {
-                    from { transform: translateX(100%); opacity: 0; }
-                    to { transform: translateX(0); opacity: 1; }
-                }
-                @keyframes slideOut {
-                    from { transform: translateX(0); opacity: 1; }
-                    to { transform: translateX(100%); opacity: 0; }
-                }
-            `;
-            document.head.appendChild(style);
-        }
-        
-        // Abrir modal
-        function openModal(modal) {
-            // Fechar sidebar se estiver aberta
-            sidebar.classList.remove('active');
-            overlay.classList.remove('active');
-            
-            // Abrir modal
-            modal.classList.add('active');
-            document.body.style.overflow = 'hidden';
-        }
-        
-        // Fechar modal
-        function closeModal(modal) {
-            modal.classList.remove('active');
-            document.body.style.overflow = 'auto';
-        }
-        
-        // Carregar agendamentos
-        async function loadAgendamentos() {
-            try {
-                // Mostrar loading
-                agendamentosList.innerHTML = '<div class="loading">Carregando agendamentos...</div>';
-                
-                const token = localStorage.getItem('token');
-                
-                if (!token) {
-                    agendamentosList.innerHTML = '<div class="no-data">Faça login para ver seus agendamentos</div>';
-                    return;
-                }
-                
-                const response = await fetch(`${API_BASE_URL}/agendamentos/meus`, {
-                    method: 'GET',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
+                    // Usar dados do token como fallback
+                    if (!savedName && userData.nome) {
+                        profileName.value = userData.nome;
                     }
-                });
-                
-                if (!response.ok) {
-                    throw new Error('Erro ao carregar agendamentos');
+                    if (!savedEmail && userData.email) {
+                        profileEmail.value = userData.email;
+                    }
+                    if (!savedPhone && userData.telefone) {
+                        profilePhone.value = userData.telefone;
+                    }
                 }
                 
-                const result = await response.json();
+                // Salvar dados do perfil
+                async function saveProfileData() {
+                    const dadosAtualizados = {
+                        nome: profileName.value.trim(),
+                        email: profileEmail.value.trim(),
+                        telefone: profilePhone.value.trim()
+                    };
+                    
+                    // Validação básica
+                    if (!dadosAtualizados.nome || !dadosAtualizados.email) {
+                        showNotification('Nome e email são obrigatórios', 'error');
+                        return;
+                    }
+                    
+                    try {
+                        const response = await fetch(`${API_BASE_URL}/usuarios/me`, {
+                            method: 'PUT',
+                            headers: { 
+                                'Authorization': `Bearer ${token}`,
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify(dadosAtualizados)
+                        });
+                        
+                        const data = await response.json();
+                        
+                        if (response.ok) {
+                            // Atualizar localStorage
+                            localStorage.setItem('userName', dadosAtualizados.nome);
+                            localStorage.setItem('userEmail', dadosAtualizados.email);
+                            localStorage.setItem('userPhone', dadosAtualizados.telefone || '');
+                            
+                            showNotification('Perfil atualizado com sucesso!', 'success');
+                            
+                            setTimeout(() => {
+                                closeModal(perfilModal);
+                            }, 1500);
+                        } else {
+                            showNotification(data.error || 'Erro ao atualizar perfil', 'error');
+                        }
+                    } catch (error) {
+                        console.error('Erro ao salvar perfil:', error);
+                        showNotification('Erro de conexão. Tente novamente.', 'error');
+                    }
+                }
+
+                async function deleteAccount() {
+
+                    const originalText = confirmDeleteBtn.innerHTML;
+                    confirmDeleteBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Excluindo...';
+                    confirmDeleteBtn.disabled = true;
+                    
+                    try {
+                        const response = await fetch(`${API_BASE_URL}/usuarios/me`, {
+                            method: 'DELETE',
+                            headers: { 
+                                'Authorization': `Bearer ${token}`,
+                                'Content-Type': 'application/json'
+                            },
+                        });
+                        
+                        const data = await response.json();
+                        
+                        if (response.ok) {
+                            showNotification('Conta excluída com sucesso', 'success');
+                            
+                            // Limpar localStorage e redirecionar
+                            setTimeout(() => {
+                                localStorage.clear();
+                                window.location.href = 'login.html';
+                            }, 2000);
+                            
+                        } else {
+                            showNotification(data.error || 'Erro ao excluir conta', 'error');
+                        }
+                    } catch (error) {
+                        console.error('Erro ao excluir conta:', error);
+                        showNotification('Erro de conexão. Tente novamente.', 'error');
+                    }
+                }
                 
-                // DEBUG: Verificar estrutura da resposta
-                console.log('Resposta da API:', result);
-                console.log('Sucesso:', result.success);
-                console.log('Agendamentos:', result.agendamentos);
-                
-                if (!result.success || !result.agendamentos || result.agendamentos.length === 0) {
-                    agendamentosList.innerHTML = `
-                        <div class="no-data">
-                            <i class="fas fa-calendar-times"></i>
-                            <p>Nenhum agendamento encontrado</p>
+                // Mostrar notificação
+                function showNotification(message, type = 'success') {
+                    // Remover notificação anterior se existir
+                    const existingNotification = document.querySelector('.notification');
+                    if (existingNotification) {
+                        existingNotification.remove();
+                    }
+                    
+                    const notification = document.createElement('div');
+                    notification.className = `notification notification-${type}`;
+                    notification.innerHTML = `
+                        <div style="position: fixed; top: 20px; right: 20px; background: ${type === 'success' ? '#28a745' : '#dc3545'}; 
+                            color: white; padding: 1rem 1.5rem; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); 
+                            z-index: 3000; display: flex; align-items: center; gap: 10px; animation: slideIn 0.3s ease;">
+                            <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i>
+                            ${message}
                         </div>
                     `;
-                    return;
+                    
+                    document.body.appendChild(notification);
+                    
+                    // Remover após 3 segundos
+                    setTimeout(() => {
+                        notification.style.animation = 'slideOut 0.3s ease';
+                        setTimeout(() => {
+                            notification.remove();
+                        }, 300);
+                    }, 3000);
+                    
+                    // Adicionar animação CSS
+                    const style = document.createElement('style');
+                    style.textContent = `
+                        @keyframes slideIn {
+                            from { transform: translateX(100%); opacity: 0; }
+                            to { transform: translateX(0); opacity: 1; }
+                        }
+                        @keyframes slideOut {
+                            from { transform: translateX(0); opacity: 1; }
+                            to { transform: translateX(100%); opacity: 0; }
+                        }
+                    `;
+                    document.head.appendChild(style);
                 }
                 
-                // Renderizar agendamentos passando o array correto
-                // Armazenar todos os agendamentos
-                todosAgendamentos = result.agendamentos;
-
-                // Renderizar apenas agendamentos futuros por padrão
-                filtrarAgendamentosFuturos();
+                // Abrir modal
+                function openModal(modal) {
+                    // Fechar sidebar se estiver aberta
+                    sidebar.classList.remove('active');
+                    overlay.classList.remove('active');
+                    
+                    // Abrir modal
+                    modal.classList.add('active');
+                    document.body.style.overflow = 'hidden';
+                }
                 
-            } catch (error) {
-                console.error('Erro ao carregar agendamentos:', error);
-                agendamentosList.innerHTML = `
-                    <div class="error-message">
-                        <i class="fas fa-exclamation-circle"></i>
-                        <p>Erro ao carregar agendamentos. Tente novamente.</p>
-                        <button onclick="loadAgendamentos()" class="btn-retry">Tentar novamente</button>
-                    </div>
-                `;
-            }
-        }
+                // Fechar modal
+                function closeModal(modal) {
+                    modal.classList.remove('active');
+                    document.body.style.overflow = 'auto';
+                }
+                
+                // Carregar agendamentos
+                async function loadAgendamentos() {
+                    try {
+                        // Mostrar loading
+                        agendamentosList.innerHTML = '<div class="loading">Carregando agendamentos...</div>';
+                        
+                        const token = localStorage.getItem('token');
+                        
+                        if (!token) {
+                            agendamentosList.innerHTML = '<div class="no-data">Faça login para ver seus agendamentos</div>';
+                            return;
+                        }
+                        
+                        const response = await fetch(`${API_BASE_URL}/agendamentos/meus`, {
+                            method: 'GET',
+                            headers: {
+                                'Authorization': `Bearer ${token}`,
+                                'Content-Type': 'application/json'
+                            }
+                        });
+                        
+                        if (!response.ok) {
+                            throw new Error('Erro ao carregar agendamentos');
+                        }
+                        
+                        const result = await response.json();
+                        
+                        // DEBUG: Verificar estrutura da resposta
+                        console.log('Resposta da API:', result);
+                        console.log('Sucesso:', result.success);
+                        console.log('Agendamentos:', result.agendamentos);
+                        
+                        if (!result.success || !result.agendamentos || result.agendamentos.length === 0) {
+                            agendamentosList.innerHTML = `
+                                <div class="no-data">
+                                    <i class="fas fa-calendar-times"></i>
+                                    <p>Nenhum agendamento encontrado</p>
+                                </div>
+                            `;
+                            return;
+                        }
+                        
+                        // Renderizar agendamentos passando o array correto
+                        // Armazenar todos os agendamentos
+                        todosAgendamentos = result.agendamentos;
 
-        // Renderizar agendamentos na lista
-        function renderizarAgendamentos(agendamentosArray) {
-            agendamentosList.innerHTML = '';
-            
-            if (!agendamentosArray || agendamentosArray.length === 0) {
-                agendamentosList.innerHTML = `
-                    <div class="no-data">
+                        // Renderizar apenas agendamentos futuros por padrão
+                        filtrarAgendamentosFuturos();
+                        
+                    } catch (error) {
+                        console.error('Erro ao carregar agendamentos:', error);
+                        agendamentosList.innerHTML = `
+                            <div class="error-message">
+                                <i class="fas fa-exclamation-circle"></i>
+                                <p>Erro ao carregar agendamentos. Tente novamente.</p>
+                                <button onclick="loadAgendamentos()" class="btn-retry">Tentar novamente</button>
+                            </div>
+                        `;
+                    }
+                }
+
+                // Renderizar agendamentos na lista
+                function renderizarAgendamentos(agendamentosArray) {
+                    agendamentosList.innerHTML = '';
+                    
+                    if (!agendamentosArray || agendamentosArray.length === 0) {
+                        agendamentosList.innerHTML = `
+                            <div class="no-data">
+                                <i class="fas fa-calendar-times"></i>
+                                <p>Nenhum agendamento encontrado</p>
+                                <a href="agendamento.html" class="btn btn-outline" style="margin-top: 1rem;">
+                                    <i class="fas fa-plus"></i>
+                                    Agendar agora
+                                </a>
+                            </div>
+                        `;
+                        return;
+                    }
+                    
+                    // Contador de agendamentos com botão de histórico
+                    const counter = document.createElement('div');
+                    counter.className = 'agendamentos-counter fade-in';
+                    counter.style.display = 'flex';
+                    counter.style.justifyContent = 'space-between';
+                    counter.style.alignItems = 'center';
+
+                    counter.innerHTML = `
+                        <span id="agendamentos-count">Carregando...</span>
+                        <button class="btn btn-outline" id="toggleHistoricoBtn" style="padding: 0.4rem 1rem; font-size: 0.9rem;">
+                            <i class="fas fa-history"></i> Mostrar Histórico
+                        </button>
+                    `;
+
+                    agendamentosList.appendChild(counter);
+
+                    // Adicionar evento ao botão de histórico
+                    document.getElementById('toggleHistoricoBtn').addEventListener('click', toggleHistoricoAgendamentos);
+                    
+                    // Armazenar todos os agendamentos e mostrar futuros por padrão
+                    todosAgendamentos = agendamentosArray;
+                    filtrarAgendamentosFuturos();
+                }
+
+
+                // Função para filtrar apenas agendamentos futuros
+                function getIsoDateOnly(dateString) {
+                    if (!dateString) return null;
+                    // Se já vem no formato YYYY-MM-DD ou com T, retorna a parte antes do T
+                    if (typeof dateString === 'string') {
+                        return dateString.split('T')[0];
+                    }
+                    // Fallback: criar Date e construir YYYY-MM-DD localmente
+                    const d = new Date(dateString);
+                    return `${d.getFullYear().toString().padStart(4,'0')}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+                }
+
+                function filtrarAgendamentosFuturos() {
+                    const hoje = new Date();
+                    const hojeIso = `${hoje.getFullYear().toString().padStart(4,'0')}-${String(hoje.getMonth()+1).padStart(2,'0')}-${String(hoje.getDate()).padStart(2,'0')}`;
+
+                    const agendamentosFuturos = todosAgendamentos.filter(agendamento => {
+                        const dataAgendamento = getIsoDateOnly(agendamento.data_agendada);
+                        return dataAgendamento >= hojeIso;
+                    });
+
+                    // Atualizar contador
+                    const countElement = document.getElementById('agendamentos-count');
+                    if (countElement) {
+                        countElement.textContent = `${agendamentosFuturos.length} agendamento(s) futuro(s)`;
+                    }
+
+                    // Renderizar apenas os futuros
+                    renderizarListaAgendamentos(agendamentosFuturos);
+                }
+
+                // Função para mostrar todos os agendamentos (histórico completo)
+                function mostrarTodosAgendamentos() {
+                    // Atualizar contador
+                    const countElement = document.getElementById('agendamentos-count');
+                    if (countElement) {
+                        countElement.textContent = `${todosAgendamentos.length} agendamento(s) no total`;
+                    }
+                    
+                    // Renderizar todos
+                    renderizarListaAgendamentos(todosAgendamentos);
+                }
+
+                // Função para renderizar a lista de agendamentos (reutilizável)
+                function renderizarListaAgendamentos(agendamentosArray) {
+                    // Limpar lista atual
+                    const itemsAtuais = agendamentosList.querySelectorAll('.agendamento-item');
+                    itemsAtuais.forEach(item => item.remove());
+                    
+                    // Remover mensagem de "nenhum agendamento" se existir
+                    const noData = agendamentosList.querySelector('.no-data');
+                    if (noData) noData.remove();
+                    
+                    const errorMessage = agendamentosList.querySelector('.error-message');
+                    if (errorMessage) errorMessage.remove();
+                    
+                    const loading = agendamentosList.querySelector('.loading');
+                    if (loading) loading.remove();
+                    
+                    if (!agendamentosArray || agendamentosArray.length === 0) {
+                        agendamentosList.appendChild(createEmptyState());
+                        return;
+                    }
+                    
+                    // Adicionar cada agendamento
+                    agendamentosArray.forEach(agendamento => {
+                        const agendamentoItem = createAgendamentoItem(agendamento);
+                        agendamentosList.appendChild(agendamentoItem);
+                    });
+                }
+
+                // Função auxiliar para criar estado vazio
+                function createEmptyState() {
+                    const emptyDiv = document.createElement('div');
+                    emptyDiv.className = 'no-data';
+                    emptyDiv.innerHTML = `
                         <i class="fas fa-calendar-times"></i>
-                        <p>Nenhum agendamento encontrado</p>
+                        <p>${mostrarHistorico ? 'Nenhum agendamento no histórico' : 'Nenhum agendamento futuro encontrado'}</p>
                         <a href="agendamento.html" class="btn btn-outline" style="margin-top: 1rem;">
                             <i class="fas fa-plus"></i>
                             Agendar agora
                         </a>
-                    </div>
-                `;
-                return;
-            }
-            
-            // Contador de agendamentos com botão de histórico
-            const counter = document.createElement('div');
-            counter.className = 'agendamentos-counter fade-in';
-            counter.style.display = 'flex';
-            counter.style.justifyContent = 'space-between';
-            counter.style.alignItems = 'center';
-
-            counter.innerHTML = `
-                <span id="agendamentos-count">Carregando...</span>
-                <button class="btn btn-outline" id="toggleHistoricoBtn" style="padding: 0.4rem 1rem; font-size: 0.9rem;">
-                    <i class="fas fa-history"></i> Mostrar Histórico
-                </button>
-            `;
-
-            agendamentosList.appendChild(counter);
-
-            // Adicionar evento ao botão de histórico
-            document.getElementById('toggleHistoricoBtn').addEventListener('click', toggleHistoricoAgendamentos);
-            
-            // Armazenar todos os agendamentos e mostrar futuros por padrão
-            todosAgendamentos = agendamentosArray;
-            filtrarAgendamentosFuturos();
-        }
-
-
-        // Função para filtrar apenas agendamentos futuros
-        function getIsoDateOnly(dateString) {
-            if (!dateString) return null;
-            // Se já vem no formato YYYY-MM-DD ou com T, retorna a parte antes do T
-            if (typeof dateString === 'string') {
-                return dateString.split('T')[0];
-            }
-            // Fallback: criar Date e construir YYYY-MM-DD localmente
-            const d = new Date(dateString);
-            return `${d.getFullYear().toString().padStart(4,'0')}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-        }
-
-        function filtrarAgendamentosFuturos() {
-            const hoje = new Date();
-            const hojeIso = `${hoje.getFullYear().toString().padStart(4,'0')}-${String(hoje.getMonth()+1).padStart(2,'0')}-${String(hoje.getDate()).padStart(2,'0')}`;
-
-            const agendamentosFuturos = todosAgendamentos.filter(agendamento => {
-                const dataAgendamento = getIsoDateOnly(agendamento.data_agendada);
-                return dataAgendamento >= hojeIso;
-            });
-
-            // Atualizar contador
-            const countElement = document.getElementById('agendamentos-count');
-            if (countElement) {
-                countElement.textContent = `${agendamentosFuturos.length} agendamento(s) futuro(s)`;
-            }
-
-            // Renderizar apenas os futuros
-            renderizarListaAgendamentos(agendamentosFuturos);
-        }
-
-        // Função para mostrar todos os agendamentos (histórico completo)
-        function mostrarTodosAgendamentos() {
-            // Atualizar contador
-            const countElement = document.getElementById('agendamentos-count');
-            if (countElement) {
-                countElement.textContent = `${todosAgendamentos.length} agendamento(s) no total`;
-            }
-            
-            // Renderizar todos
-            renderizarListaAgendamentos(todosAgendamentos);
-        }
-
-        // Função para renderizar a lista de agendamentos (reutilizável)
-        function renderizarListaAgendamentos(agendamentosArray) {
-            // Limpar lista atual
-            const itemsAtuais = agendamentosList.querySelectorAll('.agendamento-item');
-            itemsAtuais.forEach(item => item.remove());
-            
-            // Remover mensagem de "nenhum agendamento" se existir
-            const noData = agendamentosList.querySelector('.no-data');
-            if (noData) noData.remove();
-            
-            const errorMessage = agendamentosList.querySelector('.error-message');
-            if (errorMessage) errorMessage.remove();
-            
-            const loading = agendamentosList.querySelector('.loading');
-            if (loading) loading.remove();
-            
-            if (!agendamentosArray || agendamentosArray.length === 0) {
-                agendamentosList.appendChild(createEmptyState());
-                return;
-            }
-            
-            // Adicionar cada agendamento
-            agendamentosArray.forEach(agendamento => {
-                const agendamentoItem = createAgendamentoItem(agendamento);
-                agendamentosList.appendChild(agendamentoItem);
-            });
-        }
-
-        // Função auxiliar para criar estado vazio
-        function createEmptyState() {
-            const emptyDiv = document.createElement('div');
-            emptyDiv.className = 'no-data';
-            emptyDiv.innerHTML = `
-                <i class="fas fa-calendar-times"></i>
-                <p>${mostrarHistorico ? 'Nenhum agendamento no histórico' : 'Nenhum agendamento futuro encontrado'}</p>
-                <a href="agendamento.html" class="btn btn-outline" style="margin-top: 1rem;">
-                    <i class="fas fa-plus"></i>
-                    Agendar agora
-                </a>
-            `;
-            return emptyDiv;
-        }
-
-        // Função auxiliar para criar item de agendamento (extraída da renderizarAgendamentos original)
-        function createAgendamentoItem(agendamento) {
-            // Formatar data (usar apenas a parte YYYY-MM-DD para evitar shift de timezone)
-            const dataFormatada = formatarData(agendamento.data_agendada);
-
-            // Formatar hora
-            const horaFormatada = formatarHora(agendamento.hora_inicio);
-            
-            // Mapear status
-            const statusMap = {
-                'confirmado': 'Confirmado',
-                'pendente': 'Pendente',
-                'cancelado': 'Cancelado',
-                'concluido': 'Concluído'
-            };
-            
-            const statusTexto = statusMap[agendamento.status] || agendamento.status;
-            
-            // Classes CSS para status
-            const statusClassMap = {
-                'confirmado': 'status-active',
-                'pendente': 'status-pending',
-                'concluido': 'status-completed',
-                'cancelado': 'status-cancelled'
-            };
-            
-            const statusClass = statusClassMap[agendamento.status] || 'status-inactive';
-            
-            // Calcular valor total de todos os serviços
-            let valorTotal = 0;
-            let duracaoTotal = 0;
-            let servicosHtml = '';
-            
-            if (agendamento.servicos && agendamento.servicos.length > 0) {
-                // Construir HTML dos serviços (usar valor_final se disponível)
-                servicosHtml = agendamento.servicos.map(servico => {
-                    const valorServico = parseFloat(servico.valor_final !== undefined ? servico.valor_final : servico.valor_servico) || 0;
-                    const duracaoServico = parseInt(servico.duracao_servico) || 0;
-                    
-                    valorTotal += valorServico;
-                    duracaoTotal += duracaoServico;
-                    
-                    return `
-                        <div class="service-item">
-                            <span class="service-name">${servico.nome_servico || 'Serviço'}</span>
-                            <span class="service-price">R$ ${valorServico.toFixed(2)}</span>
-                        </div>
                     `;
-                }).join('');
-            } else {
-                // Fallback para agendamentos antigos com apenas um serviço
-                const valorServico = parseFloat(agendamento.valor_servico) || 0;
-                valorTotal = valorServico;
-                duracaoTotal = 60; // Default
-                
-                servicosHtml = `
-                    <div class="service-item">
-                        <span class="service-name">${agendamento.nome_servico || 'Serviço não informado'}</span>
-                        <span class="service-price">R$ ${valorServico.toFixed(2)}</span>
-                    </div>
-                `;
-            }
-            
-            // Formatar valor total
-            const valorFormatado = valorTotal.toLocaleString('pt-BR', {
-                style: 'currency',
-                currency: 'BRL'
-            });
-            
-            const agendamentoItem = document.createElement('div');
-            agendamentoItem.className = 'agendamento-item fade-in';
-            agendamentoItem.innerHTML = `
-                <div class="agendamento-header">
-                    <span class="badge ${statusClass}">
-                        ${statusTexto}
-                    </span>
-                </div>
-                
-                <div class="agendamento-details">
-                    <div class="detail-item">
-                        <i class="fas fa-user"></i>
-                        <span>${agendamento.barbeiro_nome || 'Barbeiro não informado'}</span>
-                    </div>
-                    <div class="detail-item">
-                        <i class="fas fa-cut"></i>
-                        <div class="servicos-container">
-                            ${servicosHtml}
-                        </div>
-                    </div>
-                    <div class="detail-item">
-                        <i class="far fa-calendar"></i>
-                        <span>${dataFormatada}</span>
-                    </div>
-                    <div class="detail-item">
-                        <i class="far fa-clock"></i>
-                        <span>${horaFormatada}</span>
-                    </div>
-                    <div class="detail-item">
-                        <i class="fas fa-tag"></i>
-                        <span class="valor-total">${valorFormatado}</span>
-                    </div>
-                    <div class="detail-item">
-                        <i class="fas fa-info-circle"></i>
-                        <span>Duração: ${duracaoTotal} min</span>
-                    </div>
-                </div>
-                
-                <div class="agendamento-actions">
-                    <button class="btn-action" onclick="cancelarAgendamento(${agendamento.id})" 
-                            ${agendamento.status !== 'confirmado' ? 'disabled' : ''}>
-                        <i class="fas fa-times"></i> Cancelar
-                    </button>
-                    <button class="btn-action btn-primary" onclick="verDetalhesAgendamento(${agendamento.id})">
-                        <i class="fas fa-eye"></i> Ver Detalhes
-                    </button>
-                </div>
-            `;
-            
-            return agendamentoItem;
-        }
-
-        // Função para alternar entre histórico e futuros
-        function toggleHistoricoAgendamentos() {
-            mostrarHistorico = !mostrarHistorico;
-            const btn = document.getElementById('toggleHistoricoBtn');
-            
-            if (btn) {
-                if (mostrarHistorico) {
-                    btn.innerHTML = '<i class="fas fa-calendar-alt"></i> Mostrar Futuros';
-                    mostrarTodosAgendamentos();
-                } else {
-                    btn.innerHTML = '<i class="fas fa-history"></i> Mostrar Histórico';
-                    filtrarAgendamentosFuturos();
+                    return emptyDiv;
                 }
-            }
-        }
 
-        // ADICIONE ESTA FUNÇÃO AO SEU cliente-home.html
-        async function cancelarAgendamento(agendamentoId) {
-            if (!confirm('Tem certeza que deseja cancelar este agendamento?')) {
-                return;
-            }
-            
-            try {
-                const token = localStorage.getItem('token');
-                
-                // Mostrar loading
-                const agendamentoBtn = document.querySelector(`button[onclick="cancelarAgendamento(${agendamentoId})"]`);
-                const originalText = agendamentoBtn.innerHTML;
-                agendamentoBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Cancelando...';
-                agendamentoBtn.disabled = true;
-                
-                // Usar DELETE em vez de PUT (conforme sua rota)
-                const response = await fetch(`${API_BASE_URL}/agendamentos/${agendamentoId}`, {
-                    method: 'DELETE',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    }
-                });
-                
-                const data = await response.json();
-                
-                if (response.ok && data.success) {
-                    showNotification('Agendamento cancelado com sucesso!', 'success');
-                    
-                    // Recarregar a lista de agendamentos após 1 segundo
-                    setTimeout(() => {
-                        // Recarregar todos os agendamentos do servidor
-                        loadAgendamentos();
-                    }, 1000);
-                    
-                } else {
-                    agendamentoBtn.innerHTML = originalText;
-                    agendamentoBtn.disabled = false;
-                    showNotification(data.message || 'Erro ao cancelar agendamento', 'error');
-                }
-                
-            } catch (error) {
-                console.error('Erro ao cancelar agendamento:', error);
-                showNotification('Erro de conexão. Tente novamente.', 'error');
-                
-                // Restaurar botão
-                const agendamentoBtn = document.querySelector(`button[onclick="cancelarAgendamento(${agendamentoId})"]`);
-                if (agendamentoBtn) {
-                    agendamentoBtn.innerHTML = '<i class="fas fa-times"></i> Cancelar';
-                    agendamentoBtn.disabled = false;
-                }
-            }
-        }
+                // Função auxiliar para criar item de agendamento (extraída da renderizarAgendamentos original)
+                function createAgendamentoItem(agendamento) {
+                    // Formatar data (usar apenas a parte YYYY-MM-DD para evitar shift de timezone)
+                    const dataFormatada = formatarData(agendamento.data_agendada);
 
-        // Função para ver detalhes do agendamento
-        async function verDetalhesAgendamento(agendamentoId) {
-            try {
-                const token = localStorage.getItem('token');
-                const response = await fetch(`${API_BASE_URL}/agendamentos/${agendamentoId}`, {
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    }
-                });
-                
-                const data = await response.json();
-                
-                if (response.ok && data.success) {
-                    const agendamento = data.agendamento;
+                    // Formatar hora
+                    const horaFormatada = formatarHora(agendamento.hora_inicio);
                     
-                    // Formatar dados para exibição
-                    let detalhesHTML = `
-                        <div style="max-width: 600px;">
-                            <h3 style="margin-top: 0; color: var(--primary-color);">
-                                <i class="fas fa-calendar-check"></i> Detalhes do Agendamento #${agendamento.id}
-                            </h3>
-                            
-                            <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
-                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
-                                    <div>
-                                        <strong><i class="fas fa-user"></i> Barbeiro:</strong><br>
-                                        ${agendamento.barbeiro_nome || 'Não informado'}
-                                    </div>
-                                    <div>
-                                        <strong><i class="fas fa-calendar"></i> Data:</strong><br>
-                                        ${formatarData(agendamento.data_agendada)}
-                                    </div>
-                                </div>
-                                
-                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
-                                    <div>
-                                        <strong><i class="fas fa-clock"></i> Horário:</strong><br>
-                                        ${agendamento.hora_inicio} - ${agendamento.hora_fim}
-                                    </div>
-                                    <div>
-                                        <strong><i class="fas fa-info-circle"></i> Status:</strong><br>
-                                        <span class="badge ${getStatusClass(agendamento.status)}">
-                                            ${getStatusText(agendamento.status)}
-                                        </span>
-                                    </div>
-                                </div>
-                    `;
+                    // Mapear status
+                    const statusMap = {
+                        'confirmado': 'Confirmado',
+                        'pendente': 'Pendente',
+                        'cancelado': 'Cancelado',
+                        'concluido': 'Concluído'
+                    };
                     
-                    // Adicionar serviços
+                    const statusTexto = statusMap[agendamento.status] || agendamento.status;
+                    
+                    // Classes CSS para status
+                    const statusClassMap = {
+                        'confirmado': 'status-active',
+                        'pendente': 'status-pending',
+                        'concluido': 'status-completed',
+                        'cancelado': 'status-cancelled'
+                    };
+                    
+                    const statusClass = statusClassMap[agendamento.status] || 'status-inactive';
+                    
+                    // Calcular valor total de todos os serviços
+                    let valorTotal = 0;
+                    let duracaoTotal = 0;
+                    let servicosHtml = '';
+                    
                     if (agendamento.servicos && agendamento.servicos.length > 0) {
-                        detalhesHTML += `
-                            <div style="margin-top: 15px;">
-                                <strong><i class="fas fa-cut"></i> Serviços:</strong>
-                                <div style="margin-top: 10px;">
-                                    ${agendamento.servicos.map(servico => `
-                                        <div style="display: flex; justify-content: space-between; padding: 8px; border-bottom: 1px solid #dee2e6;">
-                                            <span>${servico.nome_servico}</span>
-                                            <span style="color: #28a745; font-weight: bold;">
-                                                R$ ${parseFloat(servico.valor_final !== undefined ? servico.valor_final : servico.valor_servico || 0).toFixed(2)}
-                                            </span>
-                                        </div>
-                                    `).join('')}
+                        // Construir HTML dos serviços (usar valor_final se disponível)
+                        servicosHtml = agendamento.servicos.map(servico => {
+                            const valorServico = parseFloat(servico.valor_final !== undefined ? servico.valor_final : servico.valor_servico) || 0;
+                            const duracaoServico = parseInt(servico.duracao_servico) || 0;
+                            
+                            valorTotal += valorServico;
+                            duracaoTotal += duracaoServico;
+                            
+                            return `
+                                <div class="service-item">
+                                    <span class="service-name">${servico.nome_servico || 'Serviço'}</span>
+                                    <span class="service-price">R$ ${valorServico.toFixed(2)}</span>
                                 </div>
-                            </div>
-                        `;
+                            `;
+                        }).join('');
+                    } else {
+                        // Fallback para agendamentos antigos com apenas um serviço
+                        const valorServico = parseFloat(agendamento.valor_servico) || 0;
+                        valorTotal = valorServico;
+                        duracaoTotal = 60; // Default
                         
-                        // Calcular total
-                        const total = agendamento.servicos.reduce((sum, s) => sum + parseFloat(s.valor_final !== undefined ? s.valor_final : s.valor_servico || 0), 0);
-                        detalhesHTML += `
-                            <div style="margin-top: 15px; text-align: right; font-weight: bold; font-size: 1.1em;">
-                                <strong>Total:</strong> R$ ${total.toFixed(2)}
+                        servicosHtml = `
+                            <div class="service-item">
+                                <span class="service-name">${agendamento.nome_servico || 'Serviço não informado'}</span>
+                                <span class="service-price">R$ ${valorServico.toFixed(2)}</span>
                             </div>
                         `;
                     }
                     
-                    detalhesHTML += `
+                    // Formatar valor total
+                    const valorFormatado = valorTotal.toLocaleString('pt-BR', {
+                        style: 'currency',
+                        currency: 'BRL'
+                    });
+                    
+                    const agendamentoItem = document.createElement('div');
+                    agendamentoItem.className = 'agendamento-item fade-in';
+                    agendamentoItem.innerHTML = `
+                        <div class="agendamento-header">
+                            <span class="badge ${statusClass}">
+                                ${statusTexto}
+                            </span>
+                        </div>
+                        
+                        <div class="agendamento-details">
+                            <div class="detail-item">
+                                <i class="fas fa-user"></i>
+                                <span>${agendamento.barbeiro_nome || 'Barbeiro não informado'}</span>
                             </div>
-                            
-                            <div style="display: flex; gap: 10px; justify-content: flex-end;">
-                                <button onclick="fecharModalDetalhes()" 
-                                        style="padding: 10px 20px; border: 1px solid #ddd; border-radius: 8px; background: white; cursor: pointer;">
-                                    Fechar
-                                </button>
-                                ${agendamento.status === 'confirmado' ? `
-                                    <button onclick="cancelarAgendamento(${agendamento.id})" 
-                                            style="padding: 10px 20px; border: none; border-radius: 8px; background: #dc3545; color: white; cursor: pointer;">
-                                        <i class="fas fa-times"></i> Cancelar Agendamento
-                                    </button>
-                                ` : ''}
+                            <div class="detail-item">
+                                <i class="fas fa-cut"></i>
+                                <div class="servicos-container">
+                                    ${servicosHtml}
+                                </div>
                             </div>
+                            <div class="detail-item">
+                                <i class="far fa-calendar"></i>
+                                <span>${dataFormatada}</span>
+                            </div>
+                            <div class="detail-item">
+                                <i class="far fa-clock"></i>
+                                <span>${horaFormatada}</span>
+                            </div>
+                            <div class="detail-item">
+                                <i class="fas fa-tag"></i>
+                                <span class="valor-total">${valorFormatado}</span>
+                            </div>
+                            <div class="detail-item">
+                                <i class="fas fa-info-circle"></i>
+                                <span>Duração: ${duracaoTotal} min</span>
+                            </div>
+                        </div>
+                        
+                        <div class="agendamento-actions">
+                            <button class="btn-action" onclick="cancelarAgendamento(${agendamento.id})" 
+                                    ${agendamento.status !== 'confirmado' ? 'disabled' : ''}>
+                                <i class="fas fa-times"></i> Cancelar
+                            </button>
+                            <button class="btn-action btn-primary" onclick="verDetalhesAgendamento(${agendamento.id})">
+                                <i class="fas fa-eye"></i> Ver Detalhes
+                            </button>
                         </div>
                     `;
                     
-                    // Criar modal para exibir detalhes
-                    const modalId = 'modal-detalhes-agendamento';
-                    let modal = document.getElementById(modalId);
-                    
-                    if (!modal) {
-                        modal = document.createElement('div');
-                        modal.id = modalId;
-                        modal.className = 'modal-overlay';
-                        modal.innerHTML = `
-                            <div class="modal-content" style="max-width: 700px;">
-                                <div class="modal-header">
-                                    <h2 class="modal-title">Detalhes do Agendamento</h2>
-                                    <button class="modal-close" onclick="fecharModalDetalhes()">
-                                        <i class="fas fa-times"></i>
-                                    </button>
-                                </div>
-                                <div class="modal-body" id="${modalId}-body"></div>
-                            </div>
-                        `;
-                        document.body.appendChild(modal);
-                    }
-                    
-                    document.getElementById(`${modalId}-body`).innerHTML = detalhesHTML;
-                    modal.classList.add('active');
-                    document.body.style.overflow = 'hidden';
-                    
-                } else {
-                    showNotification(data.message || 'Erro ao carregar detalhes do agendamento', 'error');
+                    return agendamentoItem;
                 }
-                
-            } catch (error) {
-                console.error('Erro ao buscar detalhes do agendamento:', error);
-                showNotification('Erro de conexão. Tente novamente.', 'error');
-            }
-        }
 
-        // Função para fechar modal de detalhes
-        function fecharModalDetalhes() {
-            const modal = document.getElementById('modal-detalhes-agendamento');
-            if (modal) {
-                modal.classList.remove('active');
-                document.body.style.overflow = 'auto';
-            }
-        }
+                // Função para alternar entre histórico e futuros
+                function toggleHistoricoAgendamentos() {
+                    mostrarHistorico = !mostrarHistorico;
+                    const btn = document.getElementById('toggleHistoricoBtn');
+                    
+                    if (btn) {
+                        if (mostrarHistorico) {
+                            btn.innerHTML = '<i class="fas fa-calendar-alt"></i> Mostrar Futuros';
+                            mostrarTodosAgendamentos();
+                        } else {
+                            btn.innerHTML = '<i class="fas fa-history"></i> Mostrar Histórico';
+                            filtrarAgendamentosFuturos();
+                        }
+                    }
+                }
 
-        // Funções auxiliares para status (adicione se não existirem)
-        function getStatusClass(status) {
-            const statusMap = {
-                'confirmado': 'status-active',
-                'pendente': 'status-pending',
-                'concluido': 'status-completed',
-                'cancelado': 'status-cancelled'
-            };
-            return statusMap[status] || 'status-inactive';
-        }
-
-        function getStatusText(status) {
-            const statusMap = {
-                'confirmado': 'Confirmado',
-                'pendente': 'Pendente',
-                'concluido': 'Concluído',
-                'cancelado': 'Cancelado'
-            };
-            return statusMap[status] || status;
-        }
-
-        // Função auxiliar para formatar hora
-        function formatarHora(horaString) {
-            if (!horaString) return 'Hora não informada';
-            
-            // Se a hora já está no formato HH:MM:SS, extrair apenas HH:MM
-            if (horaString.includes(':')) {
-                const partes = horaString.split(':');
-                return `${partes[0]}:${partes[1]}`;
-            }
-            
-            return horaString;
-        }
-
-        // Formatar data usando apenas YYYY-MM-DD (evita problemas de timezone)
-        function formatarData(dataString) {
-            const iso = getIsoDateOnly(dataString);
-            if (!iso) return '--/--/----';
-            const [ano, mes, dia] = iso.split('-').map(Number);
-            const date = new Date(ano, mes - 1, dia);
-            return date.toLocaleDateString('pt-BR', {
-                weekday: 'long',
-                day: 'numeric',
-                month: 'long'
-            });
-        }
-
-        // Configurar eventos
-        function setupEventListeners() {
-            // Toggle sidebar
-            menuToggle.addEventListener('click', () => {
-                sidebar.classList.toggle('active');
-                overlay.classList.toggle('active');
-            });
-            
-            // Fechar sidebar ao clicar no overlay
-            overlay.addEventListener('click', () => {
-                sidebar.classList.remove('active');
-                overlay.classList.remove('active');
-            });
-            
-            // Menu items
-            menuItems.forEach(item => {
-                item.addEventListener('click', (e) => {
-                    if (item.classList.contains('logout')) {
-                        e.preventDefault();
-                        logout();
+                // ADICIONE ESTA FUNÇÃO AO SEU cliente-home.html
+                async function cancelarAgendamento(agendamentoId) {
+                    if (!confirm('Tem certeza que deseja cancelar este agendamento?')) {
                         return;
                     }
                     
-                    if (!item.hasAttribute('href') || item.getAttribute('href') === '#') {
-                        e.preventDefault();
-                        const page = item.getAttribute('data-page');
+                    try {
+                        const token = localStorage.getItem('token');
                         
-                        // Atualizar item ativo
-                        menuItems.forEach(i => i.classList.remove('active'));
-                        item.classList.add('active');
+                        // Mostrar loading
+                        const agendamentoBtn = document.querySelector(`button[onclick="cancelarAgendamento(${agendamentoId})"]`);
+                        const originalText = agendamentoBtn.innerHTML;
+                        agendamentoBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Cancelando...';
+                        agendamentoBtn.disabled = true;
                         
-                        // Atualizar título da página
-                        pageTitle.textContent = page.charAt(0).toUpperCase() + page.slice(1);
+                        // Usar DELETE em vez de PUT (conforme sua rota)
+                        const response = await fetch(`${API_BASE_URL}/agendamentos/${agendamentoId}`, {
+                            method: 'DELETE',
+                            headers: {
+                                'Authorization': `Bearer ${token}`,
+                                'Content-Type': 'application/json'
+                            }
+                        });
+                        
+                        const data = await response.json();
+                        
+                        if (response.ok && data.success) {
+                            showNotification('Agendamento cancelado com sucesso!', 'success');
+                            
+                            // Recarregar a lista de agendamentos após 1 segundo
+                            setTimeout(() => {
+                                // Recarregar todos os agendamentos do servidor
+                                loadAgendamentos();
+                            }, 1000);
+                            
+                        } else {
+                            agendamentoBtn.innerHTML = originalText;
+                            agendamentoBtn.disabled = false;
+                            showNotification(data.message || 'Erro ao cancelar agendamento', 'error');
+                        }
+                        
+                    } catch (error) {
+                        console.error('Erro ao cancelar agendamento:', error);
+                        showNotification('Erro de conexão. Tente novamente.', 'error');
+                        
+                        // Restaurar botão
+                        const agendamentoBtn = document.querySelector(`button[onclick="cancelarAgendamento(${agendamentoId})"]`);
+                        if (agendamentoBtn) {
+                            agendamentoBtn.innerHTML = '<i class="fas fa-times"></i> Cancelar';
+                            agendamentoBtn.disabled = false;
+                        }
                     }
-                });
-            });
-            
-            // Abrir modais
-            openPerfilModalBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                openModal(perfilModal);
-                pageTitle.textContent = 'Perfil';
-                menuItems.forEach(i => i.classList.remove('active'));
-                openPerfilModalBtn.classList.add('active');
-            });
-            
-            openInfoModalBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                openModal(informacoesModal);
-                pageTitle.textContent = 'Informações';
-                menuItems.forEach(i => i.classList.remove('active'));
-                openInfoModalBtn.classList.add('active');
-            });
-            
-            // Fechar modais
-            closePerfilModalBtn.addEventListener('click', () => {
-                closeModal(perfilModal);
-                pageTitle.textContent = 'Início';
-                menuItems.forEach(i => i.classList.remove('active'));
-                document.querySelector('.menu-item[data-page="inicio"]').classList.add('active');
-            });
-            
-            closeInfoModalBtn.addEventListener('click', () => {
-                closeModal(informacoesModal);
-                pageTitle.textContent = 'Início';
-                menuItems.forEach(i => i.classList.remove('active'));
-                document.querySelector('.menu-item[data-page="inicio"]').classList.add('active');
-            });
-            
-            // Fechar modal ao clicar no overlay
-            [perfilModal, informacoesModal].forEach(modal => {
-                modal.addEventListener('click', (e) => {
-                    if (e.target === modal) {
-                        closeModal(modal);
+                }
+
+                // Função para ver detalhes do agendamento
+                async function verDetalhesAgendamento(agendamentoId) {
+                    try {
+                        const token = localStorage.getItem('token');
+                        const response = await fetch(`${API_BASE_URL}/agendamentos/${agendamentoId}`, {
+                            headers: {
+                                'Authorization': `Bearer ${token}`,
+                                'Content-Type': 'application/json'
+                            }
+                        });
+                        
+                        const data = await response.json();
+                        
+                        if (response.ok && data.success) {
+                            const agendamento = data.agendamento;
+                            
+                            // Formatar dados para exibição
+                            let detalhesHTML = `
+                                <div style="max-width: 600px;">
+                                    <h3 style="margin-top: 0; color: var(--primary-color);">
+                                        <i class="fas fa-calendar-check"></i> Detalhes do Agendamento #${agendamento.id}
+                                    </h3>
+                                    
+                                    <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
+                                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                                            <div>
+                                                <strong><i class="fas fa-user"></i> Barbeiro:</strong><br>
+                                                ${agendamento.barbeiro_nome || 'Não informado'}
+                                            </div>
+                                            <div>
+                                                <strong><i class="fas fa-calendar"></i> Data:</strong><br>
+                                                ${formatarData(agendamento.data_agendada)}
+                                            </div>
+                                        </div>
+                                        
+                                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                                            <div>
+                                                <strong><i class="fas fa-clock"></i> Horário:</strong><br>
+                                                ${agendamento.hora_inicio} - ${agendamento.hora_fim}
+                                            </div>
+                                            <div>
+                                                <strong><i class="fas fa-info-circle"></i> Status:</strong><br>
+                                                <span class="badge ${getStatusClass(agendamento.status)}">
+                                                    ${getStatusText(agendamento.status)}
+                                                </span>
+                                            </div>
+                                        </div>
+                            `;
+                            
+                            // Adicionar serviços
+                            if (agendamento.servicos && agendamento.servicos.length > 0) {
+                                detalhesHTML += `
+                                    <div style="margin-top: 15px;">
+                                        <strong><i class="fas fa-cut"></i> Serviços:</strong>
+                                        <div style="margin-top: 10px;">
+                                            ${agendamento.servicos.map(servico => `
+                                                <div style="display: flex; justify-content: space-between; padding: 8px; border-bottom: 1px solid #dee2e6;">
+                                                    <span>${servico.nome_servico}</span>
+                                                    <span style="color: #28a745; font-weight: bold;">
+                                                        R$ ${parseFloat(servico.valor_final !== undefined ? servico.valor_final : servico.valor_servico || 0).toFixed(2)}
+                                                    </span>
+                                                </div>
+                                            `).join('')}
+                                        </div>
+                                    </div>
+                                `;
+                                
+                                // Calcular total
+                                const total = agendamento.servicos.reduce((sum, s) => sum + parseFloat(s.valor_final !== undefined ? s.valor_final : s.valor_servico || 0), 0);
+                                detalhesHTML += `
+                                    <div style="margin-top: 15px; text-align: right; font-weight: bold; font-size: 1.1em;">
+                                        <strong>Total:</strong> R$ ${total.toFixed(2)}
+                                    </div>
+                                `;
+                            }
+                            
+                            detalhesHTML += `
+                                    </div>
+                                    
+                                    <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                                        <button onclick="fecharModalDetalhes()" 
+                                                style="padding: 10px 20px; border: 1px solid #ddd; border-radius: 8px; background: white; cursor: pointer;">
+                                            Fechar
+                                        </button>
+                                        ${agendamento.status === 'confirmado' ? `
+                                            <button onclick="cancelarAgendamento(${agendamento.id})" 
+                                                    style="padding: 10px 20px; border: none; border-radius: 8px; background: #dc3545; color: white; cursor: pointer;">
+                                                <i class="fas fa-times"></i> Cancelar Agendamento
+                                            </button>
+                                        ` : ''}
+                                    </div>
+                                </div>
+                            `;
+                            
+                            // Criar modal para exibir detalhes
+                            const modalId = 'modal-detalhes-agendamento';
+                            let modal = document.getElementById(modalId);
+                            
+                            if (!modal) {
+                                modal = document.createElement('div');
+                                modal.id = modalId;
+                                modal.className = 'modal-overlay';
+                                modal.innerHTML = `
+                                    <div class="modal-content" style="max-width: 700px;">
+                                        <div class="modal-header">
+                                            <h2 class="modal-title">Detalhes do Agendamento</h2>
+                                            <button class="modal-close" onclick="fecharModalDetalhes()">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                        </div>
+                                        <div class="modal-body" id="${modalId}-body"></div>
+                                    </div>
+                                `;
+                                document.body.appendChild(modal);
+                            }
+                            
+                            document.getElementById(`${modalId}-body`).innerHTML = detalhesHTML;
+                            modal.classList.add('active');
+                            document.body.style.overflow = 'hidden';
+                            
+                        } else {
+                            showNotification(data.message || 'Erro ao carregar detalhes do agendamento', 'error');
+                        }
+                        
+                    } catch (error) {
+                        console.error('Erro ao buscar detalhes do agendamento:', error);
+                        showNotification('Erro de conexão. Tente novamente.', 'error');
+                    }
+                }
+
+                // Função para fechar modal de detalhes
+                function fecharModalDetalhes() {
+                    const modal = document.getElementById('modal-detalhes-agendamento');
+                    if (modal) {
+                        modal.classList.remove('active');
+                        document.body.style.overflow = 'auto';
+                    }
+                }
+
+                // Funções auxiliares para status (adicione se não existirem)
+                function getStatusClass(status) {
+                    const statusMap = {
+                        'confirmado': 'status-active',
+                        'pendente': 'status-pending',
+                        'concluido': 'status-completed',
+                        'cancelado': 'status-cancelled'
+                    };
+                    return statusMap[status] || 'status-inactive';
+                }
+
+                function getStatusText(status) {
+                    const statusMap = {
+                        'confirmado': 'Confirmado',
+                        'pendente': 'Pendente',
+                        'concluido': 'Concluído',
+                        'cancelado': 'Cancelado'
+                    };
+                    return statusMap[status] || status;
+                }
+
+                // Função auxiliar para formatar hora
+                function formatarHora(horaString) {
+                    if (!horaString) return 'Hora não informada';
+                    
+                    // Se a hora já está no formato HH:MM:SS, extrair apenas HH:MM
+                    if (horaString.includes(':')) {
+                        const partes = horaString.split(':');
+                        return `${partes[0]}:${partes[1]}`;
+                    }
+                    
+                    return horaString;
+                }
+
+                // Formatar data usando apenas YYYY-MM-DD (evita problemas de timezone)
+                function formatarData(dataString) {
+                    const iso = getIsoDateOnly(dataString);
+                    if (!iso) return '--/--/----';
+                    const [ano, mes, dia] = iso.split('-').map(Number);
+                    const date = new Date(ano, mes - 1, dia);
+                    return date.toLocaleDateString('pt-BR', {
+                        weekday: 'long',
+                        day: 'numeric',
+                        month: 'long'
+                    });
+                }
+
+                // Configurar eventos
+                function setupEventListeners() {
+                    // Toggle sidebar
+                    menuToggle.addEventListener('click', () => {
+                        sidebar.classList.toggle('active');
+                        overlay.classList.toggle('active');
+                    });
+                    
+                    // Fechar sidebar ao clicar no overlay
+                    overlay.addEventListener('click', () => {
+                        sidebar.classList.remove('active');
+                        overlay.classList.remove('active');
+                    });
+                    
+                    // Menu items
+                    menuItems.forEach(item => {
+                        item.addEventListener('click', (e) => {
+                            if (item.classList.contains('logout')) {
+                                e.preventDefault();
+                                logout();
+                                return;
+                            }
+                            
+                            if (!item.hasAttribute('href') || item.getAttribute('href') === '#') {
+                                e.preventDefault();
+                                const page = item.getAttribute('data-page');
+                                
+                                // Atualizar item ativo
+                                menuItems.forEach(i => i.classList.remove('active'));
+                                item.classList.add('active');
+                                
+                                // Atualizar título da página
+                                pageTitle.textContent = page.charAt(0).toUpperCase() + page.slice(1);
+                            }
+                        });
+                    });
+                    
+                    // Abrir modais
+                    openPerfilModalBtn.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        openModal(perfilModal);
+                        pageTitle.textContent = 'Perfil';
+                        menuItems.forEach(i => i.classList.remove('active'));
+                        openPerfilModalBtn.classList.add('active');
+                    });
+                    
+                    openInfoModalBtn.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        openModal(informacoesModal);
+                        pageTitle.textContent = 'Informações';
+                        menuItems.forEach(i => i.classList.remove('active'));
+                        openInfoModalBtn.classList.add('active');
+                    });
+                    
+                    // Fechar modais
+                    closePerfilModalBtn.addEventListener('click', () => {
+                        closeModal(perfilModal);
                         pageTitle.textContent = 'Início';
                         menuItems.forEach(i => i.classList.remove('active'));
                         document.querySelector('.menu-item[data-page="inicio"]').classList.add('active');
-                    }
-                });
-            });
+                    });
+                    
+                    closeInfoModalBtn.addEventListener('click', () => {
+                        closeModal(informacoesModal);
+                        pageTitle.textContent = 'Início';
+                        menuItems.forEach(i => i.classList.remove('active'));
+                        document.querySelector('.menu-item[data-page="inicio"]').classList.add('active');
+                    });
+                    
+                    // Fechar modal ao clicar no overlay
+                    [perfilModal, informacoesModal].forEach(modal => {
+                        modal.addEventListener('click', (e) => {
+                            if (e.target === modal) {
+                                closeModal(modal);
+                                pageTitle.textContent = 'Início';
+                                menuItems.forEach(i => i.classList.remove('active'));
+                                document.querySelector('.menu-item[data-page="inicio"]').classList.add('active');
+                            }
+                        });
+                    });
 
-            deleteAccountBtn.addEventListener('click', (e) => {
-                openModal(confirmDeleteModal);
-            });
+                    deleteAccountBtn.addEventListener('click', (e) => {
+                        openModal(confirmDeleteModal);
+                    });
 
-            // Fechar modal de confirmação
-            closeDeleteModalBtn.addEventListener('click', () => {
-                closeModal(confirmDeleteModal);
-            });
-            
-            cancelDeleteBtn.addEventListener('click', () => {
-                closeModal(confirmDeleteModal);
-            });
-            
-            // Confirmar exclusão
-            confirmDeleteBtn.addEventListener('click', deleteAccount);
-            
-            // Fechar modal ao clicar fora
-            confirmDeleteModal.addEventListener('click', (e) => {
-                if (e.target === confirmDeleteModal) {
-                    closeModal(confirmDeleteModal);
+                    // Fechar modal de confirmação
+                    closeDeleteModalBtn.addEventListener('click', () => {
+                        closeModal(confirmDeleteModal);
+                    });
+                    
+                    cancelDeleteBtn.addEventListener('click', () => {
+                        closeModal(confirmDeleteModal);
+                    });
+                    
+                    // Confirmar exclusão
+                    confirmDeleteBtn.addEventListener('click', deleteAccount);
+                    
+                    // Fechar modal ao clicar fora
+                    confirmDeleteModal.addEventListener('click', (e) => {
+                        if (e.target === confirmDeleteModal) {
+                            closeModal(confirmDeleteModal);
+                        }
+                    });
+                    
+                    // Salvar perfil
+                    saveProfileBtn.addEventListener('click', saveProfileData);
+                    
+                    // Logout
+                    logoutBtn.addEventListener('click', logout);
                 }
-            });
-            
-            // Salvar perfil
-            saveProfileBtn.addEventListener('click', saveProfileData);
-            
-            // Logout
-            logoutBtn.addEventListener('click', logout);
+                
+                // Função de logout
+                function logout() {
+                    localStorage.removeItem('token');
+                    localStorage.removeItem('nome');
+                    localStorage.removeItem('userName');
+                    localStorage.removeItem('userEmail');
+                    localStorage.removeItem('userPhone');
+                    window.location.href = 'login.html';
+                }
+                
+                // Simular carregamento de dados da API
+                function fetchUserData() {
+                    // Aqui você faria a chamada real à API
+                    console.log('Dados do usuário carregados');
+                }
+                
+                // Inicializar quando a página carregar
+                document.addEventListener('DOMContentLoaded', () => {
+                    initPage();
+                    fetchUserData();
+                });
+            }
         }
-        
-        // Função de logout
-        function logout() {
-            localStorage.removeItem('token');
-            localStorage.removeItem('nome');
-            localStorage.removeItem('userName');
-            localStorage.removeItem('userEmail');
-            localStorage.removeItem('userPhone');
-            window.location.href = 'login.html';
-        }
-        
-        // Simular carregamento de dados da API
-        function fetchUserData() {
-            // Aqui você faria a chamada real à API
-            console.log('Dados do usuário carregados');
-        }
-        
-        // Inicializar quando a página carregar
-        document.addEventListener('DOMContentLoaded', () => {
-            initPage();
-            fetchUserData();
-        });
     </script>
     <script src="/scripts/subscriptionStatus.js"></script>
 </body>

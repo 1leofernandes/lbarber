@@ -657,6 +657,187 @@
             justify-content: flex-end;
             flex-wrap: wrap;
         }
+
+        /* Visão de agendamentos por barbeiro */
+        .agendamentos-por-barbeiro-wrapper {
+            margin-top: 1.5rem;
+        }
+
+        .agendamentos-por-barbeiro-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .agendamentos-por-barbeiro-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--light-gray);
+        }
+
+        .agendamentos-escopo-toggle {
+            display: inline-flex;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 999px;
+            padding: 3px;
+            border: 1px solid rgba(212, 175, 55, 0.2);
+        }
+
+        .agendamentos-escopo-btn {
+            border: none;
+            background: transparent;
+            color: var(--medium-gray);
+            padding: 0.35rem 0.9rem;
+            border-radius: 999px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .agendamentos-escopo-btn i {
+            font-size: 0.9rem;
+        }
+
+        .agendamentos-escopo-btn.active {
+            background: linear-gradient(135deg, var(--accent-gold), var(--light-gold));
+            color: var(--primary-dark);
+            box-shadow: 0 0 10px rgba(212, 175, 55, 0.4);
+        }
+
+        .agendamentos-escopo-btn:not(.active):hover {
+            background: rgba(255, 255, 255, 0.04);
+            color: var(--light-gray);
+        }
+
+        .agendamentos-por-barbeiro {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1rem;
+        }
+
+        .coluna-barbeiro {
+            background: linear-gradient(145deg, #1b1b1b, #141414);
+            border-radius: 12px;
+            padding: 1rem;
+            border: 1px solid rgba(212, 175, 55, 0.12);
+            min-height: 140px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .coluna-barbeiro-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 0.75rem;
+            gap: 0.5rem;
+        }
+
+        .coluna-barbeiro-nome {
+            font-weight: 600;
+            color: var(--accent-gold);
+            font-size: 0.95rem;
+        }
+
+        .coluna-barbeiro-contador {
+            font-size: 0.75rem;
+            color: var(--medium-gray);
+            background: rgba(255, 255, 255, 0.03);
+            padding: 0.2rem 0.6rem;
+            border-radius: 999px;
+        }
+
+        .coluna-barbeiro-lista {
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+        }
+
+        .mini-agendamento-card {
+            width: 100%;
+            border-radius: 8px;
+            border: 1px solid rgba(212, 175, 55, 0.25);
+            background: rgba(255, 255, 255, 0.03);
+            color: var(--light-gray);
+            padding: 0.35rem 0.6rem;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.4rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .mini-agendamento-card:hover {
+            background: rgba(212, 175, 55, 0.1);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+        }
+
+        .mini-agendamento-horario {
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        .mini-agendamento-status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .mini-agendamento-status-dot.status-confirmado {
+            background-color: var(--success);
+        }
+
+        .mini-agendamento-status-dot.status-concluido {
+            background-color: #007bff;
+        }
+
+        .mini-agendamento-status-dot.status-cancelado {
+            background-color: var(--error);
+        }
+
+        .mini-agendamento-vazio {
+            font-size: 0.8rem;
+            color: var(--medium-gray);
+            font-style: italic;
+        }
+
+        .agendamentos-empty {
+            text-align: center;
+            padding: 2rem 1rem;
+            color: var(--medium-gray);
+        }
+
+        .agendamentos-empty i {
+            font-size: 1.6rem;
+            color: var(--accent-gold);
+            margin-bottom: 0.5rem;
+        }
+
+        .agendamentos-loading {
+            text-align: center;
+            padding: 2rem 1rem;
+            color: var(--medium-gray);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .agendamentos-loading i {
+            font-size: 1.6rem;
+            color: var(--accent-gold);
+        }
         
         .btn-table {
             padding: 0.5rem 1rem;
@@ -2119,210 +2300,163 @@
         }
 
         async function renderTodosAgendamentos(agendamentos) {
-            const tbody = document.getElementById('todos-agendamentos');
-            if (!tbody) return;
-            
-            if (!agendamentos || agendamentos.length === 0) {
-                tbody.innerHTML = `
-                    <tr>
-                        <td colspan="8" style="text-align: center; padding: 3rem;">
-                            <i class="fas fa-calendar-times"></i>
-                            <p style="margin-top: 1rem;">Nenhum agendamento encontrado</p>
-                        </td>
-                    </tr>
+            const container = document.getElementById('agendamentos-por-barbeiro-container');
+            if (!container) return;
+
+            // Guardar em estado para reuso (ex.: troca de escopo)
+            state.agendamentosDados = agendamentos || [];
+
+            const barbeiros = state.barbeirosFiltro || [];
+
+            if (!barbeiros.length) {
+                container.innerHTML = `
+                    <div class="agendamentos-empty">
+                        <i class="fas fa-user-slash"></i>
+                        <p>Nenhum barbeiro cadastrado para exibir agendamentos.</p>
+                    </div>
                 `;
                 return;
             }
-            
-            // Verificar se é mobile
-            const isMobile = window.innerWidth <= 768;
-            
-            if (isMobile) {
-                // Renderizar como cards para mobile
-                tbody.innerHTML = agendamentos.map(agendamento => {
-                    // Calcular valor total do agendamento com desconto de assinatura
-                    let valorTotal = 0;
-                    let servicosTexto = 'Nenhum serviço';
-                    
-                    if (agendamento.servicos && Array.isArray(agendamento.servicos) && agendamento.servicos.length > 0) {
-                        // Se há array de serviços, somar valor_final de cada um
-                        servicosTexto = agendamento.servicos.map(s => s.nome_servico).join(', ');
-                        valorTotal = agendamento.servicos.reduce((total, servico) => {
-                            return total + (parseFloat(servico.valor_final !== undefined ? servico.valor_final : servico.valor_servico) || 0);
-                        }, 0);
-                    } else if (agendamento.servico_nome) {
-                        // Fallback para agendamento antigo com um único serviço
-                        servicosTexto = agendamento.servico_nome;
-                        // Tentar usar valor_total (calculado com desconto), senão valor_servico
-                        valorTotal = parseFloat(agendamento.valor_total !== undefined ? agendamento.valor_total : (agendamento.valor_final !== undefined ? agendamento.valor_final : agendamento.valor_servico || 0));
-                    }
-                    
-                    // Se ainda não consegui calcular, tenta valor_servico como último recurso
-                    if (valorTotal === 0) {
-                        valorTotal = parseFloat(agendamento.valor_servico || 0);
-                    }
-                    
-                    const statusLabel = {
-                        'confirmado': 'Confirmado',
-                        'concluido': 'Concluído',
-                        'cancelado': 'Cancelado'
-                    };
-                    
-                    return `
-                        <tr style="display: none;">
-                            <td>${agendamento.id || ''}</td>
-                            <td>${agendamento.cliente_nome || 'Cliente'}</td>
-                            <td>${servicosTexto}</td>
-                            <td>${agendamento.barbeiro_nome || 'Barbeiro'}</td>
-                            <td>${formatDateTime(agendamento.data_agendada, agendamento.hora_inicio)}</td>
-                            <td>R$ ${valorTotal.toFixed(2)}</td>
-                            <td>
-                                <select class="form-control" style="width: 120px; padding: 0.3rem;" 
-                                        onchange="atualizarStatusAgendamento(${agendamento.id}, this.value)">
-                                    <option value="confirmado" ${agendamento.status === 'confirmado' ? 'selected' : ''}>Confirmado</option>
-                                    <option value="concluido" ${agendamento.status === 'concluido' ? 'selected' : ''}>Concluido</option>
-                                    <option value="cancelado" ${agendamento.status === 'cancelado' ? 'selected' : ''}>Cancelado</option>
-                                </select>
-                            </td>
-                            <td>
-                                <button class="btn-table btn-view" onclick="verAgendamento(${agendamento.id})">
-                                    <i class="fas fa-eye"></i>
-                                </button>
-                                <button class="btn-table btn-edit" onclick="editarAgendamento(${agendamento.id})">
-                                    <i class="fas fa-edit"></i>
-                                </button>
-                                <button class="btn-table btn-delete" onclick="excluirAgendamento(${agendamento.id})">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </td>
-                        </tr>
-                        <tr class="agendamento-card ${agendamento.status}">
-                            <td colspan="8" style="padding: 0; border: none;">
-                                <div class="agendamento-card">
-                                    <div class="agendamento-card-header">
-                                        <span class="agendamento-card-id">#${agendamento.id}</span>
-                                        <span class="agendamento-card-status status-${agendamento.status}">${statusLabel[agendamento.status] || agendamento.status}</span>
+
+            if (!agendamentos || agendamentos.length === 0) {
+                container.innerHTML = `
+                    <div class="agendamentos-empty">
+                        <i class="fas fa-calendar-times"></i>
+                        <p>Nenhum agendamento encontrado para os filtros selecionados.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const escopo = state.agendamentosEscopo || 'hoje';
+            const hojeStr = new Date().toISOString().split('T')[0];
+
+            const normalizarData = (data) => {
+                if (!data) return null;
+                if (typeof data === 'string') return data.split('T')[0];
+                try {
+                    return new Date(data).toISOString().split('T')[0];
+                } catch {
+                    return null;
+                }
+            };
+
+            const filtrarPorEscopo = (ag) => {
+                const data = normalizarData(ag.data_agendada);
+                if (!data) return false;
+                if (escopo === 'hoje') return data === hojeStr;
+                // futuros: hoje em diante
+                return data >= hojeStr;
+            };
+
+            // Indexar agendamentos por barbeiro
+            const mapaAgendamentos = new Map();
+            barbeiros.forEach(b => mapaAgendamentos.set(b.id, []));
+
+            agendamentos.forEach(ag => {
+                if (!filtrarPorEscopo(ag)) return;
+                const barbeiroId = ag.barbeiro_id || (ag.barbeiro && ag.barbeiro.id);
+                if (!mapaAgendamentos.has(barbeiroId)) return;
+                mapaAgendamentos.get(barbeiroId).push(ag);
+            });
+
+            // Função auxiliar para calcular duração total (minutos)
+            const getDuracaoTotalMinutos = (agendamento) => {
+                let duracaoTotal = 0;
+                if (agendamento.servicos && Array.isArray(agendamento.servicos) && agendamento.servicos.length > 0) {
+                    duracaoTotal = agendamento.servicos.reduce((total, servico) => {
+                        const dur = parseInt(servico.duracao_servico) || 0;
+                        return total + dur;
+                    }, 0);
+                } else if (agendamento.duracao_total) {
+                    duracaoTotal = parseInt(agendamento.duracao_total) || 0;
+                }
+                return duracaoTotal;
+            };
+
+            const calcularIntervaloHorario = (agendamento) => {
+                const inicio = agendamento.hora_inicio;
+                if (!inicio) return '--:--';
+
+                const [h, m] = inicio.split(':').map(Number);
+                let minutosInicio = (h || 0) * 60 + (m || 0);
+                let minutosFim = minutosInicio + getDuracaoTotalMinutos(agendamento);
+
+                if (!Number.isFinite(minutosFim) || minutosFim <= minutosInicio) {
+                    return inicio;
+                }
+
+                const hFim = String(Math.floor(minutosFim / 60)).padStart(2, '0');
+                const mFim = String(minutosFim % 60).padStart(2, '0');
+                return `${inicio} - ${hFim}:${mFim}`;
+            };
+
+            const scopeLabel = escopo === 'hoje' ? 'de hoje' : 'futuros';
+
+            // Montar colunas
+            container.innerHTML = `
+                <div class="agendamentos-por-barbeiro">
+                    ${barbeiros.map(b => {
+                        const lista = mapaAgendamentos.get(b.id) || [];
+                        // Ordenar por horário de início
+                        lista.sort((a, b) => {
+                            const ah = a.hora_inicio || '';
+                            const bh = b.hora_inicio || '';
+                            return ah.localeCompare(bh);
+                        });
+
+                        if (!lista.length) {
+                            return `
+                                <div class="coluna-barbeiro">
+                                    <div class="coluna-barbeiro-header">
+                                        <div class="coluna-barbeiro-nome">${b.nome}</div>
+                                        <div class="coluna-barbeiro-contador">0 ${scopeLabel}</div>
                                     </div>
-                                    <div class="agendamento-card-body">
-                                        <div class="agendamento-card-item">
-                                            <i class="fas fa-user"></i>
-                                            <div class="agendamento-card-info">
-                                                <span class="agendamento-card-label">Cliente</span>
-                                                <span class="agendamento-card-value">${agendamento.cliente_nome || 'Cliente'}</span>
-                                            </div>
-                                        </div>
-                                        <div class="agendamento-card-item">
-                                            <i class="fas fa-cut"></i>
-                                            <div class="agendamento-card-info">
-                                                <span class="agendamento-card-label">Barbeiro</span>
-                                                <span class="agendamento-card-value">${agendamento.barbeiro_nome || 'Barbeiro'}</span>
-                                            </div>
-                                        </div>
-                                        <div class="agendamento-card-item">
-                                            <i class="fas fa-scissors"></i>
-                                            <div class="agendamento-card-info">
-                                                <span class="agendamento-card-label">Serviço</span>
-                                                <span class="agendamento-card-value">${servicosTexto}</span>
-                                            </div>
-                                        </div>
-                                        <div class="agendamento-card-item">
-                                            <i class="fas fa-calendar-alt"></i>
-                                            <div class="agendamento-card-info">
-                                                <span class="agendamento-card-label">Data e Hora</span>
-                                                <span class="agendamento-card-value">${formatDateTime(agendamento.data_agendada, agendamento.hora_inicio)}</span>
-                                            </div>
-                                        </div>
-                                        <div class="agendamento-card-item">
-                                            <i class="fas fa-money-bill"></i>
-                                            <div class="agendamento-card-info">
-                                                <span class="agendamento-card-label">Valor</span>
-                                                <span class="agendamento-card-valor-destaque">R$ ${valorTotal.toFixed(2)}</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="agendamento-card-footer">
-                                        <div style="width: 100%; margin-bottom: 0.8rem; display: flex; flex-direction: column; gap: 0.5rem;">
-                                            <label style="font-size: 0.75rem; color: var(--medium-gray); font-weight: 600; text-transform: uppercase;">Status</label>
-                                            <select class="form-control" style="width: 100%; padding: 0.5rem; font-size: 0.9rem;" 
-                                                    onchange="atualizarStatusAgendamento(${agendamento.id}, this.value)">
-                                                <option value="confirmado" ${agendamento.status === 'confirmado' ? 'selected' : ''}>Confirmado</option>
-                                                <option value="concluido" ${agendamento.status === 'concluido' ? 'selected' : ''}>Concluído</option>
-                                                <option value="cancelado" ${agendamento.status === 'cancelado' ? 'selected' : ''}>Cancelado</option>
-                                            </select>
-                                        </div>
-                                        <div style="display: flex; gap: 0.5rem; width: 100%;">
-                                            <button class="btn-table btn-view" onclick="verAgendamento(${agendamento.id})" title="Ver" style="flex: 1;">
-                                                <i class="fas fa-eye"></i>
-                                            </button>
-                                            <button class="btn-table btn-edit" onclick="editarAgendamento(${agendamento.id})" title="Editar" style="flex: 1;">
-                                                <i class="fas fa-edit"></i>
-                                            </button>
-                                            <button class="btn-table btn-delete" onclick="excluirAgendamento(${agendamento.id})" title="Deletar" style="flex: 1;">
-                                                <i class="fas fa-trash"></i>
-                                            </button>
-                                        </div>
+                                    <div class="coluna-barbeiro-lista">
+                                        <div class="mini-agendamento-vazio">Sem agendamentos ${scopeLabel}.</div>
                                     </div>
                                 </div>
-                            </td>
-                        </tr>
-                    `;
-                }).join('');
-            } else {
-                // Renderizar como tabela para desktop
-                tbody.innerHTML = agendamentos.map(agendamento => {
-                    // Calcular valor total do agendamento com desconto de assinatura
-                    let valorTotal = 0;
-                    let servicosTexto = 'Nenhum serviço';
-                    
-                    if (agendamento.servicos && Array.isArray(agendamento.servicos) && agendamento.servicos.length > 0) {
-                        // Se há array de serviços, somar valor_final de cada um
-                        servicosTexto = agendamento.servicos.map(s => s.nome_servico).join(', ');
-                        valorTotal = agendamento.servicos.reduce((total, servico) => {
-                            return total + (parseFloat(servico.valor_final !== undefined ? servico.valor_final : servico.valor_servico) || 0);
-                        }, 0);
-                    } else if (agendamento.servico_nome) {
-                        // Fallback para agendamento antigo com um único serviço
-                        servicosTexto = agendamento.servico_nome;
-                        // Tentar usar valor_total (calculado com desconto), senão valor_servico
-                        valorTotal = parseFloat(agendamento.valor_total !== undefined ? agendamento.valor_total : (agendamento.valor_final !== undefined ? agendamento.valor_final : agendamento.valor_servico || 0));
-                    }
-                    
-                    // Se ainda não consegui calcular, tenta valor_servico como último recurso
-                    if (valorTotal === 0) {
-                        valorTotal = parseFloat(agendamento.valor_servico || 0);
-                    }
-                    
-                    return `
-                        <tr>
-                            <td>${agendamento.id || ''}</td>
-                            <td>${agendamento.cliente_nome || 'Cliente'}</td>
-                            <td>${servicosTexto}</td>
-                            <td>${agendamento.barbeiro_nome || 'Barbeiro'}</td>
-                            <td>${formatDateTime(agendamento.data_agendada, agendamento.hora_inicio)}</td>
-                            <td>R$ ${valorTotal.toFixed(2)}</td>
-                            <td>
-                                <select class="form-control" style="width: 120px; padding: 0.3rem;" 
-                                        onchange="atualizarStatusAgendamento(${agendamento.id}, this.value)">
-                                    <option value="confirmado" ${agendamento.status === 'confirmado' ? 'selected' : ''}>Confirmado</option>
-                                    <option value="concluido" ${agendamento.status === 'concluido' ? 'selected' : ''}>Concluido</option>
-                                    <option value="cancelado" ${agendamento.status === 'cancelado' ? 'selected' : ''}>Cancelado</option>
-                                </select>
-                            </td>
-                            <td>
-                                <button class="btn-table btn-view" onclick="verAgendamento(${agendamento.id})">
-                                    <i class="fas fa-eye"></i>
-                                </button>
-                                <button class="btn-table btn-edit" onclick="editarAgendamento(${agendamento.id})">
-                                    <i class="fas fa-edit"></i>
-                                </button>
-                                <button class="btn-table btn-delete" onclick="excluirAgendamento(${agendamento.id})">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </td>
-                        </tr>
-                    `;
-                }).join('');
-            }
+                            `;
+                        }
+
+                        return `
+                            <div class="coluna-barbeiro">
+                                <div class="coluna-barbeiro-header">
+                                    <div class="coluna-barbeiro-nome">${b.nome}</div>
+                                    <div class="coluna-barbeiro-contador">${lista.length} ${scopeLabel}</div>
+                                </div>
+                                <div class="coluna-barbeiro-lista">
+                                    ${lista.map(ag => {
+                                        const intervalo = calcularIntervaloHorario(ag);
+                                        const servicosTexto = ag.servicos && Array.isArray(ag.servicos) && ag.servicos.length > 0
+                                            ? ag.servicos.map(s => s.nome_servico).join(', ')
+                                            : (ag.servico_nome || 'Serviço');
+                                        const cliente = ag.cliente_nome || 'Cliente';
+                                        const titulo = `${cliente} • ${servicosTexto}`;
+                                        const statusClass = ag.status === 'concluido'
+                                            ? 'status-concluido'
+                                            : ag.status === 'cancelado'
+                                                ? 'status-cancelado'
+                                                : 'status-confirmado';
+
+                                        return `
+                                            <button 
+                                                type="button"
+                                                class="mini-agendamento-card"
+                                                onclick="verAgendamento(${ag.id})"
+                                                title="${titulo.replace(/"/g, '&quot;')}"
+                                            >
+                                                <span class="mini-agendamento-horario">${intervalo}</span>
+                                                <span class="mini-agendamento-status-dot ${statusClass}"></span>
+                                            </button>
+                                        `;
+                                    }).join('')}
+                                </div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            `;
         }
 
         async function carregarTodosServicos() {
@@ -2702,13 +2836,13 @@
             await carregarResumoGeral();
             // await carregarRelatorioServicos();
         }
-        
+
         async function loadAgendamentosPage() {
             const page = document.getElementById('page-agendamentos');
             page.innerHTML = `
                 <div class="welcome-section">
                     <h1 class="welcome-title">Gestão de Agendamentos</h1>
-                    <p class="welcome-subtitle">Gerencie todos os agendamentos da barbearia</p>
+                    <p class="welcome-subtitle">Visualize os agendamentos por barbeiro, de forma simples e rápida.</p>
                 </div>
                 
                 <div class="quick-actions fade-in">
@@ -2738,55 +2872,76 @@
                     </div>
                 </div>
                 
-                <div class="table-container fade-in">
-                    <div class="table-header">
-                        <div class="table-title">Todos os Agendamentos</div>
-                        <div style="display: flex; gap: 10px;">
-                            <input type="text" class="table-search" placeholder="Buscar por cliente..." id="search-agendamentos">
-                            <a class="btn btn-primary" href="agendamento-barber.html" target="_blank">
-                                <i class="fas fa-plus"></i>
-                                Novo Agendamento
-                            </a>
+                <div class="table-container fade-in agendamentos-por-barbeiro-wrapper">
+                    <div class="agendamentos-por-barbeiro-header">
+                        <div class="agendamentos-por-barbeiro-title">
+                            Agendamentos por barbeiro
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+                            <div class="agendamentos-escopo-toggle" id="agendamentos-escopo-toggle">
+                                <button type="button" class="agendamentos-escopo-btn active" data-escopo="hoje">
+                                    <i class="fas fa-sun"></i>
+                                    Hoje
+                                </button>
+                                <button type="button" class="agendamentos-escopo-btn" data-escopo="futuros">
+                                    <i class="fas fa-forward"></i>
+                                    Futuros
+                                </button>
+                            </div>
+                            <div style="display: flex; gap: 10px;">
+                                <input type="text" class="table-search" placeholder="Buscar por cliente..." id="search-agendamentos">
+                                <a class="btn btn-primary" href="agendamento-admin.html" target="_blank">
+                                    <i class="fas fa-plus"></i>
+                                    Novo Agendamento
+                                </a>
+                            </div>
                         </div>
                     </div>
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Cliente</th>
-                                <th>Serviços</th>
-                                <th>Barbeiro</th>
-                                <th>Data/Hora</th>
-                                <th>Valor</th>
-                                <th>Status</th>
-                                <th>Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody id="todos-agendamentos">
-                            <tr>
-                                <td colspan="8" style="text-align: center; padding: 3rem;">
-                                    <i class="fas fa-spinner fa-spin"></i> Carregando agendamentos...
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
+                    <div id="agendamentos-por-barbeiro-container">
+                        <div class="agendamentos-loading">
+                            <i class="fas fa-spinner fa-spin"></i>
+                            <span>Carregando agendamentos...</span>
+                        </div>
+                    </div>
                 </div>
             `;
 
+            // Estado padrão do escopo
+            state.agendamentosEscopo = state.agendamentosEscopo || 'hoje';
+
             // Configurar event listeners após o HTML ser carregado
             setTimeout(() => {
-                document.getElementById('btn-filtrar').addEventListener('click', filtrarAgendamentos);
-                document.getElementById('btn-limpar-filtros').addEventListener('click', limparFiltros);
+                document.getElementById('btn-filtrar')?.addEventListener('click', filtrarAgendamentos);
+                document.getElementById('btn-limpar-filtros')?.addEventListener('click', limparFiltros);
                 
                 const searchInput = document.getElementById('search-agendamentos');
-                searchInput.addEventListener('input', (e) => buscarPorCliente(e.target.value));
-                
-                // Configurar busca com Enter também
-                searchInput.addEventListener('keypress', (e) => {
-                    if (e.key === 'Enter') {
-                        buscarPorCliente(e.target.value);
-                    }
-                });
+                if (searchInput) {
+                    searchInput.addEventListener('input', (e) => buscarPorCliente(e.target.value));
+                    searchInput.addEventListener('keypress', (e) => {
+                        if (e.key === 'Enter') {
+                            buscarPorCliente(e.target.value);
+                        }
+                    });
+                }
+
+                // Toggle de escopo (hoje / futuros)
+                const escopoToggle = document.getElementById('agendamentos-escopo-toggle');
+                if (escopoToggle) {
+                    escopoToggle.querySelectorAll('.agendamentos-escopo-btn').forEach(btn => {
+                        btn.addEventListener('click', () => {
+                            const escopo = btn.getAttribute('data-escopo') || 'hoje';
+                            state.agendamentosEscopo = escopo;
+                            
+                            escopoToggle.querySelectorAll('.agendamentos-escopo-btn').forEach(b => b.classList.remove('active'));
+                            btn.classList.add('active');
+
+                            // Re-renderizar usando os dados já carregados (se existirem)
+                            if (state.agendamentosDados && Array.isArray(state.agendamentosDados)) {
+                                renderTodosAgendamentos(state.agendamentosDados);
+                            }
+                        });
+                    });
+                }
             }, 100);
 
             await carregarBarbeirosParaFiltro();
@@ -3275,6 +3430,8 @@
                 if (response.ok) {
                     const result = await response.json();
                     const barbeiros = result.data || [];
+                    // Guardar barbeiros em estado para uso na visão em colunas
+                    state.barbeirosFiltro = barbeiros;
                     const select = document.getElementById('filter-barbeiro');
                     
                     if (select) {
@@ -3296,17 +3453,13 @@
         async function carregarAgendamentosComFiltro(filtros = {}) {
             try {
                 // Mostrar loading
-                const tbody = document.getElementById('todos-agendamentos');
-                if (tbody) {
-                    tbody.innerHTML = `
-                        <tr>
-                            <td colspan="8" style="text-align: center; padding: 3rem;">
-                                <div style="display: flex; flex-direction: column; align-items: center; gap: 1rem;">
-                                    <i class="fas fa-spinner fa-spin" style="font-size: 2rem; color: var(--accent-gold);"></i>
-                                    <p>Carregando agendamentos...</p>
-                                </div>
-                            </td>
-                        </tr>
+                const container = document.getElementById('agendamentos-por-barbeiro-container');
+                if (container) {
+                    container.innerHTML = `
+                        <div class="agendamentos-loading">
+                            <i class="fas fa-spinner fa-spin"></i>
+                            <span>Carregando agendamentos...</span>
+                        </div>
                     `;
                 }
                 

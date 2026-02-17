@@ -1660,6 +1660,23 @@
             transform: translateY(-2px);
             box-shadow: 0 6px 15px rgba(220, 53, 69, 0.3);
         }
+
+        @media (max-width: 768px) {
+            .agendamentos-por-barbeiro {
+                display: flex !important;           /* substitui o grid */
+                flex-wrap: nowrap;                  /* impede a quebra de linha */
+                overflow-x: auto;                    /* ativa rolagem horizontal */
+                -webkit-overflow-scrolling: touch;   /* scroll suave em iOS */
+                scrollbar-width: thin;                /* barra fina no Firefox */
+                gap: 1rem;                            /* espaçamento entre colunas */
+                padding-bottom: 0.5rem;               /* espaço para a barra de rolagem */
+            }
+
+            .agendamentos-por-barbeiro .coluna-barbeiro {
+                flex: 0 0 220px;                      /* largura fixa (não encolhe) */
+                /* Se preferir largura variável, use min-width: 200px; max-width: 280px; flex: 0 0 auto; */
+            }
+        }
     </style>
 </head>
 <body>

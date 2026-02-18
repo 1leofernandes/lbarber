@@ -1677,6 +1677,42 @@
                 /* Se preferir largura variável, use min-width: 200px; max-width: 280px; flex: 0 0 auto; */
             }
         }
+
+        .mini-agendamento-vazio-slot {
+            width: 100%;
+            border-radius: 8px;
+            border: 1px dashed rgba(212, 175, 55, 0.15);
+            background: transparent;
+            color: var(--medium-gray);
+            padding: 0.35rem 0.6rem;
+            font-size: 0.85rem;
+            text-align: center;
+            letter-spacing: 1px;
+            min-height: 32px;
+            box-sizing: border-box;
+        }
+
+        .coluna-barbeiro-lista {
+            max-height: 400px;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: var(--accent-gold) #1a1a1a;
+            padding-right: 4px;
+        }
+
+        .coluna-barbeiro-lista::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .coluna-barbeiro-lista::-webkit-scrollbar-track {
+            background: #1a1a1a;
+            border-radius: 10px;
+        }
+
+        .coluna-barbeiro-lista::-webkit-scrollbar-thumb {
+            background: var(--accent-gold);
+            border-radius: 10px;
+        }
     </style>
 </head>
 <body>
@@ -2226,6 +2262,18 @@
             }
         }
 
+        // function solicitarPermissaoNotificacao() {
+        //     if (!("Notification" in window)) {
+        //         console.log("Este navegador não suporta notificações.");
+        //         return;
+        //     }
+        //     if (Notification.permission === "default") {
+        //         Notification.requestPermission();
+        //     }
+        // }
+
+        // solicitarPermissaoNotificacao();
+
         // Handler para o formulário de serviço
         async function handleNovoServico(e) {
             e.preventDefault();
@@ -2504,28 +2552,16 @@
             const container = document.getElementById('agendamentos-por-barbeiro-container');
             if (!container) return;
 
-            // Guardar em estado para reuso (ex.: troca de escopo)
             state.agendamentosDados = agendamentos || [];
-
             const barbeiros = state.barbeirosFiltro || [];
 
             if (!barbeiros.length) {
-                container.innerHTML = `
-                    <div class="agendamentos-empty">
-                        <i class="fas fa-user-slash"></i>
-                        <p>Nenhum barbeiro cadastrado para exibir agendamentos.</p>
-                    </div>
-                `;
+                container.innerHTML = `<div class="agendamentos-empty"><i class="fas fa-user-slash"></i><p>Nenhum barbeiro cadastrado.</p></div>`;
                 return;
             }
 
             if (!agendamentos || agendamentos.length === 0) {
-                container.innerHTML = `
-                    <div class="agendamentos-empty">
-                        <i class="fas fa-calendar-times"></i>
-                        <p>Nenhum agendamento encontrado para os filtros selecionados.</p>
-                    </div>
-                `;
+                container.innerHTML = `<div class="agendamentos-empty"><i class="fas fa-calendar-times"></i><p>Nenhum agendamento encontrado.</p></div>`;
                 return;
             }
 
@@ -2534,59 +2570,40 @@
 
             const normalizarData = (data) => {
                 if (!data) return null;
-                if (typeof data === 'string') return data.split('T')[0];
-                try {
-                    return new Date(data).toISOString().split('T')[0];
-                } catch {
-                    return null;
-                }
+                return typeof data === 'string' ? data.split('T')[0] : new Date(data).toISOString().split('T')[0];
             };
 
             const filtrarPorEscopo = (ag) => {
                 const data = normalizarData(ag.data_agendada);
                 if (!data) return false;
-                if (escopo === 'hoje') return data === hojeStr;
-                // futuros: hoje em diante
-                return data >= hojeStr;
+                return escopo === 'hoje' ? data === hojeStr : data >= hojeStr;
             };
 
-            // Indexar agendamentos por barbeiro
             const mapaAgendamentos = new Map();
             barbeiros.forEach(b => mapaAgendamentos.set(b.id, []));
 
             agendamentos.forEach(ag => {
                 if (!filtrarPorEscopo(ag)) return;
-                const barbeiroId = ag.barbeiro_id || (ag.barbeiro && ag.barbeiro.id);
-                if (!mapaAgendamentos.has(barbeiroId)) return;
-                mapaAgendamentos.get(barbeiroId).push(ag);
+                const barbeiroId = ag.barbeiro_id || ag.barbeiro?.id;
+                if (mapaAgendamentos.has(barbeiroId)) {
+                    mapaAgendamentos.get(barbeiroId).push(ag);
+                }
             });
 
-            // Função auxiliar para calcular duração total (minutos)
             const getDuracaoTotalMinutos = (agendamento) => {
-                let duracaoTotal = 0;
-                if (agendamento.servicos && Array.isArray(agendamento.servicos) && agendamento.servicos.length > 0) {
-                    duracaoTotal = agendamento.servicos.reduce((total, servico) => {
-                        const dur = parseInt(servico.duracao_servico) || 0;
-                        return total + dur;
-                    }, 0);
-                } else if (agendamento.duracao_total) {
-                    duracaoTotal = parseInt(agendamento.duracao_total) || 0;
+                if (agendamento.servicos?.length) {
+                    return agendamento.servicos.reduce((total, s) => total + (parseInt(s.duracao_servico) || 0), 0);
                 }
-                return duracaoTotal;
+                return parseInt(agendamento.duracao_total) || 0;
             };
 
             const calcularIntervaloHorario = (agendamento) => {
                 const inicio = agendamento.hora_inicio;
                 if (!inicio) return '--:--';
-
                 const [h, m] = inicio.split(':').map(Number);
-                let minutosInicio = (h || 0) * 60 + (m || 0);
-                let minutosFim = minutosInicio + getDuracaoTotalMinutos(agendamento);
-
-                if (!Number.isFinite(minutosFim) || minutosFim <= minutosInicio) {
-                    return inicio;
-                }
-
+                const minutosInicio = h * 60 + (m || 0);
+                const minutosFim = minutosInicio + getDuracaoTotalMinutos(agendamento);
+                if (!Number.isFinite(minutosFim) || minutosFim <= minutosInicio) return inicio;
                 const hFim = String(Math.floor(minutosFim / 60)).padStart(2, '0');
                 const mFim = String(minutosFim % 60).padStart(2, '0');
                 return `${inicio} - ${hFim}:${mFim}`;
@@ -2594,31 +2611,27 @@
 
             const scopeLabel = escopo === 'hoje' ? 'de hoje' : 'futuros';
 
-            // Montar colunas
+            // Gera lista de horários das 08:00 às 19:00 (intervalo de 30 min)
+            const horarios = [];
+            for (let h = 8; h <= 19; h++) {
+                for (let m = 0; m < 60; m += 30) {
+                    if (h === 19 && m === 30) continue; // para não incluir 19:30
+                    horarios.push(`${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`);
+                }
+            }
+
             container.innerHTML = `
                 <div class="agendamentos-por-barbeiro">
                     ${barbeiros.map(b => {
                         const lista = mapaAgendamentos.get(b.id) || [];
-                        // Ordenar por horário de início
-                        lista.sort((a, b) => {
-                            const ah = a.hora_inicio || '';
-                            const bh = b.hora_inicio || '';
-                            return ah.localeCompare(bh);
+                        // Cria mapa de agendamentos por hora_inicio (apenas HH:MM)
+                        const agendamentosPorHora = {};
+                        lista.forEach(ag => {
+                            if (ag.hora_inicio) {
+                                const horaChave = ag.hora_inicio.substring(0, 5);
+                                agendamentosPorHora[horaChave] = ag;
+                            }
                         });
-
-                        if (!lista.length) {
-                            return `
-                                <div class="coluna-barbeiro">
-                                    <div class="coluna-barbeiro-header">
-                                        <div class="coluna-barbeiro-nome">${b.nome}</div>
-                                        <div class="coluna-barbeiro-contador">0 ${scopeLabel}</div>
-                                    </div>
-                                    <div class="coluna-barbeiro-lista">
-                                        <div class="mini-agendamento-vazio">Sem agendamentos ${scopeLabel}.</div>
-                                    </div>
-                                </div>
-                            `;
-                        }
 
                         return `
                             <div class="coluna-barbeiro">
@@ -2627,30 +2640,29 @@
                                     <div class="coluna-barbeiro-contador">${lista.length} ${scopeLabel}</div>
                                 </div>
                                 <div class="coluna-barbeiro-lista">
-                                    ${lista.map(ag => {
-                                        const intervalo = calcularIntervaloHorario(ag);
-                                        const servicosTexto = ag.servicos && Array.isArray(ag.servicos) && ag.servicos.length > 0
-                                            ? ag.servicos.map(s => s.nome_servico).join(', ')
-                                            : (ag.servico_nome || 'Serviço');
-                                        const cliente = ag.cliente_nome || 'Cliente';
-                                        const titulo = `${cliente} • ${servicosTexto}`;
-                                        const statusClass = ag.status === 'concluido'
-                                            ? 'status-concluido'
-                                            : ag.status === 'cancelado'
-                                                ? 'status-cancelado'
-                                                : 'status-confirmado';
+                                    ${horarios.map(hora => {
+                                        const ag = agendamentosPorHora[hora];
+                                        if (ag) {
+                                            const intervalo = calcularIntervaloHorario(ag);
+                                            const servicosTexto = ag.servicos?.length 
+                                                ? ag.servicos.map(s => s.nome_servico).join(', ')
+                                                : (ag.servico_nome || 'Serviço');
+                                            const titulo = `${ag.cliente_nome || 'Cliente'} • ${servicosTexto}`;
+                                            const statusClass = ag.status === 'concluido' ? 'status-concluido'
+                                                                : ag.status === 'cancelado' ? 'status-cancelado'
+                                                                : 'status-confirmado';
 
-                                        return `
-                                            <button 
-                                                type="button"
-                                                class="mini-agendamento-card"
-                                                onclick="verAgendamento(${ag.id})"
-                                                title="${titulo.replace(/"/g, '&quot;')}"
-                                            >
-                                                <span class="mini-agendamento-horario">${intervalo}</span>
-                                                <span class="mini-agendamento-status-dot ${statusClass}"></span>
-                                            </button>
-                                        `;
+                                            return `
+                                                <button type="button" class="mini-agendamento-card"
+                                                        onclick="verAgendamento(${ag.id})"
+                                                        title="${titulo.replace(/"/g, '&quot;')}">
+                                                    <span class="mini-agendamento-horario">${intervalo}</span>
+                                                    <span class="mini-agendamento-status-dot ${statusClass}"></span>
+                                                </button>
+                                            `;
+                                        } else {
+                                            return `<div class="mini-agendamento-vazio-slot">---</div>`;
+                                        }
                                     }).join('')}
                                 </div>
                             </div>

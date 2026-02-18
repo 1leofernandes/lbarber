@@ -1681,7 +1681,7 @@
         .mini-agendamento-vazio-slot {
             width: 100%;
             border-radius: 8px;
-            border: 1px dashed rgba(212, 175, 55, 0.15);
+            /* border: 1px dashed rgba(212, 175, 55, 0.15); */
             background: transparent;
             color: var(--medium-gray);
             padding: 0.35rem 0.6rem;
@@ -1712,6 +1712,33 @@
         .coluna-barbeiro-lista::-webkit-scrollbar-thumb {
             background: var(--accent-gold);
             border-radius: 10px;
+        }
+
+        .mini-agendamento-horario-slot {
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            min-width: 45px;
+            color: var(--medium-gray);
+            font-size: 0.8rem;
+        }
+
+        .mini-agendamento-empty-slot {
+            width: 100%;
+            /* border-bottom: 1px dashed rgba(212, 175, 55, 0.15); */
+            height: 1px;
+            margin: 8px 0;
+        }
+
+        .mini-agendamento-slot-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            min-height: 32px;
+        }
+
+        .mini-agendamento-slot-container .mini-agendamento-card {
+            flex: 1;
+            margin: 0;
         }
     </style>
 </head>
@@ -2615,7 +2642,7 @@
             const horarios = [];
             for (let h = 8; h <= 19; h++) {
                 for (let m = 0; m < 60; m += 30) {
-                    if (h === 19 && m === 30) continue; // para não incluir 19:30
+                    if (h === 19 && m === 30) continue; // não incluir 19:30
                     horarios.push(`${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`);
                 }
             }
@@ -2642,6 +2669,7 @@
                                 <div class="coluna-barbeiro-lista">
                                     ${horarios.map(hora => {
                                         const ag = agendamentosPorHora[hora];
+                                        
                                         if (ag) {
                                             const intervalo = calcularIntervaloHorario(ag);
                                             const servicosTexto = ag.servicos?.length 
@@ -2653,15 +2681,23 @@
                                                                 : 'status-confirmado';
 
                                             return `
-                                                <button type="button" class="mini-agendamento-card"
-                                                        onclick="verAgendamento(${ag.id})"
-                                                        title="${titulo.replace(/"/g, '&quot;')}">
-                                                    <span class="mini-agendamento-horario">${intervalo}</span>
-                                                    <span class="mini-agendamento-status-dot ${statusClass}"></span>
-                                                </button>
+                                                <div class="mini-agendamento-slot-container">
+                                                    <span class="mini-agendamento-horario-slot">${hora}</span>
+                                                    <button type="button" class="mini-agendamento-card"
+                                                            onclick="verAgendamento(${ag.id})"
+                                                            title="${titulo.replace(/"/g, '&quot;')}">
+                                                        <span class="mini-agendamento-horario">${intervalo}</span>
+                                                        <span class="mini-agendamento-status-dot ${statusClass}"></span>
+                                                    </button>
+                                                </div>
                                             `;
                                         } else {
-                                            return `<div class="mini-agendamento-vazio-slot">---</div>`;
+                                            return `
+                                                <div class="mini-agendamento-slot-container">
+                                                    <span class="mini-agendamento-horario-slot">${hora}</span>
+                                                    <div class="mini-agendamento-empty-slot"></div>
+                                                </div>
+                                            `;
                                         }
                                     }).join('')}
                                 </div>

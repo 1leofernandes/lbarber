@@ -2387,28 +2387,28 @@
                 <div class="modal-body">
                     <div class="form-group">
                         <label class="form-label">Tipo de Bloqueio *</label>
-                        <div style="display: flex; gap: 20px; margin-top: 10px;">
-                            <label style="display: flex; align-items: center; gap: 5px;">
-                                <input type="radio" name="tipo" value="horario" checked 
-                                    onchange="atualizarCamposBloqueio('horario')">
+                        <div class="grid grid-cols-2 gap-x-5 gap-y-2 mt-[10px]">
+                            <label class="flex items-center gap-[5px]">
+                                <input type="radio" name="tipo" value="horario" checked onchange="atualizarCamposBloqueio('horario')">
                                 Horário Específico
                             </label>
-                            <label style="display: flex; align-items: center; gap: 5px;">
-                                <input type="radio" name="tipo" value="dia"
-                                    onchange="atualizarCamposBloqueio('dia')">
+                            
+                            <label class="flex items-center gap-[5px]">
+                                <input type="radio" name="tipo" value="dia" onchange="atualizarCamposBloqueio('dia')">
                                 Dia Inteiro
                             </label>
-                            <label style="display: flex; align-items: center; gap: 5px;">
-                                <input type="radio" name="tipo" value="periodo"
-                                    onchange="atualizarCamposBloqueio('periodo')">
+                            
+                            <label class="flex items-center gap-[5px]">
+                                <input type="radio" name="tipo" value="periodo" onchange="atualizarCamposBloqueio('periodo')">
                                 Período
                             </label>
-                            <label>
-                                <input type="radio" name="tipo" value="recorrente" 
-                                    onchange="atualizarCamposBloqueio('recorrente')">
+                            
+                            <label class="flex items-center gap-[5px]">
+                                <input type="radio" name="tipo" value="recorrente" onchange="atualizarCamposBloqueio('recorrente')">
                                 Recorrente (semanal)
                             </label>
                         </div>
+
                     </div>
 
                     <div class="form-row">

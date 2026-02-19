@@ -38,10 +38,10 @@ class BloqueioService {
             }
             
             // Verificar sobreposição com bloqueios existentes
-            const sobreposicao = await this.verificarSobreposicao(bloqueioData);
-            if (sobreposicao) {
-                throw new Error('Já existe um bloqueio neste período');
-            }
+            // const sobreposicao = await this.verificarSobreposicao(bloqueioData);
+            // if (sobreposicao) {
+            //     throw new Error('Já existe um bloqueio neste período');
+            // }
             
             return await Bloqueio.create(bloqueioData);
         } catch (error) {

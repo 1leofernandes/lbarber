@@ -51,6 +51,8 @@ class BloqueioController {
     async create(req, res) {
         try {
             const bloqueioData = req.body;
+
+            console.log('Dados recebidos no controller:', JSON.stringify(bloqueioData, null, 2));
             
             // Adicionar ativo por padrão
             if (bloqueioData.ativo === undefined) {

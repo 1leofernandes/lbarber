@@ -91,14 +91,14 @@ class BloqueioService {
         const { tipo, data_inicio, data_fim, hora_inicio, hora_fim, dias_semana } = bloqueioData;
         
         // Validar tipo
-        const tiposValidos = ['dia', 'horario', 'recorrente', 'periodo'];
+        const tiposValidos = ['dia', 'horario', 'periodo', 'recorrente'];
         if (!tiposValidos.includes(tipo)) {
             throw new Error('Tipo de bloqueio inválido');
         }
         
         // Validar datas
         const dataInicio = new Date(data_inicio);
-        const dataFim = new Date(data_fim || data_inicio);
+        const dataFim = data_fim ? new Date(data_fim) : new Date(data_inicio);
         
         if (isNaN(dataInicio.getTime())) {
             throw new Error('Data de início inválida');
@@ -112,37 +112,35 @@ class BloqueioService {
             throw new Error('Data de fim não pode ser anterior à data de início');
         }
         
-        // Validar horários para bloqueio do tipo 'horario'
+        // Validar horários para bloqueios que precisam de horário
         if (tipo === 'horario' || tipo === 'recorrente') {
             if (!hora_inicio || !hora_fim) {
-                throw new Error('Horário de início e fim são obrigatórios para bloqueios do tipo "horario"');
+                throw new Error('Horário de início e fim são obrigatórios para este tipo');
             }
             
-            const horaInicio = parseInt(hora_inicio.split(':')[0]);
-            const minutoInicio = parseInt(hora_inicio.split(':')[1]);
-            const horaFim = parseInt(hora_fim.split(':')[0]);
-            const minutoFim = parseInt(hora_fim.split(':')[1]);
-            
-            if (horaInicio < 0 || horaInicio > 23 || minutoInicio < 0 || minutoInicio > 59) {
-                throw new Error('Horário de início inválido');
+            // Validar formato do horário (HH:MM)
+            const horaRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
+            if (!horaRegex.test(hora_inicio) || !horaRegex.test(hora_fim)) {
+                throw new Error('Formato de horário inválido. Use HH:MM');
             }
             
-            if (horaFim < 0 || horaFim > 23 || minutoFim < 0 || minutoFim > 59) {
-                throw new Error('Horário de fim inválido');
-            }
+            const [hInicio, mInicio] = hora_inicio.split(':').map(Number);
+            const [hFim, mFim] = hora_fim.split(':').map(Number);
             
-            const inicioMinutos = horaInicio * 60 + minutoInicio;
-            const fimMinutos = horaFim * 60 + minutoFim;
+            const inicioMinutos = hInicio * 60 + mInicio;
+            const fimMinutos = hFim * 60 + mFim;
             
             if (fimMinutos <= inicioMinutos) {
                 throw new Error('Horário de fim deve ser após o horário de início');
             }
         }
-
+        
+        // Validar dias da semana para bloqueio recorrente
         if (tipo === 'recorrente') {
             if (!dias_semana || !Array.isArray(dias_semana) || dias_semana.length === 0) {
                 throw new Error('Dias da semana são obrigatórios para bloqueios recorrentes');
             }
+            
             for (let dia of dias_semana) {
                 if (dia < 1 || dia > 7) {
                     throw new Error('Dias da semana devem ser entre 1 (segunda) e 7 (domingo)');
@@ -157,52 +155,71 @@ class BloqueioService {
         try {
             const { tipo, data_inicio, data_fim, hora_inicio, hora_fim, barbeiro_id } = bloqueioData;
             
-            let query = `
+            const pool = require('../../config/database');
+            let query;
+            let params = [];
+            
+            // Query base
+            let baseQuery = `
                 SELECT COUNT(*) as total
                 FROM bloqueios
                 WHERE ativo = true
-                AND (
-                    (barbeiro_id = $1 OR barbeiro_id IS NULL)
-                    OR $1 IS NULL
-                )
-                AND (
             `;
             
-            const params = [barbeiro_id];
-            let paramCount = 2;
-            
-            if (tipo === 'dia') {
-                // Para bloqueios de dia inteiro, verificar sobreposição de datas
-                query += `(tipo = 'dia' AND (
-                    (data_inicio <= $${paramCount} AND data_fim >= $${paramCount})
-                    OR (data_inicio <= $${paramCount + 1} AND data_fim >= $${paramCount + 1})
-                    OR ($${paramCount} <= data_inicio AND $${paramCount + 1} >= data_fim)
-                ))`;
-                params.push(data_inicio, data_fim || data_inicio);
-                paramCount += 2;
-            } else if (tipo === 'horario') {
-                // Para bloqueios de horário, verificar sobreposição mais complexa
-                query += `(tipo = 'horario' AND (
-                    (data_inicio <= $${paramCount} AND data_fim >= $${paramCount})
-                    OR (data_inicio <= $${paramCount + 1} AND data_fim >= $${paramCount + 1})
-                    OR ($${paramCount} <= data_inicio AND $${paramCount + 1} >= data_fim)
-                )
-                AND NOT ($${paramCount + 2} >= hora_fim OR $${paramCount + 3} <= hora_inicio))`;
-                params.push(data_inicio, data_fim || data_inicio, hora_fim, hora_inicio);
-                paramCount += 4;
+            // Condição para barbeiro
+            if (barbeiro_id) {
+                baseQuery += ` AND (barbeiro_id = $${params.length + 1} OR barbeiro_id IS NULL)`;
+                params.push(barbeiro_id);
+            } else {
+                baseQuery += ` AND barbeiro_id IS NULL`;
             }
             
-            query += `)`;
+            // Condição específica por tipo
+            if (tipo === 'dia') {
+                // Para bloqueios de dia inteiro, verificar sobreposição de datas
+                baseQuery += ` AND tipo = 'dia' AND (
+                    (data_inicio <= $${params.length + 1} AND COALESCE(data_fim, data_inicio) >= $${params.length + 1})
+                    OR (data_inicio <= $${params.length + 2} AND COALESCE(data_fim, data_inicio) >= $${params.length + 2})
+                    OR ($${params.length + 1} <= data_inicio AND $${params.length + 2} >= COALESCE(data_fim, data_inicio))
+                )`;
+                params.push(data_inicio, data_fim || data_inicio);
+                
+            } else if (tipo === 'horario' || tipo === 'recorrente') {
+                // Para bloqueios de horário ou recorrente, verificar sobreposição de datas e horários
+                baseQuery += ` AND tipo IN ('horario', 'recorrente') AND (
+                    (
+                        (data_inicio <= $${params.length + 1} AND COALESCE(data_fim, data_inicio) >= $${params.length + 1})
+                        OR (data_inicio <= $${params.length + 2} AND COALESCE(data_fim, data_inicio) >= $${params.length + 2})
+                        OR ($${params.length + 1} <= data_inicio AND $${params.length + 2} >= COALESCE(data_fim, data_inicio))
+                    )
+                    AND NOT ($${params.length + 4} <= hora_inicio OR $${params.length + 3} >= hora_fim)
+                )`;
+                params.push(data_inicio, data_fim || data_inicio, hora_fim, hora_inicio);
+                
+                // Para bloqueios recorrentes, também verificar dias da semana
+                if (tipo === 'recorrente' && bloqueioData.dias_semana && bloqueioData.dias_semana.length > 0) {
+                    baseQuery += ` AND (
+                        dias_semana IS NULL 
+                        OR dias_semana && $${params.length + 1}::integer[]
+                    )`;
+                    params.push(bloqueioData.dias_semana);
+                }
+            }
             
+            // Excluir o próprio bloqueio se estiver editando
             if (excluirBloqueioId) {
-                query += ` AND id != $${paramCount}`;
+                baseQuery += ` AND id != $${params.length + 1}`;
                 params.push(excluirBloqueioId);
             }
             
-            const pool = require('../../config/database');
-            const result = await pool.query(query, params);
+            query = baseQuery;
             
+            console.log('Query de verificação:', query);
+            console.log('Parâmetros:', params);
+            
+            const result = await pool.query(query, params);
             return parseInt(result.rows[0].total) > 0;
+            
         } catch (error) {
             console.error('Erro ao verificar sobreposição de bloqueios:', error);
             throw error;

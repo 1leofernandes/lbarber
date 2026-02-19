@@ -6141,6 +6141,11 @@
                 ativo: true,
                 dias_semana: diasSemana.length > 0 ? diasSemana : null
             };
+
+            // if (bloqueioData.tipo === 'dia' || bloqueioData.tipo === 'periodo') {
+            //     delete bloqueioData.hora_inicio;
+            //     delete bloqueioData.hora_fim;
+            // }
             
             // Validar dados
             if (!bloqueioData.data_inicio) {

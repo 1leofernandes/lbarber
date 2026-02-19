@@ -51,19 +51,19 @@ class Bloqueio {
 
     static async create(bloqueioData) {
         const { tipo, data_inicio, data_fim, hora_inicio, hora_fim, 
-                barbeiro_id, motivo, ativo } = bloqueioData;
+                barbeiro_id, motivo, ativo, dias_semana } = bloqueioData;
         
         const query = `
             INSERT INTO bloqueios 
             (tipo, data_inicio, data_fim, hora_inicio, hora_fim, 
-             barbeiro_id, motivo, ativo)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+            barbeiro_id, motivo, ativo, dias_semana)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
             RETURNING *
         `;
         
         const result = await pool.query(query, [
             tipo, data_inicio, data_fim, hora_inicio, hora_fim,
-            barbeiro_id, motivo, ativo !== false
+            barbeiro_id, motivo, ativo !== false, dias_semana
         ]);
         
         return result.rows[0];
@@ -71,20 +71,20 @@ class Bloqueio {
 
     static async update(id, bloqueioData) {
         const { tipo, data_inicio, data_fim, hora_inicio, hora_fim, 
-                barbeiro_id, motivo, ativo } = bloqueioData;
+                barbeiro_id, motivo, ativo, dias_semana } = bloqueioData;
         
         const query = `
             UPDATE bloqueios 
             SET tipo = $1, data_inicio = $2, data_fim = $3,
                 hora_inicio = $4, hora_fim = $5, barbeiro_id = $6,
-                motivo = $7, ativo = $8, updated_at = CURRENT_TIMESTAMP
-            WHERE id = $9
+                motivo = $7, ativo = $8, dias_semana = $9, updated_at = CURRENT_TIMESTAMP
+            WHERE id = $10
             RETURNING *
         `;
         
         const result = await pool.query(query, [
             tipo, data_inicio, data_fim, hora_inicio, hora_fim,
-            barbeiro_id, motivo, ativo, id
+            barbeiro_id, motivo, ativo, dias_semana, id
         ]);
         
         return result.rows[0];
@@ -107,15 +107,23 @@ class Bloqueio {
                     OR barbeiro_id IS NULL
                 )
                 AND (
-                    -- Bloqueios de dia inteiro
                     (tipo = 'dia' AND $2 BETWEEN data_inicio AND COALESCE(data_fim, data_inicio))
                     OR
-                    -- Bloqueios de período
                     (tipo = 'periodo' AND $2 BETWEEN data_inicio AND data_fim)
                     OR
-                    -- Bloqueios de horário específico
                     (tipo = 'horario' 
                     AND $2 BETWEEN data_inicio AND COALESCE(data_fim, data_inicio)
+                    AND NOT ($4 <= hora_inicio OR $3 >= hora_fim))
+                    OR
+                    (tipo = 'recorrente'
+                    AND $2 >= data_inicio
+                    AND (data_fim IS NULL OR $2 <= data_fim)
+                    AND (
+                        CASE 
+                            WHEN EXTRACT(DOW FROM $2::date) = 0 THEN 7
+                            ELSE EXTRACT(DOW FROM $2::date)::integer
+                        END = ANY(dias_semana)
+                    )
                     AND NOT ($4 <= hora_inicio OR $3 >= hora_fim))
                 )
             ) as bloqueado

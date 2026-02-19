@@ -88,10 +88,10 @@ class BloqueioService {
     }
 
     async validarBloqueio(bloqueioData) {
-        const { tipo, data_inicio, data_fim, hora_inicio, hora_fim } = bloqueioData;
+        const { tipo, data_inicio, data_fim, hora_inicio, hora_fim, dias_semana } = bloqueioData;
         
         // Validar tipo
-        const tiposValidos = ['dia', 'horario'];
+        const tiposValidos = ['dia', 'horario', 'recorrente', 'periodo'];
         if (!tiposValidos.includes(tipo)) {
             throw new Error('Tipo de bloqueio inválido');
         }
@@ -113,7 +113,7 @@ class BloqueioService {
         }
         
         // Validar horários para bloqueio do tipo 'horario'
-        if (tipo === 'horario') {
+        if (tipo === 'horario' || tipo === 'recorrente') {
             if (!hora_inicio || !hora_fim) {
                 throw new Error('Horário de início e fim são obrigatórios para bloqueios do tipo "horario"');
             }
@@ -136,6 +136,17 @@ class BloqueioService {
             
             if (fimMinutos <= inicioMinutos) {
                 throw new Error('Horário de fim deve ser após o horário de início');
+            }
+        }
+
+        if (tipo === 'recorrente') {
+            if (!dias_semana || !Array.isArray(dias_semana) || dias_semana.length === 0) {
+                throw new Error('Dias da semana são obrigatórios para bloqueios recorrentes');
+            }
+            for (let dia of dias_semana) {
+                if (dia < 1 || dia > 7) {
+                    throw new Error('Dias da semana devem ser entre 1 (segunda) e 7 (domingo)');
+                }
             }
         }
         

@@ -2403,6 +2403,11 @@
                                     onchange="atualizarCamposBloqueio('periodo')">
                                 Período
                             </label>
+                            <label>
+                                <input type="radio" name="tipo" value="recorrente" 
+                                    onchange="atualizarCamposBloqueio('recorrente')">
+                                Recorrente (semanal)
+                            </label>
                         </div>
                     </div>
 
@@ -2426,6 +2431,19 @@
                         <div class="form-group">
                             <label for="bloqueio-hora-fim" class="form-label">Horário de Fim</label>
                             <input type="time" class="form-control" id="bloqueio-hora-fim" name="hora_fim" value="18:00">
+                        </div>
+                    </div>
+
+                    <div id="bloqueio-dias-semana-container" style="display: none; margin-bottom: 15px;">
+                        <label>Dias da Semana (múltipla escolha)</label>
+                        <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 5px;">
+                            <label><input type="checkbox" name="dias_semana" value="1"> Segunda</label>
+                            <label><input type="checkbox" name="dias_semana" value="2"> Terça</label>
+                            <label><input type="checkbox" name="dias_semana" value="3"> Quarta</label>
+                            <label><input type="checkbox" name="dias_semana" value="4"> Quinta</label>
+                            <label><input type="checkbox" name="dias_semana" value="5"> Sexta</label>
+                            <label><input type="checkbox" name="dias_semana" value="6"> Sábado</label>
+                            <label><input type="checkbox" name="dias_semana" value="7"> Domingo</label>
                         </div>
                     </div>
 
@@ -5645,7 +5663,8 @@
                 hora_fim: document.getElementById('bloqueio-hora-fim')?.value,
                 aplicacao: document.querySelector('input[name="aplicacao"]:checked')?.value,
                 barbeiro_id: document.getElementById('barbeiro-bloqueio')?.value,
-                motivo: document.getElementById('bloqueio-motivo')?.value
+                motivo: document.getElementById('bloqueio-motivo')?.value,
+                dias_semana: Array.from(document.querySelectorAll('input[name="dias_semana"]:checked')).map(cb => cb.value)
             };
             
             try {
@@ -5828,6 +5847,13 @@
         }
 
         // Função para renderizar a lista de bloqueios
+        function formatarDiasSemana(dias) {
+            if (!dias || !dias.length) return '';
+            const nomes = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
+            return dias.map(d => nomes[d-1]).join(', ');
+        }
+
+        // Função para renderizar a lista de bloqueios
         function renderListaBloqueios(bloqueios) {
             const tbody = document.getElementById('lista-bloqueios');
             if (!tbody) return;
@@ -5848,44 +5874,65 @@
             const isMobile = window.innerWidth <= 768;
             
             tbody.innerHTML = bloqueios.map(bloqueio => {
-                // Formatar tipo
-                let tipoTexto = 'Horário Específico';
-                if (bloqueio.tipo === 'dia') {
-                    tipoTexto = 'Dia Inteiro';
-                } else if (bloqueio.tipo === 'periodo') {
-                    tipoTexto = 'Período';
+                // FORMATAR TIPO
+                let tipoTexto = '';
+                let tipoIcon = '';
+                let infoExtra = '';
+                
+                switch(bloqueio.tipo) {
+                    case 'horario':
+                        tipoTexto = 'Horário Específico';
+                        tipoIcon = 'fa-clock';
+                        break;
+                    case 'dia':
+                        tipoTexto = 'Dia Inteiro';
+                        tipoIcon = 'fa-calendar-day';
+                        break;
+                    case 'periodo':
+                        tipoTexto = 'Período';
+                        tipoIcon = 'fa-calendar-week';
+                        break;
+                    case 'recorrente':
+                        tipoTexto = 'Recorrente';
+                        tipoIcon = 'fa-sync-alt';
+                        infoExtra = formatarDiasSemana(bloqueio.dias_semana);
+                        break;
                 }
                 
-                // Formatar período
+                // FORMATAR PERÍODO
                 let periodoTexto = new Date(bloqueio.data_inicio).toLocaleDateString('pt-BR');
                 if (bloqueio.data_fim && bloqueio.data_fim !== bloqueio.data_inicio) {
                     periodoTexto += ` a ${new Date(bloqueio.data_fim).toLocaleDateString('pt-BR')}`;
                 }
                 
-                // Formatar horário
+                // FORMATAR HORÁRIO
                 let horarioTexto = '00:00 - 23:59';
-                if (bloqueio.tipo === 'horario' && bloqueio.hora_inicio && bloqueio.hora_fim) {
+                if ((bloqueio.tipo === 'horario' || bloqueio.tipo === 'recorrente') && bloqueio.hora_inicio && bloqueio.hora_fim) {
                     horarioTexto = `${bloqueio.hora_inicio} - ${bloqueio.hora_fim}`;
                 }
                 
-                // Aplicado para
+                // APLICADO PARA
                 let aplicadoPara = 'Todos os barbeiros';
                 if (bloqueio.barbeiro_id) {
                     aplicadoPara = bloqueio.barbeiro_nome || `Barbeiro #${bloqueio.barbeiro_id}`;
                 }
                 
-                // Status
+                // STATUS
                 const statusClass = bloqueio.ativo ? 'status-active' : 'status-inactive';
                 const statusText = bloqueio.ativo ? 'Ativo' : 'Inativo';
                 
                 if (isMobile) {
-                    // Renderizar como card para mobile
+                    // RENDERIZAR COMO CARD PARA MOBILE
                     return `
                         <tr class="list-card-row" style="display: none;">
                             <td colspan="7" style="padding: 0; border: none;">
                                 <div class="list-card">
                                     <div class="list-card-header">
-                                        <div class="list-card-title">${tipoTexto}</div>
+                                        <div class="list-card-title">
+                                            <i class="fas ${tipoIcon}" style="margin-right: 8px;"></i>
+                                            ${tipoTexto}
+                                            ${infoExtra ? `<br><small style="font-size: 0.8rem; color: var(--accent-gold);">${infoExtra}</small>` : ''}
+                                        </div>
                                         <span class="status-badge ${statusClass}" style="font-size: 0.7rem;">
                                             ${statusText}
                                         </span>
@@ -5933,10 +5980,18 @@
                         </tr>
                     `;
                 } else {
-                    // Renderizar como tabela para desktop
+                    // RENDERIZAR COMO TABELA PARA DESKTOP
                     return `
                         <tr>
-                            <td>${tipoTexto}</td>
+                            <td>
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <i class="fas ${tipoIcon}" style="color: var(--accent-gold); width: 20px;"></i>
+                                    <div>
+                                        <div>${tipoTexto}</div>
+                                        ${infoExtra ? `<small style="color: var(--accent-gold); font-size: 0.8rem;">${infoExtra}</small>` : ''}
+                                    </div>
+                                </div>
+                            </td>
                             <td>${periodoTexto}</td>
                             <td>${horarioTexto}</td>
                             <td>${aplicadoPara}</td>
@@ -5948,10 +6003,10 @@
                             </td>
                             <td>
                                 <div style="display: flex; gap: 5px;">
-                                    <button class="btn-table btn-edit" onclick="editarBloqueio(${bloqueio.id})">
+                                    <button class="btn-table btn-edit" onclick="editarBloqueio(${bloqueio.id})" title="Editar">
                                         <i class="fas fa-edit"></i>
                                     </button>
-                                    <button class="btn-table btn-delete" onclick="excluirBloqueio(${bloqueio.id})">
+                                    <button class="btn-table btn-delete" onclick="excluirBloqueio(${bloqueio.id})" title="Excluir">
                                         <i class="fas fa-trash"></i>
                                     </button>
                                 </div>
@@ -6006,25 +6061,35 @@
         function atualizarCamposBloqueio(tipo) {
             const horarioContainer = document.getElementById('bloqueio-horario-container');
             const dataFimContainer = document.getElementById('bloqueio-data-fim-container');
+            const diasSemanaContainer = document.getElementById('bloqueio-dias-semana-container');
             
-            if (!horarioContainer || !dataFimContainer) return;
+            if (!horarioContainer || !dataFimContainer || !diasSemanaContainer) return;
             
             switch(tipo) {
                 case 'horario':
                     horarioContainer.style.display = 'flex';
                     dataFimContainer.style.display = 'block';
+                    diasSemanaContainer.style.display = 'none';
                     break;
                 case 'dia':
                     horarioContainer.style.display = 'none';
                     dataFimContainer.style.display = 'none';
+                    diasSemanaContainer.style.display = 'none';
                     break;
                 case 'periodo':
                     horarioContainer.style.display = 'none';
                     dataFimContainer.style.display = 'block';
+                    diasSemanaContainer.style.display = 'none';
+                    break;
+                case 'recorrente':
+                    horarioContainer.style.display = 'flex';
+                    dataFimContainer.style.display = 'block';  // data fim opcional
+                    diasSemanaContainer.style.display = 'block';
                     break;
                 default:
                     horarioContainer.style.display = 'flex';
                     dataFimContainer.style.display = 'block';
+                    diasSemanaContainer.style.display = 'none';
             }
         }
 
@@ -6063,6 +6128,8 @@
             
             // Coletar dados do formulário
             const formData = new FormData(e.target);
+            const diasSemana = formData.getAll('dias_semana').map(v => parseInt(v));
+
             const bloqueioData = {
                 tipo: formData.get('tipo') || 'horario',
                 data_inicio: formData.get('data_inicio'),
@@ -6071,7 +6138,8 @@
                 hora_fim: formData.get('hora_fim') || '23:59',
                 barbeiro_id: formData.get('barbeiro_id') || null,
                 motivo: formData.get('motivo') || '',
-                ativo: true
+                ativo: true,
+                dias_semana: diasSemana.length > 0 ? diasSemana : null
             };
             
             // Validar dados

@@ -391,19 +391,30 @@ class AgendamentoService {
                 SELECT 
                     tipo,
                     hora_inicio,
-                    hora_fim
+                    hora_fim,
+                    dias_semana,
+                    data_inicio,
+                    data_fim
                 FROM bloqueios
                 WHERE ativo = true
                 AND (
                     barbeiro_id = $1 
-                    OR barbeiro_id IS NULL  -- Bloqueios para todos os barbeiros
+                    OR barbeiro_id IS NULL
                 )
                 AND (
-                    (tipo = 'dia' AND $2 BETWEEN data_inicio AND COALESCE(data_fim, data_inicio))
-                    OR
-                    (tipo = 'periodo' AND $2 BETWEEN data_inicio AND data_fim)
+                    (tipo IN ('dia', 'periodo') AND $2 BETWEEN data_inicio AND COALESCE(data_fim, data_inicio))
                     OR
                     (tipo = 'horario' AND $2 BETWEEN data_inicio AND COALESCE(data_fim, data_inicio))
+                    OR
+                    (tipo = 'recorrente' 
+                    AND $2 >= data_inicio 
+                    AND (data_fim IS NULL OR $2 <= data_fim)
+                    AND (
+                        CASE 
+                            WHEN EXTRACT(DOW FROM $2::date) = 0 THEN 7
+                            ELSE EXTRACT(DOW FROM $2::date)::integer
+                        END = ANY(dias_semana)
+                    ))
                 )
                 ORDER BY hora_inicio ASC
             `;
@@ -416,13 +427,11 @@ class AgendamentoService {
                 horariosBloqueados: []
             };
             
-            // Verificar se há bloqueio de dia inteiro
             resultado.todoDiaBloqueado = bloqueios.some(b => b.tipo === 'dia' || b.tipo === 'periodo');
             
             if (!resultado.todoDiaBloqueado) {
-                // Coletar horários bloqueados específicos
                 bloqueios.forEach(bloqueio => {
-                    if (bloqueio.tipo === 'horario' && bloqueio.hora_inicio && bloqueio.hora_fim) {
+                    if ((bloqueio.tipo === 'horario' || bloqueio.tipo === 'recorrente') && bloqueio.hora_inicio && bloqueio.hora_fim) {
                         resultado.horariosBloqueados.push({
                             inicio: bloqueio.hora_inicio,
                             fim: bloqueio.hora_fim
@@ -431,7 +440,6 @@ class AgendamentoService {
                 });
             }
             
-            console.log(`Bloqueios encontrados: ${JSON.stringify(resultado)}`);
             return resultado;
         } catch (error) {
             console.error('Erro ao verificar bloqueios:', error);

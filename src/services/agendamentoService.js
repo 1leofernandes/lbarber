@@ -307,6 +307,8 @@ class AgendamentoService {
             
             // 1. Primeiro verificar se há bloqueios para esta data/barbeiro
             const bloqueios = await this.verificarBloqueios(barbeiro_id, data);
+
+            console.log('[getHorariosDisponiveis] Bloqueios retornados:', bloqueios);
             
             if (bloqueios.todoDiaBloqueado) {
                 console.log('Dia inteiro bloqueado para este barbeiro');
@@ -418,9 +420,15 @@ class AgendamentoService {
                 )
                 ORDER BY hora_inicio ASC
             `;
-            
+
+            console.log(`[verificarBloqueios] Barbeiro: ${barbeiro_id}, Data: ${data}`);
+            console.log('[verificarBloqueios] Resultado da query:', result.rows);
+
             const result = await pool.query(query, [barbeiro_id, data]);
             
+            console.log(`[verificarBloqueios] Barbeiro: ${barbeiro_id}, Data: ${data}`);
+            console.log('[verificarBloqueios] Resultado da query:', result.rows);
+
             const bloqueios = result.rows;
             const resultado = {
                 todoDiaBloqueado: false,

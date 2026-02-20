@@ -389,6 +389,8 @@ class AgendamentoService {
     // NOVO: Método para verificar bloqueios
     async verificarBloqueios(barbeiro_id, data) {
         try {
+            const pool = require('../config/database');
+            
             const query = `
                 SELECT 
                     tipo,
@@ -422,11 +424,10 @@ class AgendamentoService {
             `;
 
             console.log(`[verificarBloqueios] Barbeiro: ${barbeiro_id}, Data: ${data}`);
-            console.log('[verificarBloqueios] Resultado da query:', result.rows);
-
+            
+            // Executa a query e armazena o resultado
             const result = await pool.query(query, [barbeiro_id, data]);
             
-            console.log(`[verificarBloqueios] Barbeiro: ${barbeiro_id}, Data: ${data}`);
             console.log('[verificarBloqueios] Resultado da query:', result.rows);
 
             const bloqueios = result.rows;
@@ -448,6 +449,7 @@ class AgendamentoService {
                 });
             }
             
+            console.log('[verificarBloqueios] Resultado processado:', resultado);
             return resultado;
         } catch (error) {
             console.error('Erro ao verificar bloqueios:', error);

@@ -6133,7 +6133,7 @@
             const bloqueioData = {
                 tipo: formData.get('tipo') || 'horario',
                 data_inicio: formData.get('data_inicio'),
-                data_fim: formData.get('data_fim') || formData.get('data_inicio'),
+                data_fim: formData.get('data_fim') || null,
                 hora_inicio: formData.get('hora_inicio') || '00:00',
                 hora_fim: formData.get('hora_fim') || '23:59',
                 barbeiro_id: formData.get('barbeiro_id') || null,

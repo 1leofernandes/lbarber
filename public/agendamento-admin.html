@@ -1768,7 +1768,7 @@
             loadingToast.showToast();
 
             try {
-                const response = await fetch(`${API_BASE_URL}/agendamentos`, {
+                const response = await fetch(`${API_BASE_URL}/agendamentos/barber`, {
                     method: 'POST',
                     headers: {
                         'Authorization': `Bearer ${estado.token}`,

@@ -99,6 +99,100 @@ class AgendamentoController {
             });
         }
     }
+
+    async createBarber(req, res) {
+        try {
+            const userId = req.user.id;
+            const { 
+                barbeiro_id, 
+                servicos_ids, 
+                data_agendada, 
+                hora_inicio, 
+                hora_fim, 
+                observacoes,
+                cliente_nome_admin  // <-- novo campo
+            } = req.body;
+            
+            // Validações
+            if (!servicos_ids || !Array.isArray(servicos_ids) || servicos_ids.length === 0) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Pelo menos um serviço é obrigatório (servicos_ids deve ser um array)'
+                });
+            }
+            
+            if (!data_agendada || !hora_inicio || !hora_fim) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Data e horário são obrigatórios'
+                });
+            }
+            
+            // Verificar serviços
+            for (const servicoId of servicos_ids) {
+                const servico = await servicoService.getServicoById(servicoId);
+                if (!servico) {
+                    return res.status(404).json({
+                        success: false,
+                        message: `Serviço com ID ${servicoId} não encontrado`
+                    });
+                }
+            }
+            
+            // Calcular duração total
+            const servicosInfo = await Promise.all(
+                servicos_ids.map(id => servicoService.getServicoById(id))
+            );
+            const duracaoTotal = servicosInfo.reduce((total, servico) => {
+                return total + (servico.duracao_servico || 0);
+            }, 0);
+            
+            // Validar hora_fim (opcional)
+            const [hora, minuto] = hora_inicio.split(':').map(Number);
+            const inicio = new Date();
+            inicio.setHours(hora, minuto, 0, 0);
+            const fimCalculado = new Date(inicio.getTime() + duracaoTotal * 60000);
+            const horaFimCalculada = `${String(fimCalculado.getHours()).padStart(2, '0')}:${String(fimCalculado.getMinutes()).padStart(2, '0')}`;
+            
+            if (hora_fim && hora_fim !== horaFimCalculada) {
+                console.warn(`Hora fim fornecida (${hora_fim}) difere da calculada (${horaFimCalculada})`);
+            }
+            
+            // Preparar dados para o service
+            const agendamentoData = {
+                usuario_id: userId,                 // ID de quem está criando (barbeiro/admin)
+                barbeiro_id: barbeiro_id || null,
+                servicos_ids,
+                data_agendada,
+                hora_inicio,
+                hora_fim: hora_fim || horaFimCalculada,
+                observacoes,
+                cliente_nome_admin                   // <-- novo campo
+            };
+            
+            const novoAgendamento = await agendamentoService.createAgendamentoComServicosBarber(agendamentoData);
+            
+            res.status(201).json({
+                success: true,
+                message: 'Agendamento realizado com sucesso',
+                agendamento: novoAgendamento
+            });
+        } catch (error) {
+            console.error('Erro ao criar agendamento (barber):', error);
+            
+            if (error.message && (error.message.includes('conflito') || error.message.includes('indisponível'))) {
+                return res.status(409).json({
+                    success: false,
+                    message: error.message
+                });
+            }
+            
+            res.status(500).json({
+                success: false,
+                message: 'Erro interno do servidor'
+            });
+        }
+    }
     
     // Buscar horários disponíveis (ATUALIZADO PARA CONSIDERAR BLOQUEIOS E RETORNAR PREÇOS)
     async getHorariosDisponiveis(req, res) {

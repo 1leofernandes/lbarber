@@ -3043,7 +3043,7 @@
                 
                 return `
                     <tr>
-                        <td>${agendamento.cliente_nome || 'Cliente'}</td>
+                        <td>${agendamento.cliente_nome_admin || agendamento.cliente_nome || 'Cliente'}</td>
                         <td>${servicosTexto}</td>
                         <td>${agendamento.barbeiro_nome || 'Barbeiro'}</td>
                         <td>${formatDateTime(agendamento.data_agendada, agendamento.hora_inicio)}</td>
@@ -3165,7 +3165,10 @@
                                             const servicosTexto = ag.servicos?.length 
                                                 ? ag.servicos.map(s => s.nome_servico).join(', ')
                                                 : (ag.servico_nome || 'Serviço');
-                                            const titulo = `${ag.cliente_nome || 'Cliente'} • ${servicosTexto}`;
+                                            const nomeCliente = ag.cliente_nome_admin || ag.cliente_nome || 'Cliente';
+
+
+                                            const titulo = `${nomeCliente} • ${servicosTexto}`;
                                             const statusClass = ag.status === 'concluido' ? 'status-concluido'
                                                                 : ag.status === 'cancelado' ? 'status-cancelado'
                                                                 : 'status-confirmado';
@@ -7647,7 +7650,11 @@
             currentModalAgendamentoId = id;
 
             // Preenche os campos do modal
-            document.getElementById('modal-cliente').textContent = agendamento.cliente_nome || 'Cliente não informado';
+            const nomeCliente = agendamento.cliente_nome_admin 
+                ? agendamento.cliente_nome_admin 
+                : (agendamento.cliente_nome || 'Cliente não informado');
+            
+            document.getElementById('modal-cliente').textContent = nomeCliente;
 
             // Processa serviços e valor total (igual ao antigo código)
             let servicosTexto = 'Nenhum serviço';

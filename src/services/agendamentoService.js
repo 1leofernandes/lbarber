@@ -75,6 +75,98 @@ class AgendamentoService {
             client.release();
         }
     }
+
+    async createAgendamentoComServicosBarber(agendamentoData) {
+        const client = await pool.connect();
+        try {
+            const { 
+                usuario_id, 
+                barbeiro_id, 
+                servicos_ids, 
+                data_agendada, 
+                hora_inicio, 
+                hora_fim, 
+                observacoes,
+                cliente_nome_admin      // <-- novo campo
+            } = agendamentoData;
+            
+            await client.query('BEGIN');
+            
+            // Verificar disponibilidade
+            const disponivel = await this.verificarDisponibilidadeCompleta(
+                barbeiro_id, 
+                data_agendada, 
+                hora_inicio, 
+                hora_fim,
+                null
+            );
+            
+            if (!disponivel) {
+                throw new Error('Horário indisponível para agendamento');
+            }
+            
+            // Calcular duração total (opcional, apenas para validação)
+            const servicosInfo = await Promise.all(
+                servicos_ids.map(async (id) => {
+                    const result = await client.query(
+                        'SELECT duracao_servico FROM servicos WHERE id = $1',
+                        [id]
+                    );
+                    return result.rows[0];
+                })
+            );
+            
+            // Inserir agendamento
+            const primeiroServico = servicos_ids[0] || null;
+            
+            // Verificar assinatura ativa (se houver)
+            const assinaturaUsuario = await subscriptionService.getActiveAssinaturaUsuario(usuario_id);
+            const assinaturaUsuarioId = assinaturaUsuario ? assinaturaUsuario.id : null;
+
+            // Query com a nova coluna cliente_nome_admin
+            const agendamentoQuery = `
+                INSERT INTO agendamentos 
+                (usuario_id, barbeiro_id, servico_id, data_agendada, hora_inicio, hora_fim, observacoes, assinatura_usuario_id, cliente_nome_admin, created_at, updated_at)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW())
+                RETURNING *
+            `;
+            
+            const agendamentoValues = [
+                usuario_id, 
+                barbeiro_id, 
+                primeiroServico, 
+                data_agendada, 
+                hora_inicio, 
+                hora_fim, 
+                observacoes || null, 
+                assinaturaUsuarioId,
+                cliente_nome_admin || null   // <-- novo valor
+            ];
+            
+            const agendamentoResult = await client.query(agendamentoQuery, agendamentoValues);
+            const agendamento = agendamentoResult.rows[0];
+            
+            // Inserir relações com serviços
+            for (const servicoId of servicos_ids) {
+                await client.query(
+                    'INSERT INTO agendamento_servicos (agendamento_id, servico_id) VALUES ($1, $2)',
+                    [agendamento.id, servicoId]
+                );
+            }
+            
+            await client.query('COMMIT');
+            
+            // Retornar agendamento completo com serviços
+            return await this.getAgendamentoComServicosById(agendamento.id);
+            
+        } catch (error) {
+            await client.query('ROLLBACK');
+            console.error('Erro no createAgendamentoComServicosBarber:', error);
+            throw error;
+        } finally {
+            client.release();
+        }
+    }
     
     // MÉTODO ORIGINAL (mantido para compatibilidade)
     async createAgendamento(agendamentoData) {

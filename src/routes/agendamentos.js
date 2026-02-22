@@ -10,6 +10,10 @@ router.use(authenticateToken);
 // POST /agendamentos - Criar novo agendamento (COM MÚLTIPLOS SERVIÇOS)
 router.post('/', agendamentoController.create);
 
+// post /agendamentos/barber - Criar agendamento para outro usuário
+
+router.post('/barber', agendamentoController.createBarber);
+
 // GET /agendamentos/horarios-disponiveis - Buscar horários disponíveis
 router.get('/horarios-disponiveis', agendamentoController.getHorariosDisponiveis);
 

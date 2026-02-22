@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Agendar - Barbearia Silva</title>
+    <title>Agendar - Barbearia Silva (Admin)</title>
     <link rel="icon" href="assets/image0 (1).jpeg" type="image/jpeg">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -11,7 +11,6 @@
     <link rel="shortcut icon" href="assets/image0 (1).jpeg" type="image/x-icon">
 
     <!-- meta tags -->
-
     <meta name="description" content="Faça login na Barbearia Silva para agendar seus cortes de cabelo, acompanhar seus agendamentos e acessar promoções exclusivas. Acesse sua conta agora!"/>
     <meta name="keywords" content="login, barbearia, agendamento, cortes de cabelo, promoções, conta, acesso"/>
     <meta name="author" content="LF Software"/>
@@ -280,7 +279,6 @@
             display: flex;
             flex-direction: column;
             z-index: 1001;
-            /* box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.5); */
         }
         
         .bottom-sheet.active {
@@ -327,6 +325,28 @@
             overflow-y: auto;
             padding-right: 5px;
             max-height: 60vh;
+        }
+        
+        /* Input dentro do bottom sheet */
+        .input-field {
+            width: 100%;
+            padding: 1rem;
+            background: var(--card-bg);
+            border: 2px solid rgba(212, 175, 55, 0.2);
+            border-radius: 12px;
+            color: var(--light-gray);
+            font-size: 1rem;
+            margin-bottom: 1.5rem;
+            transition: border-color 0.3s ease;
+        }
+        
+        .input-field:focus {
+            outline: none;
+            border-color: var(--accent-gold);
+        }
+        
+        .input-field::placeholder {
+            color: var(--medium-gray);
         }
         
         /* Options Grid */
@@ -785,7 +805,7 @@
         </div>
         <div class="step" id="step4">
             <div class="step-circle">4</div>
-            <div class="step-label">Confirmar</div>
+            <div class="step-label">Cliente</div>
         </div>
     </div>
     
@@ -835,6 +855,21 @@
                 <button class="change-btn">Alterar</button>
             </div>
         </div>
+
+        <!-- Step 4: Nome do Cliente -->
+        <div class="selection-card" id="clienteCard">
+            <div class="card-header">
+                <div>
+                    <h2 class="card-title"><i class="fas fa-user"></i> Nome do Cliente</h2>
+                    <p class="card-subtitle">Informe o nome do cliente</p>
+                </div>
+                <i class="fas fa-chevron-right"></i>
+            </div>
+            <div id="clienteSelected" class="selected-option" style="display: none;">
+                <div class="selected-text">Não informado</div>
+                <button class="change-btn">Alterar</button>
+            </div>
+        </div>
         
         <!-- Summary Section -->
         <div class="summary-section">
@@ -858,6 +893,11 @@
             <div class="summary-item">
                 <span class="summary-label">Hora:</span>
                 <span class="summary-value" id="summaryHora">--:--</span>
+            </div>
+            
+            <div class="summary-item">
+                <span class="summary-label">Cliente:</span>
+                <span class="summary-value" id="summaryCliente">Não informado</span>
             </div>
             
             <div class="summary-item">
@@ -951,6 +991,23 @@
             Confirmar Data e Hora
         </button>
     </div>
+
+    <!-- Bottom Sheet - Nome do Cliente -->
+    <div class="bottom-sheet-overlay" id="clienteOverlay"></div>
+    <div class="bottom-sheet" id="clienteSheet">
+        <div class="bottom-sheet-header">
+            <h2 class="bottom-sheet-title">Nome do Cliente</h2>
+            <button class="bottom-sheet-close" id="closeClienteSheet">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="bottom-sheet-content">
+            <input type="text" id="clienteNomeInput" class="input-field" placeholder="Digite o nome do cliente" maxlength="100">
+        </div>
+        <button class="btn btn-primary" id="confirmClienteBtn" disabled>
+            Confirmar Nome
+        </button>
+    </div>
     
     <!-- Botão Flutuante para Confirmar -->
     <button class="floating-confirm-btn" id="floatingConfirmBtn" disabled>
@@ -989,9 +1046,10 @@
                 horaInicio: null,
                 horaFim: null
             },
+            clienteNome: '', // Novo campo para nome do cliente
             horariosDisponiveis: [],
             dataSelecionada: null,
-            passoAtual: 1 // 1=barbeiro, 2=servicos, 3=data/hora, 4=confirmar
+            passoAtual: 1 // 1=barbeiro, 2=servicos, 3=data/hora, 4=cliente
         };
         
         // Elementos DOM
@@ -1006,17 +1064,20 @@
             barbeiroCard: document.getElementById('barbeiroCard'),
             servicosCard: document.getElementById('servicosCard'),
             dataHoraCard: document.getElementById('dataHoraCard'),
+            clienteCard: document.getElementById('clienteCard'),
             
             // Selected options
             barbeiroSelected: document.getElementById('barbeiroSelected'),
             servicosSelected: document.getElementById('servicosSelected'),
             dataHoraSelected: document.getElementById('dataHoraSelected'),
+            clienteSelected: document.getElementById('clienteSelected'),
             
             // Summary
             summaryBarbeiro: document.getElementById('summaryBarbeiro'),
             summaryServicos: document.getElementById('summaryServicos'),
             summaryData: document.getElementById('summaryData'),
             summaryHora: document.getElementById('summaryHora'),
+            summaryCliente: document.getElementById('summaryCliente'),
             summarySubtotal: document.getElementById('summarySubtotal'),
             summaryDiscount: document.getElementById('summaryDiscount'),
             summaryTotal: document.getElementById('summaryTotal'),
@@ -1026,11 +1087,13 @@
             barbeiroSheet: document.getElementById('barbeiroSheet'),
             servicosSheet: document.getElementById('servicosSheet'),
             dataHoraSheet: document.getElementById('dataHoraSheet'),
+            clienteSheet: document.getElementById('clienteSheet'),
             
             // Overlays
             barbeiroOverlay: document.getElementById('barbeiroOverlay'),
             servicosOverlay: document.getElementById('servicosOverlay'),
             dataHoraOverlay: document.getElementById('dataHoraOverlay'),
+            clienteOverlay: document.getElementById('clienteOverlay'),
             
             // Content areas
             barbeiroContent: document.getElementById('barbeiroContent'),
@@ -1039,12 +1102,14 @@
             timeSlotsGrid: document.getElementById('timeSlotsGrid'),
             selectedDateText: document.getElementById('selectedDateText'),
             noSlotsMessage: document.getElementById('noSlotsMessage'),
+            clienteNomeInput: document.getElementById('clienteNomeInput'),
             
             // Buttons
             floatingConfirmBtn: document.getElementById('floatingConfirmBtn'),
             confirmBarbeiroBtn: document.getElementById('confirmBarbeiroBtn'),
             confirmServicosBtn: document.getElementById('confirmServicosBtn'),
             confirmDataHoraBtn: document.getElementById('confirmDataHoraBtn'),
+            confirmClienteBtn: document.getElementById('confirmClienteBtn'),
             selectedCount: document.getElementById('selectedCount')
         };
         
@@ -1054,7 +1119,7 @@
             servicos: null
         };
         
-        // Inicialização otimizada
+        //Inicialização otimizada
         document.addEventListener('DOMContentLoaded', () => {
             if (!estado.token) {
                 window.location.href = 'login.html';
@@ -1301,15 +1366,27 @@
                     toast('Por favor, selecione pelo menos um serviço.', 'warning');
                 }
             };
+            elementos.clienteCard.onclick = () => {
+                if (estado.selecionados.data && estado.selecionados.horaInicio) {
+                    abrirBottomSheet('cliente');
+                    // Preencher input com valor atual
+                    elementos.clienteNomeInput.value = estado.clienteNome || '';
+                    validarBotaoConfirmarCliente();
+                } else {
+                    toast('Por favor, selecione data e horário primeiro.', 'warning');
+                }
+            };
             
             // Fechar bottom sheets
             elementos.barbeiroOverlay.onclick = () => fecharBottomSheet('barbeiro');
             elementos.servicosOverlay.onclick = () => fecharBottomSheet('servicos');
             elementos.dataHoraOverlay.onclick = () => fecharBottomSheet('dataHora');
+            elementos.clienteOverlay.onclick = () => fecharBottomSheet('cliente');
             
             document.getElementById('closeBarbeiroSheet').onclick = () => fecharBottomSheet('barbeiro');
             document.getElementById('closeServicosSheet').onclick = () => fecharBottomSheet('servicos');
             document.getElementById('closeDataHoraSheet').onclick = () => fecharBottomSheet('dataHora');
+            document.getElementById('closeClienteSheet').onclick = () => fecharBottomSheet('cliente');
             
             // Botões de confirmar nos bottom sheets
             elementos.confirmBarbeiroBtn.onclick = () => {
@@ -1324,6 +1401,10 @@
                 confirmarDataHora();
             };
             
+            elementos.confirmClienteBtn.onclick = () => {
+                confirmarCliente();
+            };
+            
             // Botão flutuante de confirmar agendamento
             elementos.floatingConfirmBtn.onclick = confirmarAgendamento;
             
@@ -1331,6 +1412,15 @@
             elementos.barbeiroSelected.querySelector('.change-btn').onclick = () => abrirBottomSheet('barbeiro');
             elementos.servicosSelected.querySelector('.change-btn').onclick = () => abrirBottomSheet('servicos');
             elementos.dataHoraSelected.querySelector('.change-btn').onclick = () => abrirBottomSheet('dataHora');
+            elementos.clienteSelected.querySelector('.change-btn').onclick = () => abrirBottomSheet('cliente');
+            
+            // Validação em tempo real no input do cliente
+            elementos.clienteNomeInput.addEventListener('input', validarBotaoConfirmarCliente);
+        }
+        
+        function validarBotaoConfirmarCliente() {
+            const nome = elementos.clienteNomeInput.value.trim();
+            elementos.confirmClienteBtn.disabled = nome === '';
         }
         
         function abrirBottomSheet(tipo) {
@@ -1344,6 +1434,10 @@
             // Se for dataHora, carregar horários
             if (tipo === 'dataHora' && estado.dataSelecionada) {
                 carregarHorariosDisponiveis(estado.dataSelecionada);
+            }
+            // Se for cliente, focar no input
+            if (tipo === 'cliente') {
+                setTimeout(() => elementos.clienteNomeInput.focus(), 300);
             }
         }
         
@@ -1439,11 +1533,39 @@
             elementos.summaryData.textContent = dataFormatada;
             elementos.summaryHora.textContent = horaFormatada;
             
-            // Ativar último step
+            // Ativar último step (cliente)
+            elementos.clienteCard.classList.add('active');
             elementos.step4.classList.add('active');
             
             // Fechar bottom sheet
             fecharBottomSheet('dataHora');
+            
+            // Abrir automaticamente o bottom sheet de cliente após fechar o de data/hora
+            setTimeout(() => {
+                abrirBottomSheet('cliente');
+            }, 300);
+            
+            atualizarUI();
+        }
+        
+        function confirmarCliente() {
+            const nome = elementos.clienteNomeInput.value.trim();
+            if (nome === '') {
+                toast('Por favor, informe o nome do cliente.', 'warning');
+                return;
+            }
+            
+            estado.clienteNome = nome;
+            
+            // Atualizar card
+            elementos.clienteSelected.querySelector('.selected-text').textContent = nome;
+            elementos.clienteSelected.style.display = 'flex';
+            
+            // Atualizar summary
+            elementos.summaryCliente.textContent = nome;
+            
+            // Fechar bottom sheet
+            fecharBottomSheet('cliente');
             
             atualizarUI();
         }
@@ -1680,7 +1802,8 @@
             const podeConfirmar = estado.selecionados.barbeiro !== undefined &&
                                 estado.selecionados.servicos.length > 0 &&
                                 estado.selecionados.data &&
-                                estado.selecionados.horaInicio;
+                                estado.selecionados.horaInicio &&
+                                estado.clienteNome.trim() !== '';
             
             elementos.floatingConfirmBtn.disabled = !podeConfirmar;
         }
@@ -1754,6 +1877,11 @@
                 return;
             }
 
+            if (estado.clienteNome.trim() === '') {
+                toast('Informe o nome do cliente.', 'warning');
+                return;
+            }
+
             // Toast de carregamento
             const loadingToast = Toastify({
                 text: 'Confirmando agendamento...',
@@ -1768,7 +1896,7 @@
             loadingToast.showToast();
 
             try {
-                const response = await fetch(`${API_BASE_URL}/agendamentos`, {
+                const response = await fetch(`${API_BASE_URL}/agendamentos/barber`, {
                     method: 'POST',
                     headers: {
                         'Authorization': `Bearer ${estado.token}`,
@@ -1779,7 +1907,8 @@
                         servicos_ids: estado.selecionados.servicos,
                         data_agendada: estado.selecionados.data,
                         hora_inicio: estado.selecionados.horaInicio,
-                        hora_fim: estado.selecionados.horaFim
+                        hora_fim: estado.selecionados.horaFim,
+                        cliente_nome_admin: estado.clienteNome // Nome do cliente informado
                     })
                 });
 

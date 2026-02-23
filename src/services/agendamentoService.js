@@ -614,7 +614,7 @@ class AgendamentoService {
             }
             
             const result = await pool.query(query, params);
-            return result.rows.map(row => row.hora_inicio);
+            return result.rows.map(row => row.hora_inicio.substring(0,5));
         } catch (error) {
             console.error('Erro ao buscar horários ocupados:', error);
             return [];

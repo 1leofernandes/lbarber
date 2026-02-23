@@ -87,7 +87,7 @@ class AgendamentoService {
                 hora_inicio, 
                 hora_fim, 
                 observacoes,
-                cliente_nome_admin      // <-- novo campo
+                cliente_nome_admin
             } = agendamentoData;
             
             await client.query('BEGIN');
@@ -140,7 +140,7 @@ class AgendamentoService {
                 hora_fim, 
                 observacoes || null, 
                 assinaturaUsuarioId,
-                cliente_nome_admin || null   // <-- novo valor
+                cliente_nome_admin || null
             ];
             
             const agendamentoResult = await client.query(agendamentoQuery, agendamentoValues);
@@ -410,16 +410,21 @@ class AgendamentoService {
             // 2. Obter horários padrão da barbearia para este dia
             const horariosPadrao = this.gerarHorariosPadrao(data);
             
-            // 3. Obter horários ocupados por agendamentos
-            const horariosOcupados = await this.getHorariosOcupados(barbeiro_id, data);
+            // 3. Obter intervalos ocupados por agendamentos (agora retorna objetos com inicio e fim)
+            const intervalosOcupados = await this.getIntervalosOcupados(barbeiro_id, data);
 
-            console.log('Horários ocupados retornados do banco:', horariosOcupados);
+            console.log('Intervalos ocupados retornados do banco:', intervalosOcupados);
             
-            // 4. Filtrar horários disponíveis considerando bloqueios
-            const horariosDisponiveis = this.filtrarHorariosDisponiveis(
-                horariosPadrao, 
-                horariosOcupados, 
-                bloqueios.horariosBloqueados,
+            // 4. Combinar intervalos de agendamentos com intervalos de bloqueios
+            const todosIntervalosIndisponiveis = [
+                ...intervalosOcupados,
+                ...bloqueios.horariosBloqueados
+            ];
+            
+            // 5. Filtrar horários disponíveis considerando todos os intervalos indisponíveis
+            const horariosDisponiveis = this.filtrarHorariosPorIntervalos(
+                horariosPadrao,
+                todosIntervalosIndisponiveis,
                 duracaoMinutos
             );
             
@@ -588,15 +593,15 @@ class AgendamentoService {
         return horarios;
     }
     
-    // Método para obter horários ocupados
-    async getHorariosOcupados(barbeiro_id, data) {
+    // NOVO: Método para obter intervalos ocupados (retorna array de objetos {inicio, fim})
+    async getIntervalosOcupados(barbeiro_id, data) {
         try {
             let query;
             let params;
             
             if (barbeiro_id) {
                 query = `
-                    SELECT hora_inicio
+                    SELECT hora_inicio, hora_fim
                     FROM agendamentos
                     WHERE barbeiro_id = $1
                     AND data_agendada::date = $2::date
@@ -605,7 +610,7 @@ class AgendamentoService {
                 params = [barbeiro_id, data];
             } else {
                 query = `
-                    SELECT hora_inicio
+                    SELECT hora_inicio, hora_fim
                     FROM agendamentos
                     WHERE data_agendada::date = $1::date
                     AND status NOT IN ('cancelado')
@@ -614,44 +619,37 @@ class AgendamentoService {
             }
             
             const result = await pool.query(query, params);
-            return result.rows.map(row => row.hora_inicio.substring(0,5));
+            // Retorna objetos com inicio e fim (removendo segundos se houver)
+            return result.rows.map(row => ({
+                inicio: row.hora_inicio.substring(0,5),
+                fim: row.hora_fim.substring(0,5)
+            }));
         } catch (error) {
-            console.error('Erro ao buscar horários ocupados:', error);
+            console.error('Erro ao buscar intervalos ocupados:', error);
             return [];
         }
     }
     
-    // Método para filtrar horários disponíveis
-    filtrarHorariosDisponiveis(horariosPadrao, horariosOcupados, horariosBloqueados, duracaoMinutos) {
+    // NOVO: Método para filtrar horários baseado em intervalos indisponíveis
+    filtrarHorariosPorIntervalos(horariosPadrao, intervalosIndisponiveis, duracaoMinutos) {
         if (!horariosPadrao || horariosPadrao.length === 0) {
             return [];
         }
         
         return horariosPadrao.filter(horario => {
-            // Verificar se não está ocupado
-            if (horariosOcupados.includes(horario)) {
-                return false;
-            }
+            const horarioMinutos = this.converterParaMinutos(horario);
+            const fimHorario = horarioMinutos + duracaoMinutos;
             
-            // Verificar se não está em um horário bloqueado
-            const estaBloqueado = horariosBloqueados.some(bloqueio => {
-                const horarioMinutos = this.converterParaMinutos(horario);
-                const inicioBloqueio = this.converterParaMinutos(bloqueio.inicio);
-                const fimBloqueio = this.converterParaMinutos(bloqueio.fim);
+            // Verifica se o intervalo [horario, horario+duracao] conflita com algum intervalo indisponível
+            const conflito = intervalosIndisponiveis.some(intervalo => {
+                const inicioIntervalo = this.converterParaMinutos(intervalo.inicio);
+                const fimIntervalo = this.converterParaMinutos(intervalo.fim);
                 
-                // Verificar se o horário começa durante o bloqueio
-                // OU se o horário (com duração) se sobrepõe ao bloqueio
-                const horarioComDuracao = horarioMinutos + duracaoMinutos;
-                return (horarioMinutos >= inicioBloqueio && horarioMinutos < fimBloqueio) ||
-                       (horarioComDuracao > inicioBloqueio && horarioComDuracao <= fimBloqueio) ||
-                       (horarioMinutos <= inicioBloqueio && horarioComDuracao >= fimBloqueio);
+                // Há conflito se os intervalos se sobrepõem
+                return (horarioMinutos < fimIntervalo && fimHorario > inicioIntervalo);
             });
             
-            if (estaBloqueado) {
-                return false;
-            }
-            
-            return true;
+            return !conflito;
         });
     }
     
@@ -665,7 +663,6 @@ class AgendamentoService {
     // MÉTODO ORIGINAL (mantido para compatibilidade)
     async verificarSlotDisponivel(data, inicio, duracao, barbeiroId) {
         try {
-            // ... (código mantido igual) ...
             const [hora, min] = inicio.split(':').map(Number);
             const inicioDate = new Date(`${data}T${inicio}:00`);
             const fimDate = new Date(inicioDate.getTime() + duracao * 60000);

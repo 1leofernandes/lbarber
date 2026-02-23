@@ -3043,7 +3043,7 @@
                 
                 return `
                     <tr>
-                        <td>${agendamento.cliente_nome_admin || agendamento.cliente_nome || 'Cliente'}</td>
+                        <td>${agendamento.cliente_nome_admin || agendamento.usuario_nome || 'Cliente'}</td>
                         <td>${servicosTexto}</td>
                         <td>${agendamento.barbeiro_nome || 'Barbeiro'}</td>
                         <td>${formatDateTime(agendamento.data_agendada, agendamento.hora_inicio)}</td>
@@ -7652,7 +7652,7 @@
             // Preenche os campos do modal
             const nomeCliente = agendamento.cliente_nome_admin 
                 ? agendamento.cliente_nome_admin 
-                : (agendamento.cliente_nome || 'Cliente não informado');
+                : (agendamento.usuario_nome || 'Cliente não informado');
             
             document.getElementById('modal-cliente').textContent = nomeCliente;
 

@@ -3165,7 +3165,7 @@
                                             const servicosTexto = ag.servicos?.length 
                                                 ? ag.servicos.map(s => s.nome_servico).join(', ')
                                                 : (ag.servico_nome || 'Serviço');
-                                            const nomeCliente = ag.cliente_nome_admin || ag.cliente_nome || 'Cliente';
+                                            const nomeCliente = ag.cliente_nome_admin || ag.usuario_nome || 'Cliente';
 
 
                                             const titulo = `${nomeCliente} • ${servicosTexto}`;

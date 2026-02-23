@@ -412,6 +412,8 @@ class AgendamentoService {
             
             // 3. Obter horários ocupados por agendamentos
             const horariosOcupados = await this.getHorariosOcupados(barbeiro_id, data);
+
+            console.log('Horários ocupados retornados do banco:', horariosOcupados);
             
             // 4. Filtrar horários disponíveis considerando bloqueios
             const horariosDisponiveis = this.filtrarHorariosDisponiveis(
@@ -593,31 +595,26 @@ class AgendamentoService {
             let params;
             
             if (barbeiro_id) {
-                // Para barbeiro específico
                 query = `
                     SELECT hora_inicio
                     FROM agendamentos
                     WHERE barbeiro_id = $1
-                    AND data_agendada = $2
+                    AND data_agendada::date = $2::date
                     AND status NOT IN ('cancelado')
                 `;
                 params = [barbeiro_id, data];
             } else {
-                // Para "sem preferência" - ver todos os barbeiros
                 query = `
                     SELECT hora_inicio
                     FROM agendamentos
-                    WHERE data_agendada = $1
+                    WHERE data_agendada::date = $1::date
                     AND status NOT IN ('cancelado')
                 `;
                 params = [data];
             }
             
             const result = await pool.query(query, params);
-            
-            const horariosOcupados = result.rows.map(row => row.hora_inicio);
-            console.log(`Horários ocupados encontrados: ${horariosOcupados.length}`);
-            return horariosOcupados;
+            return result.rows.map(row => row.hora_inicio);
         } catch (error) {
             console.error('Erro ao buscar horários ocupados:', error);
             return [];

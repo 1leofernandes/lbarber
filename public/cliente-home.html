@@ -2098,7 +2098,7 @@
                     }
                 }
 
-                // ADICIONE ESTA FUNÇÃO AO SEU cliente-home.html
+                // Função para cancelar agendamento (agora global)
                 async function cancelarAgendamento(agendamentoId) {
                     if (!confirm('Tem certeza que deseja cancelar este agendamento?')) {
                         return;
@@ -2151,8 +2151,9 @@
                         }
                     }
                 }
+                window.cancelarAgendamento = cancelarAgendamento;
 
-                // Função para ver detalhes do agendamento
+                // Função para ver detalhes do agendamento (agora global)
                 async function verDetalhesAgendamento(agendamentoId) {
                     try {
                         const token = localStorage.getItem('token');
@@ -2281,8 +2282,9 @@
                         showNotification('Erro de conexão. Tente novamente.', 'error');
                     }
                 }
+                window.verDetalhesAgendamento = verDetalhesAgendamento;
 
-                // Função para fechar modal de detalhes
+                // Função para fechar modal de detalhes (agora global)
                 function fecharModalDetalhes() {
                     const modal = document.getElementById('modal-detalhes-agendamento');
                     if (modal) {
@@ -2290,6 +2292,7 @@
                         document.body.style.overflow = 'auto';
                     }
                 }
+                window.fecharModalDetalhes = fecharModalDetalhes;
 
                 // Funções auxiliares para status (adicione se não existirem)
                 function getStatusClass(status) {

@@ -65,12 +65,14 @@ class AssinaturaController {
                     u.nome,
                     u.email,
                     u.telefone,
-                    u.assinatura_id,
+                    a.id as assinatura_id,          -- id do plano (tabela assinatura)
                     a.nome_plano,
                     a.valor,
                     a.status as plano_status
                 FROM usuarios u
-                LEFT JOIN assinatura a ON u.assinatura_id = a.id
+                LEFT JOIN assinaturas_usuarios au ON u.id = au.usuario_id 
+                    AND au.status = 'ativa'          -- considera apenas assinaturas ativas (opcional)
+                LEFT JOIN assinatura a ON au.plano_id = a.id
                 WHERE u.assinante = true
                 ORDER BY u.nome ASC
             `;
@@ -84,7 +86,7 @@ class AssinaturaController {
                     nome: row.nome,
                     email: row.email,
                     telefone: row.telefone,
-                    assinatura_id: row.assinatura_id,
+                    assinatura_id: row.assinatura_id,   // agora é o id do plano correto
                     plano_nome: row.nome_plano,
                     valor: row.valor ? parseFloat(row.valor) : 0,
                     plano_status: row.plano_status

@@ -483,55 +483,58 @@ class AdminAgendamentoService {
 
     async getHorariosDisponiveis(barbeiro_id, data) {
         try {
-            // Horários padrão da barbearia
-            const horariosDisponiveis = [];
-            const inicioExpediente = 8; // 8:00
-            const fimExpediente = 19; // 19:00
-            const intervalo = 30; // 30 minutos
+            // 1. Obter limites de funcionamento para a data
+            const dataObj = new Date(data);
+            const diaSemana = dataObj.getDay(); // 0=domingo, 1=segunda...
             
-            // Buscar agendamentos existentes
-            const agendamentos = await Appointment.getUnavailableHours(barbeiro_id, data);
-            const horariosOcupados = agendamentos;
-            
-            // Buscar bloqueios
-            const bloqueios = await Block.findAll({
-                id_barbeiro: barbeiro_id,
-                data: data
-            });
-            
-            // Gerar todos os horários possíveis
-            for (let hora = inicioExpediente; hora < fimExpediente; hora++) {
-                for (let minuto = 0; minuto < 60; minuto += intervalo) {
-                    const horaFormatada = `${hora.toString().padStart(2, '0')}:${minuto.toString().padStart(2, '0')}`;
-                    
-                    // Verificar se não está ocupado
-                    if (!horariosOcupados.includes(horaFormatada)) {
-                        // Verificar se não está em um bloqueio
-                        const estaBloqueado = bloqueios.some(bloqueio => {
-                            if (bloqueio.tipo === 'dia') return true;
-                            
-                            const horaBloqueioInicio = parseInt(bloqueio.hora_inicio?.split(':')[0] || 0);
-                            const minutoBloqueioInicio = parseInt(bloqueio.hora_inicio?.split(':')[1] || 0);
-                            const horaBloqueioFim = parseInt(bloqueio.hora_fim?.split(':')[0] || 23);
-                            const minutoBloqueioFim = parseInt(bloqueio.hora_fim?.split(':')[1] || 59);
-                            
-                            const horaAtual = hora * 60 + minuto;
-                            const inicioBloqueio = horaBloqueioInicio * 60 + minutoBloqueioInicio;
-                            const fimBloqueio = horaBloqueioFim * 60 + minutoBloqueioFim;
-                            
-                            return horaAtual >= inicioBloqueio && horaAtual < fimBloqueio;
-                        });
-                        
-                        if (!estaBloqueado) {
-                            horariosDisponiveis.push(horaFormatada);
-                        }
-                    }
-                }
+            let inicioMin, fimMin;
+            if (diaSemana === 0) {
+                return []; // domingo fechado
+            } else if (diaSemana === 6) { // sábado
+                inicioMin = 8 * 60 + 30; // 8:30
+                fimMin   = 18 * 60 + 30; // 18:30
+            } else { // segunda a sexta
+                inicioMin = 8 * 60 + 30; // 8:30
+                fimMin   = 19 * 60;      // 19:00
             }
-            
+
+            // 2. Gerar slots de 30 em 30 minutos
+            const intervalo = 30; // minutos
+            const todosSlots = [];
+            for (let minutos = inicioMin; minutos + intervalo <= fimMin; minutos += intervalo) {
+                const hora = Math.floor(minutos / 60);
+                const min = minutos % 60;
+                todosSlots.push(`${hora.toString().padStart(2, '0')}:${min.toString().padStart(2, '0')}`);
+            }
+
+            // 3. Buscar horários ocupados (agendamentos + bloqueios)
+            const [horariosOcupados, bloqueios] = await Promise.all([
+                Appointment.getUnavailableHours(barbeiro_id, data),
+                Block.findAll({ id_barbeiro: barbeiro_id, data: data })
+            ]);
+
+            // 4. Filtrar slots disponíveis
+            const horariosDisponiveis = todosSlots.filter(slot => {
+                // Verificar se não está em agendamento
+                if (horariosOcupados.includes(slot)) return false;
+
+                // Verificar bloqueios
+                const slotMinutos = this._converterParaMinutos(slot);
+                const estaBloqueado = bloqueios.some(bloqueio => {
+                    if (bloqueio.tipo === 'dia') return true;
+
+                    const inicioBloqueio = this._converterParaMinutos(bloqueio.hora_inicio || '00:00');
+                    const fimBloqueio   = this._converterParaMinutos(bloqueio.hora_fim || '23:59');
+                    // Verifica sobreposição considerando duração padrão (ex: 30 min)
+                    return (slotMinutos < fimBloqueio && slotMinutos + intervalo > inicioBloqueio);
+                });
+
+                return !estaBloqueado;
+            });
+
             return horariosDisponiveis;
         } catch (error) {
-            console.error('Erro ao buscar horários disponíveis:', error);
+            console.error('Erro ao buscar horários disponíveis (admin):', error);
             throw error;
         }
     }

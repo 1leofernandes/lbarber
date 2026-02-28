@@ -561,33 +561,26 @@ class AgendamentoService {
         const data = new Date(dataStr);
         const diaSemana = data.getDay(); // 0 = domingo, 1 = segunda, etc.
         
-        // Definir horário de funcionamento baseado no dia da semana
-        let inicioExpediente, fimExpediente, intervalo;
+        // Horários em minutos desde meia-noite
+        let inicioMin, fimMin;
         
-        if (diaSemana === 0) { // Domingo - fechado
+        if (diaSemana === 0) { // Domingo
             return [];
         } else if (diaSemana === 6) { // Sábado
-            inicioExpediente = 8; // 8:00
-            fimExpediente = 17; // 17:00 (5:00 PM)
+            inicioMin = 8 * 60 + 30; // 8:30
+            fimMin   = 18 * 60 + 30; // 18:30
         } else { // Segunda a Sexta
-            inicioExpediente = 8; // 8:00
-            fimExpediente = 19; // 19:00 (7:00 PM)
+            inicioMin = 8 * 60 + 30; // 8:30
+            fimMin   = 19 * 60;      // 19:00
         }
         
-        intervalo = 30; // 30 minutos
-        
+        const intervalo = 30; // minutos
         const horarios = [];
-        for (let hora = inicioExpediente; hora < fimExpediente; hora++) {
-            for (let minuto = 0; minuto < 60; minuto += intervalo) {
-                const horaFormatada = `${hora.toString().padStart(2, '0')}:${minuto.toString().padStart(2, '0')}`;
-                
-                // Não adicionar horários muito próximos do fim do expediente
-                if (hora === fimExpediente - 1 && minuto + intervalo > 60) {
-                    continue;
-                }
-                
-                horarios.push(horaFormatada);
-            }
+        
+        for (let minutos = inicioMin; minutos + intervalo <= fimMin; minutos += intervalo) {
+            const hora = Math.floor(minutos / 60);
+            const minuto = minutos % 60;
+            horarios.push(`${hora.toString().padStart(2, '0')}:${minuto.toString().padStart(2, '0')}`);
         }
         
         return horarios;

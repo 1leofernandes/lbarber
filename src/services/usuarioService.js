@@ -22,6 +22,8 @@ class UsuarioService {
     }
     
     // Buscar usuário com dados da assinatura
+    // CORRIGIDO: assinatura_id é o ID de assinaturas_usuarios, não de assinatura
+    // Faz dois JOINs: usuarios -> assinaturas_usuarios -> assinatura
     async getUsuarioComAssinatura(id) {
         try {
             const query = `
@@ -35,14 +37,20 @@ class UsuarioService {
                     u.assinatura_id,
                     u.created_at, 
                     u.updated_at,
-                    a.id as plano_id,
+                    au.plano_id,
+                    au.status as assinatura_status,
+                    au.data_inicio,
+                    au.data_fim,
+                    au.proxima_cobranca,
+                    a.id as plano_id_real,
                     a.nome_plano,
                     a.descricao,
                     a.servicos,
                     a.valor,
                     a.status as plano_status
                 FROM usuarios u
-                LEFT JOIN assinatura a ON u.assinatura_id = a.id
+                LEFT JOIN assinaturas_usuarios au ON u.assinatura_id = au.id AND au.status = 'ativa'
+                LEFT JOIN assinatura a ON au.plano_id = a.id
                 WHERE u.id = $1
             `;
             const values = [id];

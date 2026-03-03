@@ -16,14 +16,14 @@ class AssinaturaController {
                     a.descricao,
                     a.status,
                     a.created_at,
-                    COUNT(DISTINCT u.id) as total_assinantes,
+                    COUNT(DISTINCT au.usuario_id) as total_assinantes,
                     ARRAY_AGG(DISTINCT ads.dia_semana ORDER BY ads.dia_semana) FILTER (WHERE ads.dia_semana IS NOT NULL) as dias_semana,
                     ARRAY_AGG(DISTINCT s.nome_servico) FILTER (WHERE s.nome_servico IS NOT NULL) as servicos_inclusos
                 FROM assinatura a
-                LEFT JOIN usuarios u ON u.assinatura_id = a.id AND u.assinante = true
                 LEFT JOIN assinatura_dias_semana ads ON a.id = ads.assinatura_id
                 LEFT JOIN assinatura_servico asv ON a.id = asv.assinatura_id
                 LEFT JOIN servicos s ON asv.servico_id = s.id
+                LEFT JOIN assinaturas_usuarios au ON a.id = au.plano_id AND au.status = 'ativa'
                 GROUP BY a.id
                 ORDER BY a.valor ASC
             `;
@@ -117,14 +117,14 @@ class AssinaturaController {
                     a.descricao,
                     a.status,
                     a.created_at,
-                    COUNT(DISTINCT u.id) as total_assinantes,
+                    COUNT(DISTINCT au.usuario_id) as total_assinantes,
                     ARRAY_AGG(DISTINCT ads.dia_semana ORDER BY ads.dia_semana) FILTER (WHERE ads.dia_semana IS NOT NULL) as dias_semana,
                     JSON_AGG(JSON_BUILD_OBJECT('id', s.id, 'nome', s.nome_servico) ORDER BY s.nome_servico) FILTER (WHERE s.id IS NOT NULL) as servicos
                 FROM assinatura a
-                LEFT JOIN usuarios u ON u.assinatura_id = a.id AND u.assinante = true
                 LEFT JOIN assinatura_dias_semana ads ON a.id = ads.assinatura_id
                 LEFT JOIN assinatura_servico asv ON a.id = asv.assinatura_id
                 LEFT JOIN servicos s ON asv.servico_id = s.id
+                LEFT JOIN assinaturas_usuarios au ON a.id = au.plano_id AND au.status = 'ativa'
                 WHERE a.id = $1
                 GROUP BY a.id
             `;
@@ -335,7 +335,7 @@ class AssinaturaController {
 
             // Verificar se há usuários com esta assinatura
             const checkQuery = `
-                SELECT COUNT(*) as total FROM usuarios WHERE assinatura_id = $1 AND assinante = true
+                SELECT COUNT(DISTINCT usuario_id) as total FROM assinaturas_usuarios WHERE plano_id = $1 AND status = 'ativa'
             `;
             const checkResult = await pool.query(checkQuery, [parseInt(planoId)]);
 
@@ -391,10 +391,10 @@ class AssinaturaController {
                     a.id,
                     a.nome_plano,
                     a.valor,
-                    COUNT(DISTINCT u.id) as total_assinantes,
-                    COALESCE(SUM(CASE WHEN u.assinante = true THEN a.valor ELSE 0 END), 0) as receita_esperada_mensal
+                    COUNT(DISTINCT au.usuario_id) as total_assinantes,
+                    COALESCE(COUNT(DISTINCT au.usuario_id) * a.valor, 0) as receita_esperada_mensal
                 FROM assinatura a
-                LEFT JOIN usuarios u ON u.assinatura_id = a.id
+                LEFT JOIN assinaturas_usuarios au ON a.id = au.plano_id AND au.status = 'ativa'
                 GROUP BY a.id
                 ORDER BY a.valor ASC
             `;

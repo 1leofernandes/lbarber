@@ -442,30 +442,46 @@ class AgendamentoService {
                     const userRes = await pool.query('SELECT assinante, assinatura_id FROM usuarios WHERE id = $1', [usuarioId]);
                     const user = userRes.rows[0];
                     if (user && user.assinante && user.assinatura_id) {
-                        // identificar dia da semana
-                        const diaSemana = await (async () => {
-                            const q = `SELECT EXTRACT(ISODOW FROM $1::date)::integer as d`;
-                            const r = await pool.query(q, [data]);
-                            return r.rows[0].d;
-                        })();
-                        // buscar servicos do plano
-                        const coveredRes = await pool.query(
-                            `SELECT servico_id FROM assinatura_servico WHERE assinatura_id = $1 AND servico_id = ANY($2::int[])`,
-                            [user.assinatura_id, servicosIds]
+                        // CORRIGIDO: assinatura_id é o ID de assinaturas_usuarios, não de assinatura
+                        // Buscar o plano_id (que é o ID de assinatura) via assinaturas_usuarios
+                        const auRes = await pool.query(
+                            `SELECT plano_id FROM assinaturas_usuarios WHERE id = $1 AND status = 'ativa'`,
+                            [user.assinatura_id]
                         );
-                        const coveredIds = coveredRes.rows.map(r => r.servico_id);
-                        // checar dia coberto
-                        const diaRes = await pool.query(
-                            `SELECT 1 FROM assinatura_dias_semana WHERE assinatura_id = $1 AND dia_semana = $2 LIMIT 1`,
-                            [user.assinatura_id, diaSemana]
-                        );
-                        const diaCoberto = diaRes.rows.length > 0;
-                        // aplicar desconto: servicos cobertos e diaCoberto -> valor 0
-                        precoComDesconto = servicos.reduce((acc, s) => {
-                            if (!s) return acc;
-                            const isCovered = diaCoberto && coveredIds.includes(s.id);
-                            return acc + (isCovered ? 0 : parseFloat(s.valor_servico || 0));
-                        }, 0);
+                        
+                        if (auRes.rows.length > 0) {
+                            const planoId = auRes.rows[0].plano_id;
+                            
+                            // identificar dia da semana
+                            const diaSemana = await (async () => {
+                                const q = `SELECT EXTRACT(ISODOW FROM $1::date)::integer as d`;
+                                const r = await pool.query(q, [data]);
+                                return r.rows[0].d;
+                            })();
+                            
+                            // buscar servicos do plano (usando plano_id, não assinatura_id)
+                            const coveredRes = await pool.query(
+                                `SELECT servico_id FROM assinatura_servico WHERE assinatura_id = $1 AND servico_id = ANY($2::int[])`,
+                                [planoId, servicosIds]
+                            );
+                            const coveredIds = coveredRes.rows.map(r => r.servico_id);
+                            
+                            // checar dia coberto (usando plano_id, não assinatura_id)
+                            const diaRes = await pool.query(
+                                `SELECT 1 FROM assinatura_dias_semana WHERE assinatura_id = $1 AND dia_semana = $2 LIMIT 1`,
+                                [planoId, diaSemana]
+                            );
+                            const diaCoberto = diaRes.rows.length > 0;
+                            
+                            // aplicar desconto: servicos cobertos e diaCoberto -> valor 0
+                            precoComDesconto = servicos.reduce((acc, s) => {
+                                if (!s) return acc;
+                                const isCovered = diaCoberto && coveredIds.includes(s.id);
+                                return acc + (isCovered ? 0 : parseFloat(s.valor_servico || 0));
+                            }, 0);
+                        } else {
+                            precoComDesconto = precoEstimado;
+                        }
                     } else {
                         precoComDesconto = precoEstimado;
                     }

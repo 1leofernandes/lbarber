@@ -125,30 +125,53 @@ app.get('/ping', (req, res) => {
 
 // ==================== ROTAS ====================
 
-// GET /assinatura/:id - Obter dados da assinatura com dias de semana
+// GET /assinatura/:id - Obter dados da assinatura do usuário
+// O id passado é assinaturas_usuarios.id (não assinatura.id!)
+// A função recupera os dados do plano conectado via plano_id
 app.get('/assinatura/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const pool = require('./src/config/database');
     
-    const result = await pool.query(`
-      SELECT 
-        a.*,
-        json_agg(DISTINCT ads.dia_semana) as dias_semana
-      FROM assinatura a
-      LEFT JOIN assinatura_dias_semana ads ON a.id = ads.assinatura_id
-      WHERE a.id = $1
-      GROUP BY a.id
+    // First, get the assinaturas_usuarios record with the plan id
+    const usuarioAssinaturaResult = await pool.query(`
+      SELECT au.id, au.usuario_id, au.plano_id, au.status, au.data_inicio, au.data_fim, au.proxima_cobranca
+      FROM assinaturas_usuarios au
+      WHERE au.id = $1
     `, [id]);
     
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Assinatura não encontrada' });
+    if (usuarioAssinaturaResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Assinatura do usuário não encontrada' });
     }
     
-    const assinatura = result.rows[0];
-    assinatura.dias_semana = assinatura.dias_semana.filter(d => d !== null);
+    const usuarioAssinatura = usuarioAssinaturaResult.rows[0];
+    const planoId = usuarioAssinatura.plano_id;
     
-    res.json({ assinatura });
+    // Now get the plan details with days of week
+    const planoResult = await pool.query(`
+      SELECT 
+        a.*,
+        json_agg(DISTINCT ads.dia_semana) as dias_semana,
+        json_agg(DISTINCT JSONB_BUILD_OBJECT('id', s.id, 'nome_servico', s.nome_servico, 'valor_servico', s.valor_servico)) FILTER (WHERE s.id IS NOT NULL) as servicos_inclusos
+      FROM assinatura a
+      LEFT JOIN assinatura_dias_semana ads ON a.id = ads.assinatura_id
+      LEFT JOIN assinatura_servico asv ON a.id = asv.assinatura_id
+      LEFT JOIN servicos s ON asv.servico_id = s.id
+      WHERE a.id = $1
+      GROUP BY a.id
+    `, [planoId]);
+    
+    if (planoResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Plano não encontrado' });
+    }
+    
+    const plano = planoResult.rows[0];
+    plano.dias_semana = (plano.dias_semana || []).filter(d => d !== null);
+    plano.servicos_inclusos = (plano.servicos_inclusos || []).filter(s => s && s.id);
+    
+    res.json({ 
+      assinatura: plano
+    });
   } catch (error) {
     console.error('Erro ao buscar assinatura:', error);
     res.status(500).json({ error: 'Erro ao buscar assinatura' });

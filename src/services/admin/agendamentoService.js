@@ -128,7 +128,7 @@ class AdminAgendamentoService {
             }
 
             // Agrupar por ID do agendamento para o json_agg funcionar corretamente
-            query += ` GROUP BY a.id, u.nome, b.nome`;
+            query += ` GROUP BY a.id, u.nome, u.telefone, b.nome`;
 
             // Ordenar por data e hora (mais recentes primeiro)
             query += ` ORDER BY a.data_agendada DESC, a.hora_inicio DESC`;

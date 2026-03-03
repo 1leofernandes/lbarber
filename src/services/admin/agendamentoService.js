@@ -54,6 +54,7 @@ class AdminAgendamentoService {
                 SELECT 
                     a.*,
                     u.nome as usuario_nome,
+                    u.telefone as usuario_telefone,
                     b.nome as barbeiro_nome,
                     COALESCE(
                         json_agg(

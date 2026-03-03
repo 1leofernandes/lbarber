@@ -1223,6 +1223,38 @@
         </div>
     </div>
     
+    <!-- Modal para Completar Telefone -->
+    <div class="modal-overlay" id="completePhoneModal">
+        <div class="modal-content" style="max-width: 400px;">
+            <div class="modal-header">
+                <h2 class="modal-title">
+                    <i class="fas fa-phone"></i>
+                    Complete seu Cadastro
+                </h2>
+                <button class="modal-close" id="closePhoneModal"></button>
+            </div>
+            <div class="modal-body">
+                <p style="margin-bottom: 1.5rem; color: var(--medium-gray); font-size: 0.95rem;">
+                    Para melhor atendimento em caso de imprevistos, digite seu número de telefone.
+                </p>
+                <div class="form-group">
+                    <label class="form-label">Telefone (Celular)</label>
+                    <input 
+                        type="tel" 
+                        class="form-control" 
+                        id="completePhoneInput" 
+                        placeholder="(62) 90000-0000"
+                        maxlength="15"
+                        required
+                    >
+                </div>
+                <button class="btn btn-primary btn-block" id="savePhoneBtn">
+                    <i class="fas fa-check"></i> Salvar Telefone
+                </button>
+            </div>
+        </div>
+    </div>
+    
     <!-- Sidebar Menu -->
     <aside class="sidebar" id="sidebar">
         <div class="sidebar-header">
@@ -1596,6 +1628,16 @@
                             localStorage.setItem('userPhone', userDataFromAPI.telefone || '');
                             localStorage.setItem('assinante', usuario.assinante);
                             localStorage.setItem('assinatura_id', usuario.assinatura_id || '');
+                            
+                            // VERIFICAR SE TELEFONE ESTÁ VAZIO - Exibir modal
+                            if (!userDataFromAPI.telefone || userDataFromAPI.telefone.trim() === '') {
+                                setTimeout(() => {
+                                    const completePhoneModal = document.getElementById('completePhoneModal');
+                                    if (completePhoneModal) {
+                                        openModal(completePhoneModal);
+                                    }
+                                }, 500);
+                            }
                             
                         } else {
                             // Se API falhar, usar dados do localStorage ou token
@@ -2447,6 +2489,90 @@
                     
                     // Salvar perfil
                     saveProfileBtn.addEventListener('click', saveProfileData);
+                    
+                    // ===== LÓGICA DE TELEFONE =====
+                    const completePhoneModal = document.getElementById('completePhoneModal');
+                    const completePhoneInput = document.getElementById('completePhoneInput');
+                    const closePhoneModal = document.getElementById('closePhoneModal');
+                    const savePhoneBtn = document.getElementById('savePhoneBtn');
+                    
+                    if (completePhoneModal && completePhoneInput) {
+                        // Função para mascarar telefone
+                        function mascaraTelefone(value) {
+                            return value.replace(/\D/g, '')
+                                .replace(/^(\d{2})(\d)/g, '($1) $2')
+                                .replace(/(\d)(\d{4})$/, '$1-$2');
+                        }
+                        
+                        // Aplicar máscara ao digitar
+                        completePhoneInput.addEventListener('input', (e) => {
+                            e.target.value = mascaraTelefone(e.target.value);
+                        });
+                        
+                        // Fechar modal
+                        closePhoneModal.addEventListener('click', () => {
+                            closeModal(completePhoneModal);
+                        });
+                        
+                        // Salvar telefone
+                        savePhoneBtn.addEventListener('click', async () => {
+                            const telefoneComMascara = completePhoneInput.value.trim();
+                            
+                            // Validar
+                            if (!telefoneComMascara || telefoneComMascara.length < 14) {
+                                showNotification('Digite um telefone válido', 'error');
+                                return;
+                            }
+                            
+                            // Extrair apenas os 11 dígitos
+                            const telefoneLimpo = telefoneComMascara.replace(/\D/g, '');
+                            
+                            if (telefoneLimpo.length !== 11) {
+                                showNotification('O telefone deve conter 11 dígitos', 'error');
+                                return;
+                            }
+                            
+                            try {
+                                savePhoneBtn.disabled = true;
+                                savePhoneBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
+                                
+                                const response = await fetch(`${API_BASE_URL}/usuarios/me`, {
+                                    method: 'PUT',
+                                    headers: { 
+                                        'Authorization': `Bearer ${token}`,
+                                        'Content-Type': 'application/json'
+                                    },
+                                    body: JSON.stringify({
+                                        nome: usuario.nome,
+                                        email: profileEmail.value,
+                                        telefone: telefoneLimpo
+                                    })
+                                });
+                                
+                                const data = await response.json();
+                                
+                                if (response.ok) {
+                                    showNotification('Telefone salvo com sucesso!', 'success');
+                                    localStorage.setItem('userPhone', telefoneLimpo);
+                                    
+                                    setTimeout(() => {
+                                        closeModal(completePhoneModal);
+                                        savePhoneBtn.disabled = false;
+                                        savePhoneBtn.innerHTML = '<i class="fas fa-check"></i> Salvar Telefone';
+                                    }, 1500);
+                                } else {
+                                    showNotification(data.error || 'Erro ao salvar telefone', 'error');
+                                    savePhoneBtn.disabled = false;
+                                    savePhoneBtn.innerHTML = '<i class="fas fa-check"></i> Salvar Telefone';
+                                }
+                            } catch (error) {
+                                console.error('Erro ao salvar telefone:', error);
+                                showNotification('Erro de conexão. Tente novamente.', 'error');
+                                savePhoneBtn.disabled = false;
+                                savePhoneBtn.innerHTML = '<i class="fas fa-check"></i> Salvar Telefone';
+                            }
+                        });
+                    }
                     
                     // Logout
                     logoutBtn.addEventListener('click', logout);

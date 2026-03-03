@@ -265,6 +265,7 @@ class AgendamentoService {
                     SELECT 
                         a.*, 
                         u.nome as barbeiro_nome,
+                        cl.telefone as usuario_telefone,
                         COALESCE(
                             json_agg(
                                 DISTINCT jsonb_build_object(
@@ -278,10 +279,11 @@ class AgendamentoService {
                         ) as servicos
                     FROM agendamentos a
                     LEFT JOIN usuarios u ON a.barbeiro_id = u.id
+                    LEFT JOIN usuarios cl ON a.usuario_id = cl.id
                     LEFT JOIN agendamento_servicos ags ON a.id = ags.agendamento_id
                     LEFT JOIN servicos s ON ags.servico_id = s.id
                     WHERE a.id = $1 AND a.usuario_id = $2
-                    GROUP BY a.id, u.nome
+                    GROUP BY a.id, u.nome, cl.telefone
                 `;
                 params = [agendamentoId, usuarioId];
             } else {
@@ -289,6 +291,7 @@ class AgendamentoService {
                     SELECT 
                         a.*, 
                         u.nome as barbeiro_nome,
+                        cl.telefone as usuario_telefone,
                         COALESCE(
                             json_agg(
                                 DISTINCT jsonb_build_object(
@@ -302,10 +305,11 @@ class AgendamentoService {
                         ) as servicos
                     FROM agendamentos a
                     LEFT JOIN usuarios u ON a.barbeiro_id = u.id
+                    LEFT JOIN usuarios cl ON a.usuario_id = cl.id
                     LEFT JOIN agendamento_servicos ags ON a.id = ags.agendamento_id
                     LEFT JOIN servicos s ON ags.servico_id = s.id
                     WHERE a.id = $1
-                    GROUP BY a.id, u.nome
+                    GROUP BY a.id, u.nome, cl.telefone
                 `;
                 params = [agendamentoId];
             }

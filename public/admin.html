@@ -3890,6 +3890,15 @@
                                 </div>
                             </div>
                             <div class="agendamento-detalhe-item">
+                                <i class="fas fa-phone"></i>
+                                <div class="agendamento-detalhe-info">
+                                    <div class="agendamento-detalhe-label">Telefone</div>
+                                    <div class="agendamento-detalhe-value" id="modal-telefone">
+                                        <a href="#" id="modal-whatsapp-btn" target="_blank" style="color: var(--accent-gold); text-decoration: none;">---</a>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="agendamento-detalhe-item">
                                 <i class="fas fa-scissors"></i>
                                 <div class="agendamento-detalhe-info">
                                     <div class="agendamento-detalhe-label">Serviços</div>
@@ -7655,6 +7664,21 @@
                 : (agendamento.usuario_nome || 'Cliente não informado');
             
             document.getElementById('modal-cliente').textContent = nomeCliente;
+
+            // Preenche telefone do cliente com link WhatsApp
+            const telefoneLimpo = agendamento.usuario_telefone ? agendamento.usuario_telefone.replace(/\D/g, '') : null;
+            const whatsappBtn = document.getElementById('modal-whatsapp-btn');
+            const modalTelefone = document.getElementById('modal-telefone');
+            
+            if (telefoneLimpo && telefoneLimpo.length === 11) {
+                const telefonoFormatado = telefoneLimpo.replace(/^(\d{2})(\d{5})(\d{4})$/, '($1) $2-$3');
+                const urlWhatsapp = `https://wa.me/55${telefoneLimpo}`;
+                whatsappBtn.href = urlWhatsapp;
+                whatsappBtn.textContent = telefonoFormatado;
+                whatsappBtn.title = 'Abrir conversa no WhatsApp';
+            } else {
+                modalTelefone.innerHTML = '<span style="color: var(--medium-gray);">Não informado</span>';
+            }
 
             // Processa serviços e valor total (igual ao antigo código)
             let servicosTexto = 'Nenhum serviço';

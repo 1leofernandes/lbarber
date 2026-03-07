@@ -1669,11 +1669,13 @@
             opacity: 0;
             visibility: hidden;
             transition: all 0.3s ease;
+            pointer-events: none;
         }
 
         .modal-overlay.active {
             opacity: 1;
             visibility: visible;
+            pointer-events: auto;
         }
 
         .modal-container {
@@ -3943,6 +3945,12 @@
 
             document.body.appendChild(modalOverlay);
 
+            // Configurar listeners do modal (apenas adicionar, pois o elemento foi recriado)
+            const closeBtn = modalOverlay.querySelector('#modal-close-btn');
+            if (closeBtn) {
+                closeBtn.addEventListener('click', fecharModalAgendamento);
+            }
+
             // Evento para fechar ao clicar no overlay (fundo)
             modalOverlay.addEventListener('click', (e) => {
                 if (e.target === modalOverlay) {
@@ -3950,14 +3958,27 @@
                 }
             });
 
+            // Configurar botões de ação imediatamente (sem setTimeout)
+            const finalizarBtn = modalOverlay.querySelector('#modal-finalizar-btn');
+            const excluirBtn = modalOverlay.querySelector('#modal-excluir-btn');
 
-            // Após o setTimeout, adicione:
-            setTimeout(() => {
-                configurarBotoesModal();
-            }, 150); // Um pequeno delay para garantir que o modal já está no DOM
+            if (finalizarBtn) {
+                finalizarBtn.addEventListener('click', async () => {
+                    if (!currentModalAgendamentoId) return;
+                    await atualizarStatusAgendamento(currentModalAgendamentoId, 'concluido');
+                    fecharModalAgendamento();
+                    await carregarAgendamentosComFiltro({});
+                });
+            }
 
-            // Evento para fechar pelo botão X
-            document.getElementById('modal-close-btn').addEventListener('click', fecharModalAgendamento);
+            if (excluirBtn) {
+                excluirBtn.addEventListener('click', async () => {
+                    if (!currentModalAgendamentoId) return;
+                    await excluirAgendamento(currentModalAgendamentoId);
+                    fecharModalAgendamento();
+                    await carregarAgendamentosComFiltro({});
+                });
+            }
 
             await carregarBarbeirosParaFiltro();
             await carregarAgendamentosComFiltro();
@@ -5792,13 +5813,6 @@
             }
         }
         
-        function verAgendamento(id) {
-            alert(`Visualizar agendamento ${id} (Funcionalidade em desenvolvimento)`);
-        }
-        
-        function editarAgendamento(id) {
-            alert(`Editar agendamento ${id} (Funcionalidade em desenvolvimento)`);
-        }
         
         async function excluirAgendamento(id) {
             if (!confirm('Tem certeza que deseja excluir este agendamento?')) return;
@@ -7643,6 +7657,13 @@
             const overlay = document.getElementById('agendamento-modal-overlay');
             if (overlay) {
                 overlay.classList.remove('active');
+                // Aguardar transição terminar antes de resetar completamente
+                // Isso garante que o overlay esteja pronto para a próxima abertura
+                setTimeout(() => {
+                    if (!overlay.classList.contains('active')) {
+                        // Modal continua fechado, seguro resetar
+                    }
+                }, 300); // Mesmo tempo da transição CSS
             }
             currentModalAgendamentoId = null;
         }
@@ -7724,34 +7745,8 @@
         }
 
         // Configura os botões do modal (chame isso após criar o modal, ou dentro do load uma vez)
-        function configurarBotoesModal() {
-            const finalizarBtn = document.getElementById('modal-finalizar-btn');
-            const excluirBtn = document.getElementById('modal-excluir-btn');
-
-            if (finalizarBtn) {
-                finalizarBtn.addEventListener('click', async () => {
-                    if (!currentModalAgendamentoId) return;
-                    // Chama a função que já deve existir para atualizar status
-                    await atualizarStatusAgendamento(currentModalAgendamentoId, 'concluido');
-                    fecharModalAgendamento();
-                    // Recarrega a lista para refletir a mudança
-                    await carregarAgendamentosComFiltro({});
-                });
-            }
-
-            if (excluirBtn) {
-                excluirBtn.addEventListener('click', async () => {
-                    if (!currentModalAgendamentoId) return;
-                    // Chama a função de exclusão (deve existir)
-                    await excluirAgendamento(currentModalAgendamentoId);
-                    fecharModalAgendamento();
-                    // Recarrega a lista
-                    await carregarAgendamentosComFiltro({});
-                });
-            }
-        }
-
-        // Chame configurarBotoesModal() após adicionar o modal ao DOM (dentro do loadAgendamentosPage)
+        // Função configurarBotoesModal() foi removida
+        // Os listeners dos botões são agora configurados diretamente em loadAgendamentosPage()
     </script>
 </body>
 </html>

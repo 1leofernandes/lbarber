@@ -68,7 +68,10 @@ class AssinaturaController {
                     a.id as assinatura_id,          -- id do plano (tabela assinatura)
                     a.nome_plano,
                     a.valor,
-                    a.status as plano_status
+                    a.status as plano_status,
+                    au.data_inicio,
+                    au.proxima_cobranca,
+                    au.data_fim
                 FROM usuarios u
                 LEFT JOIN assinaturas_usuarios au ON u.id = au.usuario_id 
                     AND au.status = 'ativa'          -- considera apenas assinaturas ativas (opcional)
@@ -89,7 +92,10 @@ class AssinaturaController {
                     assinatura_id: row.assinatura_id,   // agora é o id do plano correto
                     plano_nome: row.nome_plano,
                     valor: row.valor ? parseFloat(row.valor) : 0,
-                    plano_status: row.plano_status
+                    plano_status: row.plano_status,
+                    data_inicio: row.data_inicio,
+                    proxima_cobranca: row.proxima_cobranca,
+                    data_fim: row.data_fim
                 }))
             });
         } catch (error) {

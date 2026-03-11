@@ -1365,6 +1365,44 @@
                 max-height: 90vh;
                 overflow-y: auto;
             }
+
+            .modal-container {
+                width: 95% !important;
+                max-width: 100% !important;
+                max-height: 95vh;
+                border-radius: 12px;
+            }
+            
+            .modal-header {
+                padding: 1rem;
+            }
+            
+            .modal-header h3 {
+                font-size: 1.1rem;
+            }
+            
+            .modal-body {
+                padding: 1rem;
+            }
+            
+            .agendamento-detalhe-item {
+                gap: 0.7rem;
+                margin-bottom: 0.8rem;
+                padding-bottom: 0.6rem;
+            }
+            
+            .agendamento-detalhe-item i {
+                width: 24px;
+                font-size: 1.1rem;
+            }
+            
+            .agendamento-detalhe-label {
+                font-size: 0.8rem;
+            }
+            
+            .agendamento-detalhe-value {
+                font-size: 0.95rem;
+            }
             
             .form-group {
                 margin-bottom: 1rem;
@@ -2193,6 +2231,196 @@
                     </button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <div id="modal-novo-plano" class="modal-overlay">
+        <div class="modal-content" style="max-width: 700px;">
+            <div class="modal-header">
+                <h2 id="modal-plano-titulo">Novo Plano de Assinatura</h2>
+                <button class="modal-close" onclick="closeModal('novo-plano')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form id="form-novo-plano">
+                <div class="modal-body">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="plano-nome" class="form-label">Nome do Plano *</label>
+                            <input type="text" class="form-control" id="plano-nome" name="nome_plano" required 
+                                placeholder="Ex: Plano Bronze, Plano Silver, etc.">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="plano-valor" class="form-label">Valor Mensal (R$) *</label>
+                            <input type="number" class="form-control" id="plano-valor" name="valor" 
+                                min="0" step="0.01" required placeholder="0.00">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="plano-descricao" class="form-label">Descrição</label>
+                        <textarea class="form-control" id="plano-descricao" name="descricao" 
+                            rows="2" placeholder="Descreva o plano..."></textarea>
+                    </div>
+
+                    <!-- Dias da Semana -->
+                    <div class="form-group">
+                        <label class="form-label"><i class="fas fa-calendar"></i> Dias de Cobertura *</label>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)); gap: 0.5rem; margin-top: 0.5rem;">
+                            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                                <input type="checkbox" name="dias_semana" value="1" class="dia-checkbox">
+                                <span>Seg</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                                <input type="checkbox" name="dias_semana" value="2" class="dia-checkbox">
+                                <span>Ter</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                                <input type="checkbox" name="dias_semana" value="3" class="dia-checkbox">
+                                <span>Qua</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                                <input type="checkbox" name="dias_semana" value="4" class="dia-checkbox">
+                                <span>Qui</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                                <input type="checkbox" name="dias_semana" value="5" class="dia-checkbox">
+                                <span>Sex</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                                <input type="checkbox" name="dias_semana" value="6" class="dia-checkbox">
+                                <span>Sab</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                                <input type="checkbox" name="dias_semana" value="7" class="dia-checkbox">
+                                <span>Dom</span>
+                            </label>
+                        </div>
+                        <small style="color: #28a745; margin-top: 0.5rem; display: block;"><i class="fas fa-info-circle"></i> Selecione os dias que este plano está ativo</small>
+                    </div>
+
+                    <!-- Serviços -->
+                    <div class="form-group">
+                        <label class="form-label"><i class="fas fa-scissors"></i> Serviços Inclusos *</label>
+                        <div style="max-height: 250px; overflow-y: auto; border: 1px solid rgba(212, 175, 55, 0.2); border-radius: 5px; padding: 1rem; background: rgba(30, 30, 30, 0.5);">
+                            <div id="modal-servicos-container">
+                                <p style="color: var(--medium-gray); text-align: center;">Carregando serviços...</p>
+                            </div>
+                        </div>
+                        <small style="color: #17a2b8; margin-top: 0.5rem; display: block;"><i class="fas fa-info-circle"></i> Selecione os serviços que este plano oferece</small>
+                    </div>
+                </div>
+                <div class="modal-footer" style="display: flex; gap: 0.5rem; padding-top: 1.5rem; border-top: 1px solid rgba(212, 175, 55, 0.1);">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('novo-plano')">
+                        <i class="fas fa-times"></i>
+                        Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i>
+                        Salvar Plano
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal para Detalhes de Assinante -->
+    <div id="modal-detalhes-assinante" class="modal-overlay">
+        <div class="modal-container" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3><i class="fas fa-user-check"></i> Detalhes da Assinatura</h3>
+                <button class="modal-close" onclick="fecharModalAssinante()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="agendamento-detalhe-card">
+                    <!-- Informações do Cliente -->
+                    <div class="agendamento-detalhe-item">
+                        <i class="fas fa-user"></i>
+                        <div class="agendamento-detalhe-info">
+                            <div class="agendamento-detalhe-label">Cliente</div>
+                            <div class="agendamento-detalhe-value" id="detalhe-cliente-nome">-</div>
+                        </div>
+                    </div>
+
+                    <!-- Informações de Contato -->
+                    <div class="agendamento-detalhe-item">
+                        <i class="fas fa-envelope"></i>
+                        <div class="agendamento-detalhe-info">
+                            <div class="agendamento-detalhe-label">Email</div>
+                            <div class="agendamento-detalhe-value" id="detalhe-cliente-email">-</div>
+                        </div>
+                    </div>
+
+                    <div class="agendamento-detalhe-item">
+                        <i class="fas fa-phone"></i>
+                        <div class="agendamento-detalhe-info">
+                            <div class="agendamento-detalhe-label">Telefone</div>
+                            <div class="agendamento-detalhe-value" id="detalhe-cliente-telefone">-</div>
+                        </div>
+                    </div>
+
+                    <!-- Informações do Plano -->
+                    <div class="agendamento-detalhe-item" style="border-top: 1px solid rgba(212, 175, 55, 0.1); padding-top: 1rem; margin-top: 1rem;">
+                        <i class="fas fa-gem"></i>
+                        <div class="agendamento-detalhe-info">
+                            <div class="agendamento-detalhe-label">Plano</div>
+                            <div class="agendamento-detalhe-value" id="detalhe-plano-nome">-</div>
+                        </div>
+                    </div>
+
+                    <div class="agendamento-detalhe-item">
+                        <i class="fas fa-dollar-sign"></i>
+                        <div class="agendamento-detalhe-info">
+                            <div class="agendamento-detalhe-label">Valor Mensal</div>
+                            <div class="agendamento-detalhe-value" id="detalhe-plano-valor">R$ 0.00</div>
+                        </div>
+                    </div>
+
+                    <!-- Datas da Assinatura -->
+                    <div class="agendamento-detalhe-item" style="border-top: 1px solid rgba(212, 175, 55, 0.1); padding-top: 1rem; margin-top: 1rem;">
+                        <i class="fas fa-calendar-alt"></i>
+                        <div class="agendamento-detalhe-info">
+                            <div class="agendamento-detalhe-label">Início da Assinatura</div>
+                            <div class="agendamento-detalhe-value" id="detalhe-data-inicio">-</div>
+                        </div>
+                    </div>
+
+                    <div class="agendamento-detalhe-item">
+                        <i class="fas fa-credit-card"></i>
+                        <div class="agendamento-detalhe-info">
+                            <div class="agendamento-detalhe-label">Próxima Cobrança</div>
+                            <div class="agendamento-detalhe-value" id="detalhe-proxima-cobranca" style="color: var(--accent-gold); font-weight: 600;">-</div>
+                        </div>
+                    </div>
+
+                    <div class="agendamento-detalhe-item">
+                        <i class="fas fa-calendar-times"></i>
+                        <div class="agendamento-detalhe-info">
+                            <div class="agendamento-detalhe-label">Vencimento</div>
+                            <div class="agendamento-detalhe-value" id="detalhe-data-fim">Sem vencimento previsto</div>
+                        </div>
+                    </div>
+
+                    <!-- Status -->
+                    <div class="agendamento-detalhe-item" style="border-top: 1px solid rgba(212, 175, 55, 0.1); padding-top: 1rem; margin-top: 1rem;">
+                        <i class="fas fa-info-circle"></i>
+                        <div class="agendamento-detalhe-info">
+                            <div class="agendamento-detalhe-label">Status</div>
+                            <div class="agendamento-detalhe-value">
+                                <span class="status-badge" id="detalhe-status-badge" style="display: inline-block;">Ativo</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="fecharModalAssinante()">
+                    <i class="fas fa-times"></i> Fechar
+                </button>
+            </div>
         </div>
     </div>
 
@@ -3520,6 +3748,9 @@
                 if (responseAssinantes && responseAssinantes.ok) {
                     const resultAssinantes = await responseAssinantes.json();
                     const assinantes = resultAssinantes.data || [];
+
+                    // Armazenar assinantes no state para uso em funções como verAssinante()
+                    state.assinantesTodasPlanasParamData = assinantes;
                     
                     if (assinantes.length === 0) {
                         tbodyAssinantes.innerHTML = `

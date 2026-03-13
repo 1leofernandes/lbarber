@@ -12,145 +12,93 @@ class AdminAgendamentoService {
 
     async getAllAgendamentos(filters = {}, limit = 100, offset = 0) {
         try {
-            console.log('Filtros recebidos no service:', filters);
-            
-            // Transformar filtros para os nomes corretos
-            const filtrosTransformados = {};
-            
-            // Mapear 'data' para 'data_agendada'
-            if (filters.data) {
-                filtrosTransformados.data = filters.data;
-            }
-            
-            // Manter outros filtros
-            if (filters.status) {
-                filtrosTransformados.status = filters.status;
-            }
-            
-            if (filters.barbeiro_id) {
-                filtrosTransformados.barbeiro_id = filters.barbeiro_id;
-            }
-            
-            if (filters.cliente) {
-                filtrosTransformados.cliente = filters.cliente;
-            }
-            
-            if (filters.usuario_id) {
-                filtrosTransformados.usuario_id = filters.usuario_id;
-            }
-            
-            if (filters.data_inicio) {
-                filtrosTransformados.data_inicio = filters.data_inicio;
-            }
-            
-            if (filters.data_fim) {
-                filtrosTransformados.data_fim = filters.data_fim;
-            }
-            
-            console.log('Filtros transformados:', filtrosTransformados);
-            
-            // --- Query manual com todos os campos necessários ---
+            // --- SQL otimizado: sem GROUP BY ou json_agg complexo ---
             let query = `
                 SELECT 
-                    a.*,
+                    a.id,
+                    a.usuario_id,
+                    a.barbeiro_id,
+                    a.servico_id,
+                    a.data_agendada,
+                    a.hora_inicio,
+                    a.hora_fim,
+                    a.status,
+                    a.observacoes,
+                    a.assinatura_usuario_id,
+                    a.cliente_nome_admin,
+                    a.created_at,
+                    a.updated_at,
                     u.nome as usuario_nome,
                     u.telefone as usuario_telefone,
-                    b.nome as barbeiro_nome,
-                    COALESCE(
-                        json_agg(
-                            json_build_object(
-                                'id', s.id,
-                                'nome_servico', s.nome_servico,
-                                'valor_servico', s.valor_servico,
-                                'duracao_servico', s.duracao_servico,
-                                'descricao', s.descricao
-                            )
-                        ) FILTER (WHERE s.id IS NOT NULL),
-                        '[]'::json
-                    ) as servicos
+                    b.nome as barbeiro_nome
                 FROM agendamentos a
                 LEFT JOIN usuarios u ON a.usuario_id = u.id
                 LEFT JOIN usuarios b ON a.barbeiro_id = b.id
-                LEFT JOIN agendamento_servicos ags ON a.id = ags.agendamento_id
-                LEFT JOIN servicos s ON ags.servico_id = s.id
             `;
 
-            // Construir condições WHERE dinamicamente
             const conditions = [];
             const params = [];
             let paramIndex = 1;
 
-            // Filtro por data específica
-            if (filtrosTransformados.data) {
+            // Construir filtros dinamicamente
+            if (filters.data) {
                 conditions.push(`a.data_agendada = $${paramIndex++}`);
-                params.push(filtrosTransformados.data);
+                params.push(filters.data);
             }
-
-            // Filtro por status
-            if (filtrosTransformados.status) {
+            if (filters.status) {
                 conditions.push(`a.status = $${paramIndex++}`);
-                params.push(filtrosTransformados.status);
+                params.push(filters.status);
             }
-
-            // Filtro por barbeiro
-            if (filtrosTransformados.barbeiro_id) {
+            if (filters.barbeiro_id) {
                 conditions.push(`a.barbeiro_id = $${paramIndex++}`);
-                params.push(filtrosTransformados.barbeiro_id);
+                params.push(filters.barbeiro_id);
             }
-
-            // Filtro por cliente (busca em cliente_nome_admin e usuario.nome)
-            if (filtrosTransformados.cliente) {
+            if (filters.cliente) {
                 conditions.push(`(a.cliente_nome_admin ILIKE $${paramIndex} OR u.nome ILIKE $${paramIndex})`);
-                params.push(`%${filtrosTransformados.cliente}%`);
+                params.push(`%${filters.cliente}%`);
                 paramIndex++;
             }
-
-            // Filtro por usuário específico
-            if (filtrosTransformados.usuario_id) {
+            if (filters.usuario_id) {
                 conditions.push(`a.usuario_id = $${paramIndex++}`);
-                params.push(filtrosTransformados.usuario_id);
+                params.push(filters.usuario_id);
             }
-
-            // Filtro por período (data_inicio e data_fim)
-            if (filtrosTransformados.data_inicio) {
+            if (filters.data_inicio) {
                 conditions.push(`a.data_agendada >= $${paramIndex++}`);
-                params.push(filtrosTransformados.data_inicio);
+                params.push(filters.data_inicio);
             }
-            
-            if (filtrosTransformados.data_fim) {
+            if (filters.data_fim) {
                 conditions.push(`a.data_agendada <= $${paramIndex++}`);
-                params.push(filtrosTransformados.data_fim);
+                params.push(filters.data_fim);
             }
 
-            // Adicionar condições WHERE se houver
             if (conditions.length > 0) {
                 query += ' WHERE ' + conditions.join(' AND ');
             }
 
-            // Agrupar por ID do agendamento para o json_agg funcionar corretamente
-            query += ` GROUP BY a.id, u.nome, u.telefone, b.nome`;
-
-            // Ordenar por data e hora (mais recentes primeiro)
+            // Ordenação eficiente com índices
             query += ` ORDER BY a.data_agendada DESC, a.hora_inicio DESC`;
-
-            // Adicionar paginação
+            // Usar LIMIT com offset otimizado (máximo 5000 registros por fetch)
+            const limitSafe = Math.min(parseInt(limit) || 100, 5000);
             query += ` LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`;
-            params.push(limit, offset);
+            params.push(limitSafe, parseInt(offset) || 0);
 
-            console.log('Query final:', query);
-            console.log('Params:', params);
-
-            // Executar a query
             const result = await pool.query(query, params);
-            const agendamentos = result.rows;
+            const agendamentosBasicos = result.rows;
 
-            // Aplicar descontos/coberturas de assinatura para cada agendamento
-            const enriched = [];
-            for (const a of agendamentos) {
-                enriched.push(await agendamentoService.aplicarDescontosAssinatura(a));
+            // --- OTIMIZAÇÃO CRÍTICA: Enriquecer em PARALELO (Promise.all) não sequencial ---
+            // Batches de 10 para não sobrecarregar o pool de conexões
+            const batchSize = 10;
+            const agendamentosEnriquecidos = [];
+            
+            for (let i = 0; i < agendamentosBasicos.length; i += batchSize) {
+                const batch = agendamentosBasicos.slice(i, i + batchSize);
+                const agendamentosEnriquecidosBatch = await Promise.all(
+                    batch.map(a => this.enriquecerAgendamentoComServicos(a))
+                );
+                agendamentosEnriquecidos.push(...agendamentosEnriquecidosBatch);
             }
             
-            return enriched;
+            return agendamentosEnriquecidos;
             
         } catch (error) {
             console.error('Erro ao buscar agendamentos:', error);
@@ -580,6 +528,140 @@ class AdminAgendamentoService {
         } catch (error) {
             console.error('Erro ao buscar resumo de agendamentos:', error);
             throw error;
+        }
+    }
+
+    // OTIMIZADO: Enriquecer um agendamento com serviços (paralelo, não sequencial)
+    async enriquecerAgendamentoComServicos(agendamento) {
+        try {
+            // Buscar serviços do agendamento em uma única query
+            const servicosResult = await pool.query(`
+                SELECT s.id, s.nome_servico, s.valor_servico, s.duracao_servico, s.descricao
+                FROM servicos s
+                INNER JOIN agendamento_servicos ags ON s.id = ags.servico_id
+                WHERE ags.agendamento_id = $1
+            `, [agendamento.id]);
+            
+            const servicos = servicosResult.rows;
+            
+            // Aplicar descontos (versão otimizada com menos queries)
+            const servicosEnriquecidos = await this.aplicarDescontosAssinaturaOtimizado(
+                agendamento.usuario_id,
+                agendamento.data_agendada,
+                servicos,
+                agendamento.assinatura_usuario_id
+            );
+            
+            let subtotal = 0;
+            let descontoTotal = 0;
+            
+            for (const s of servicosEnriquecidos) {
+                subtotal += parseFloat(s.valor_original) || 0;
+                descontoTotal += (parseFloat(s.valor_original) - parseFloat(s.valor_final)) || 0;
+            }
+            
+            return {
+                ...agendamento,
+                servicos: servicosEnriquecidos,
+                valor_subtotal: subtotal,
+                desconto_total: descontoTotal,
+                valor_total: subtotal - descontoTotal
+            };
+        } catch (error) {
+            console.error('Erro ao enriquecer agendamento:', error);
+            // Retornar agendamento básico sem erro crítico
+            return {
+                ...agendamento,
+                servicos: [],
+                valor_subtotal: 0,
+                desconto_total: 0,
+                valor_total: 0
+            };
+        }
+    }
+    
+    // OTIMIZADO: Aplicar descontos de assinatura (menos queries)
+    async aplicarDescontosAssinaturaOtimizado(usuarioId, dataAgendada, servicos, assinaturaUsuarioId) {
+        try {
+            // Se não há serviços, retornar vazio
+            if (!servicos || servicos.length === 0) return [];
+            
+            // Buscar assinatura ativa uma única vez
+            let assinaturaUsuario = null;
+            if (assinaturaUsuarioId) {
+                const res = await pool.query(
+                    'SELECT * FROM assinaturas_usuarios WHERE id = $1',
+                    [assinaturaUsuarioId]
+                );
+                assinaturaUsuario = res.rows[0];
+            }
+            if (!assinaturaUsuario) {
+                const res = await pool.query(`
+                    SELECT * FROM assinaturas_usuarios 
+                    WHERE usuario_id = $1 AND status = 'ativa'
+                    LIMIT 1
+                `, [usuarioId]);
+                assinaturaUsuario = res.rows[0];
+            }
+            
+            // Se não tem assinatura, retornar serviços como estão
+            if (!assinaturaUsuario || !assinaturaUsuario.plano_id) {
+                return servicos.map(s => ({
+                    ...s,
+                    valor_original: parseFloat(s.valor_servico) || 0,
+                    valor_final: parseFloat(s.valor_servico) || 0,
+                    coberto: false
+                }));
+            }
+            
+            // Calcular dia da semana
+            let dbDay = null;
+            if (dataAgendada) {
+                const d = new Date(dataAgendada);
+                const jsDay = d.getDay();
+                dbDay = jsDay === 0 ? 7 : jsDay;
+            }
+            
+            // Buscar serviços cobertos em UMA query
+            const planoResult = await pool.query(`
+                SELECT DISTINCT ass.servico_id
+                FROM assinatura_servico ass
+                WHERE ass.assinatura_id = $1
+            `, [assinaturaUsuario.plano_id]);
+            
+            const servicosCobertos = new Set(planoResult.rows.map(r => r.servico_id));
+            
+            // Buscar dias da semana cobertos
+            let diasCobertos = [];
+            if (dbDay) {
+                const diasResult = await pool.query(`
+                    SELECT dia_semana FROM assinatura_dias_semana 
+                    WHERE assinatura_id = $1
+                `, [assinaturaUsuario.plano_id]);
+                diasCobertos = diasResult.rows.map(r => r.dia_semana);
+            }
+            
+            // Enriquecer serviços
+            return servicos.map(s => {
+                const valorOriginal = parseFloat(s.valor_servico) || 0;
+                const coberto = servicosCobertos.has(s.id) && diasCobertos.includes(dbDay);
+                const valorFinal = coberto ? 0 : valorOriginal;
+                
+                return {
+                    ...s,
+                    valor_original: valorOriginal,
+                    valor_final: valorFinal,
+                    coberto
+                };
+            });
+        } catch (error) {
+            console.error('Erro ao aplicar descontos:', error);
+            return servicos.map(s => ({
+                ...s,
+                valor_original: parseFloat(s.valor_servico) || 0,
+                valor_final: parseFloat(s.valor_servico) || 0,
+                coberto: false
+            }));
         }
     }
 

@@ -9,11 +9,22 @@ class AgendamentoService {
     async createAgendamentoComServicos(agendamentoData) {
         const client = await pool.connect();
         try {
-            const { usuario_id, barbeiro_id, servicos_ids, data_agendada, hora_inicio, hora_fim, observacoes } = agendamentoData;
+            let { usuario_id, barbeiro_id, servicos_ids, data_agendada, hora_inicio, hora_fim, observacoes } = agendamentoData;
             
             await client.query('BEGIN');
             
-            // 1. Verificar disponibilidade do horário (INCLUINDO BLOQUEIOS)
+            // 1. SE SEM PREFERÊNCIA (barbeiro_id = null), ENCONTRAR UM BARBEIRO DISPONÍVEL
+            if (!barbeiro_id) {
+                console.log('[createAgendamentoComServicos] Sem preferência de barbeiro, procurando barbeiro disponível...');
+                barbeiro_id = await this.encontrarBarbeiroDisponivel(data_agendada, hora_inicio, hora_fim);
+                
+                if (!barbeiro_id) {
+                    throw new Error('Nenhum barbeiro disponível para este horário');
+                }
+                console.log(`[createAgendamentoComServicos] Barbeiro atribuído: ${barbeiro_id}`);
+            }
+            
+            // 2. Verificar disponibilidade do horário (INCLUINDO BLOQUEIOS)
             const disponivel = await this.verificarDisponibilidadeCompleta(
                 barbeiro_id, 
                 data_agendada, 
@@ -26,7 +37,7 @@ class AgendamentoService {
                 throw new Error('Horário indisponível para agendamento');
             }
             
-            // 2. Calcular duração total para validação
+            // 3. Calcular duração total para validação
             const servicosInfo = await Promise.all(
                 servicos_ids.map(async (id) => {
                     const result = await client.query(
@@ -37,7 +48,7 @@ class AgendamentoService {
                 })
             );
             
-            // 3. Criar o agendamento (servico_id pode ser NULL ou primeiro serviço)
+            // 4. Criar o agendamento (servico_id pode ser NULL ou primeiro serviço)
             const primeiroServico = servicos_ids[0] || null;
             // Verificar se usuário tem assinatura ativa (para referenciar em agendamento)
             const assinaturaUsuario = await subscriptionService.getActiveAssinaturaUsuario(usuario_id);
@@ -54,7 +65,7 @@ class AgendamentoService {
             const agendamentoResult = await client.query(agendamentoQuery, agendamentoValues);
             const agendamento = agendamentoResult.rows[0];
             
-            // 4. Inserir relações na tabela agendamento_servicos
+            // 5. Inserir relações na tabela agendamento_servicos
             for (const servicoId of servicos_ids) {
                 await client.query(
                     'INSERT INTO agendamento_servicos (agendamento_id, servico_id) VALUES ($1, $2)',
@@ -64,7 +75,7 @@ class AgendamentoService {
             
             await client.query('COMMIT');
             
-            // 5. Retornar agendamento completo com serviços
+            // 6. Retornar agendamento completo com serviços
             return await this.getAgendamentoComServicosById(agendamento.id);
             
         } catch (error) {
@@ -396,10 +407,105 @@ class AgendamentoService {
         }
     }
     
+    // NOVO: Encontrar um barbeiro disponível para um horário específico (para "sem preferência")
+    async encontrarBarbeiroDisponivel(data_agendada, hora_inicio, hora_fim) {
+        try {
+            console.log(`[encontrarBarbeiroDisponivel] Procurando barbeiro para ${data_agendada} ${hora_inicio}-${hora_fim}`);
+            
+            // 1. Obter todos os barbeiros ativos
+            const barbeirosQuery = `
+                SELECT id FROM usuarios 
+                WHERE role = 'barbeiro' 
+                AND ativo = true
+                ORDER BY id ASC
+            `;
+            const barbeirosResult = await pool.query(barbeirosQuery);
+            const barbeiros = barbeirosResult.rows;
+            
+            if (!barbeiros || barbeiros.length === 0) {
+                console.log('[encontrarBarbeiroDisponivel] Nenhum barbeiro ativo encontrado');
+                return null;
+            }
+            
+            // 2. Para cada barbeiro, verificar disponibilidade
+            for (const barbeiro of barbeiros) {
+                const barbeiroId = barbeiro.id;
+                
+                // Verificar se não há conflito com agendamentos
+                const agendamentosQuery = `
+                    SELECT COUNT(*) as total
+                    FROM agendamentos
+                    WHERE barbeiro_id = $1
+                    AND data_agendada = $2
+                    AND status NOT IN ('cancelado')
+                    AND (
+                        (hora_inicio < $4 AND hora_fim > $3) OR
+                        (hora_inicio >= $3 AND hora_inicio < $4)
+                    )
+                `;
+                
+                const agendamentosResult = await pool.query(agendamentosQuery, [
+                    barbeiroId,
+                    data_agendada,
+                    hora_inicio,
+                    hora_fim
+                ]);
+                
+                const temAgendamento = parseInt(agendamentosResult.rows[0].total) > 0;
+                
+                if (temAgendamento) {
+                    console.log(`[encontrarBarbeiroDisponivel] Barbeiro ${barbeiroId} ocupado neste horário`);
+                    continue;
+                }
+                
+                // Verificar bloqueios
+                const bloqueios = await this.verificarBloqueios(barbeiroId, data_agendada);
+                
+                if (bloqueios.todoDiaBloqueado) {
+                    console.log(`[encontrarBarbeiroDisponivel] Barbeiro ${barbeiroId} tem o dia todo bloqueado`);
+                    continue;
+                }
+                
+                // Verificar se há conflito com bloqueios específicos
+                const horaInicioMin = this.converterParaMinutos(hora_inicio);
+                const horaFimMin = this.converterParaMinutos(hora_fim);
+                
+                let temBloqueio = false;
+                for (const bloqueio of bloqueios.horariosBloqueados) {
+                    const inicioBloquMin = this.converterParaMinutos(bloqueio.inicio);
+                    const fimBloquMin = this.converterParaMinutos(bloqueio.fim);
+                    
+                    if (horaInicioMin < fimBloquMin && horaFimMin > inicioBloquMin) {
+                        console.log(`[encontrarBarbeiroDisponivel] Barbeiro ${barbeiroId} tem bloqueio neste horário`);
+                        temBloqueio = true;
+                        break;
+                    }
+                }
+                
+                if (!temBloqueio) {
+                    // Barbeiro disponível encontrado!
+                    console.log(`[encontrarBarbeiroDisponivel] Barbeiro ${barbeiroId} é o PRIMEIRO DISPONÍVEL`);
+                    return barbeiroId;
+                }
+            }
+            
+            console.log('[encontrarBarbeiroDisponivel] Nenhum barbeiro disponível para este horário');
+            return null;
+        } catch (error) {
+            console.error('Erro ao encontrar barbeiro disponível:', error);
+            return null;
+        }
+    }
+    
     // MÉTODO ATUALIZADO: Buscar horários disponíveis (AGORA COM BLOQUEIOS E PREÇOS)
     async getHorariosDisponiveis(barbeiro_id, data, servicosIds = [], duracaoMinutos = 30, usuarioId = null) {
         try {
             console.log(`Buscando horários para barbeiro: ${barbeiro_id}, data: ${data}, duração: ${duracaoMinutos}min`);
+            
+            // Se barbeiro_id é null (sem preferência), usar lógica especial
+            if (!barbeiro_id) {
+                return await this.getHorariosDisponiveisSemPreferencia(data, servicosIds, duracaoMinutos, usuarioId);
+            }
             
             // 1. Primeiro verificar se há bloqueios para esta data/barbeiro
             const bloqueios = await this.verificarBloqueios(barbeiro_id, data);
@@ -501,6 +607,98 @@ class AgendamentoService {
             };
         } catch (error) {
             console.error('Erro ao buscar horários disponíveis:', error);
+            throw error;
+        }
+    }
+    
+    // NOVO: Buscar horários disponíveis quando "sem preferência" (qualquer barbeiro)
+    async getHorariosDisponiveisSemPreferencia(data, servicosIds = [], duracaoMinutos = 30, usuarioId = null) {
+        try {
+            console.log(`[getHorariosDisponiveisSemPreferencia] Buscando horários gerais para data: ${data}, duração: ${duracaoMinutos}min`);
+            
+            // 1. Obter horários padrão da barbearia para este dia
+            const horariosPadrao = this.gerarHorariosPadrao(data);
+            
+            if (!horariosPadrao || horariosPadrao.length === 0) {
+                console.log('Nenhum horário padrão para este dia (provavelmente domingo)');
+                return { horarios: [], precoEstimado: 0, precoComDesconto: 0 };
+            }
+            
+            // 2. Obter todos os barbeiros
+            const barbeirosQuery = `SELECT id FROM usuarios WHERE role = 'barbeiro' AND ativo = true ORDER BY id ASC`;
+            const barbeirosResult = await pool.query(barbeirosQuery);
+            const barbeiros = barbeirosResult.rows;
+            
+            if (!barbeiros || barbeiros.length === 0) {
+                console.log('Nenhum barbeiro ativo encontrado');
+                return { horarios: [], precoEstimado: 0, precoComDesconto: 0 };
+            }
+            
+            console.log(`[getHorariosDisponiveisSemPreferencia] Total de barbeiros: ${barbeiros.length}`);
+            
+            // 3. Para cada horário, verificar se ALGUM barbeiro está disponível
+            const horariosComDisponibilidade = [];
+            
+            for (const horario of horariosPadrao) {
+                let temBarbeiroDisponivel = false;
+                
+                for (const barbeiro of barbeiros) {
+                    const barbeiroId = barbeiro.id;
+                    
+                    // Obter intervalos ocupados por agendamentos
+                    const intervalosOcupados = await this.getIntervalosOcupados(barbeiroId, data);
+                    
+                    // Obter bloqueios
+                    const bloqueios = await this.verificarBloqueios(barbeiroId, data);
+                    
+                    if (bloqueios.todoDiaBloqueado) {
+                        continue; // Este barbeiro tem o dia todo bloqueado
+                    }
+                    
+                    // Combinar todos os intervalos indisponíveis
+                    const todosIntervalosIndisponiveis = [
+                        ...intervalosOcupados,
+                        ...bloqueios.horariosBloqueados
+                    ];
+                    
+                    // Usar a lógica existente para filtrar
+                    const horariosDisponiveisParaBarbeiro = this.filtrarHorariosPorIntervalos(
+                        [horario], // Testar apenas este horário
+                        todosIntervalosIndisponiveis,
+                        duracaoMinutos
+                    );
+                    
+                    if (horariosDisponiveisParaBarbeiro.length > 0) {
+                        // Este barbeiro está disponível para este horário!
+                        temBarbeiroDisponivel = true;
+                        console.log(`[getHorariosDisponiveisSemPreferencia] Horário ${horario} tem barbeiro ${barbeiroId} disponível`);
+                        break; // Não precisa verificar outros barbeiros para este horário
+                    }
+                }
+                
+                if (temBarbeiroDisponivel) {
+                    horariosComDisponibilidade.push(horario);
+                }
+            }
+            
+            console.log(`[getHorariosDisponiveisSemPreferencia] Horários com disponibilidade: ${horariosComDisponibilidade.length}`);
+            
+            // Calcular preços
+            let precoEstimado = 0;
+            let precoComDesconto = 0;
+            if (servicosIds && servicosIds.length > 0) {
+                const servicos = await Promise.all(servicosIds.map(id => servicoService.getServicoById(id)));
+                precoEstimado = servicos.reduce((acc, s) => acc + (s ? parseFloat(s.valor_servico || 0) : 0), 0);
+                precoComDesconto = precoEstimado; // Para "sem preferência", sem descontos especiais
+            }
+
+            return {
+                horarios: horariosComDisponibilidade,
+                precoEstimado,
+                precoComDesconto
+            };
+        } catch (error) {
+            console.error('Erro ao buscar horários sem preferência:', error);
             throw error;
         }
     }

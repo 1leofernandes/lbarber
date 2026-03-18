@@ -416,7 +416,6 @@ class AgendamentoService {
             const barbeirosQuery = `
                 SELECT id FROM usuarios 
                 WHERE role = 'barbeiro' 
-                AND ativo = true
                 ORDER BY id ASC
             `;
             const barbeirosResult = await pool.query(barbeirosQuery);
@@ -625,7 +624,7 @@ class AgendamentoService {
             }
             
             // 2. Obter todos os barbeiros
-            const barbeirosQuery = `SELECT id FROM usuarios WHERE role = 'barbeiro' AND ativo = true ORDER BY id ASC`;
+            const barbeirosQuery = `SELECT id FROM usuarios WHERE role = 'barbeiro' ORDER BY id ASC`;
             const barbeirosResult = await pool.query(barbeirosQuery);
             const barbeiros = barbeirosResult.rows;
             

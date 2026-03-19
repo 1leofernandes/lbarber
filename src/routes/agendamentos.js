@@ -25,12 +25,12 @@ router.get('/meus', agendamentoController.getByUsuario);
 router.get('/:id', agendamentoController.getById);
 
 // PUT /agendamentos/:id/cancel - Cancelar um agendamento
-router.put('/:id/cancel', agendamentoController.cancel);
+// router.put('/:id/cancel', agendamentoController.cancel);
 
 router.delete('/:id', agendamentoController.cancel);
 
 // editar agendamentos
 
-router.put('/agendamentos/:id', agendamentoController.update);
+router.put('/:id', agendamentoController.update);
 
 module.exports = router;

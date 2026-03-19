@@ -1195,6 +1195,7 @@
                         });
                     }, 500);
                 }
+                renderizarServicos();
                 
                 atualizarUI();
 
@@ -1300,8 +1301,13 @@
                     ? '<div class="free-badge">INCLUSO</div>'
                     : `<div class="original-price">R$ ${valorNumerico.toFixed(2)}</div>`;
 
+                // Verificar se este serviço está selecionado
+                const isSelected = estado.selecionados.servicos.includes(servico.id);
+                
                 const item = document.createElement('div');
-                item.className = `service-item ${estado.selecionados.servicos.includes(servico.id) ? 'selected' : ''}`;
+                item.className = `service-item ${isSelected ? 'selected' : ''}`;
+                // Adicionar data attribute com o ID do serviço
+                item.dataset.servicoId = servico.id;
                 item.innerHTML = `
                     <div class="service-info">
                         <div class="service-name">${servico.nome_servico}</div>
@@ -1312,28 +1318,26 @@
                     </div>
                 `;
 
-                item.onclick = () => toggleServico(servico.id);
+                item.onclick = () => toggleServico(servico.id, item);
                 elementos.servicosContent.appendChild(item);
             });
 
             atualizarContadorServicos();
         }
         
-        function toggleServico(servicoId) {
+        function toggleServico(servicoId, itemElement) {
             const index = estado.selecionados.servicos.indexOf(servicoId);
+            
             if (index === -1) {
+                // Adicionar serviço
                 estado.selecionados.servicos.push(servicoId);
+                itemElement.classList.add('selected');
             } else {
+                // Remover serviço
                 estado.selecionados.servicos.splice(index, 1);
+                itemElement.classList.remove('selected');
             }
-            const servicosItems = elementos.servicosContent.querySelectorAll('.service-item');
-            servicosItems.forEach(item => {
-                const servicoNome = item.querySelector('.service-name').textContent;
-                const servico = estado.servicos.find(s => s.nome_servico === servicoNome);
-                if (servico && servico.id === servicoId) {
-                    item.classList.toggle('selected');
-                }
-            });
+            
             atualizarContadorServicos();
             elementos.confirmServicosBtn.disabled = estado.selecionados.servicos.length === 0;
         }

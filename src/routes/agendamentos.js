@@ -29,4 +29,8 @@ router.put('/:id/cancel', agendamentoController.cancel);
 
 router.delete('/:id', agendamentoController.cancel);
 
+// editar agendamentos
+
+router.put('/agendamentos/:id', agendamentoController.update);
+
 module.exports = router;

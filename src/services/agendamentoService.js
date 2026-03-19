@@ -1001,6 +1001,92 @@ class AgendamentoService {
             return agendamento;
         }
     }
+
+
+    // service edit agendamento
+    async updateAgendamento(id, agendamentoData) {
+        const client = await pool.connect();
+        try {
+            const { usuario_id, barbeiro_id, servicos_ids, data_agendada, hora_inicio, hora_fim, observacoes } = agendamentoData;
+            await client.query('BEGIN');
+
+            // Se não foi escolhido um barbeiro, seleciona um automaticamente
+            let barbeiroId = barbeiro_id;
+            if (!barbeiroId) {
+                barbeiroId = await this.encontrarBarbeiroDisponivel(data_agendada, hora_inicio, hora_fim);
+                if (!barbeiroId) {
+                    throw new Error('Nenhum barbeiro disponível para o horário selecionado');
+                }
+            }
+
+            // Verificar disponibilidade (ignorando este agendamento)
+            const disponivel = await this.verificarDisponibilidadeCompleta(
+                barbeiroId,
+                data_agendada,
+                hora_inicio,
+                hora_fim,
+                id // excluir_agendamento_id
+            );
+            if (!disponivel) {
+                throw new Error('Horário indisponível para o novo agendamento');
+            }
+
+            // Atualizar agendamento
+            const primeiroServico = servicos_ids[0] || null;
+            const assinaturaUsuario = await subscriptionService.getActiveAssinaturaUsuario(usuario_id);
+            const assinaturaUsuarioId = assinaturaUsuario ? assinaturaUsuario.id : null;
+
+            const updateQuery = `
+                UPDATE agendamentos
+                SET barbeiro_id = $1,
+                    servico_id = $2,
+                    data_agendada = $3,
+                    hora_inicio = $4,
+                    hora_fim = $5,
+                    observacoes = $6,
+                    assinatura_usuario_id = $7,
+                    updated_at = NOW()
+                WHERE id = $8
+                RETURNING *
+            `;
+            const updateValues = [
+                barbeiroId,
+                primeiroServico,
+                data_agendada,
+                hora_inicio,
+                hora_fim,
+                observacoes || null,
+                assinaturaUsuarioId,
+                id
+            ];
+            const updateResult = await client.query(updateQuery, updateValues);
+            if (updateResult.rowCount === 0) {
+                throw new Error('Agendamento não encontrado');
+            }
+
+            // Remover relações antigas de serviços
+            await client.query('DELETE FROM agendamento_servicos WHERE agendamento_id = $1', [id]);
+
+            // Inserir novas relações
+            for (const servicoId of servicos_ids) {
+                await client.query(
+                    'INSERT INTO agendamento_servicos (agendamento_id, servico_id) VALUES ($1, $2)',
+                    [id, servicoId]
+                );
+            }
+
+            await client.query('COMMIT');
+
+            // Retornar agendamento completo
+            return await this.getAgendamentoComServicosById(id);
+        } catch (error) {
+            await client.query('ROLLBACK');
+            console.error('Erro no updateAgendamento:', error);
+            throw error;
+        } finally {
+            client.release();
+        }
+    }
 }
 
 module.exports = new AgendamentoService();

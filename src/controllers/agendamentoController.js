@@ -316,6 +316,88 @@ class AgendamentoController {
             });
         }
     }
+
+
+    // editar agendamentos 
+    async update(req, res) {
+        try {
+            const userId = req.user.id;
+            const { id } = req.params;
+            const { barbeiro_id, servicos_ids, data_agendada, hora_inicio, hora_fim, observacoes } = req.body;
+
+            // Validações básicas
+            if (!servicos_ids || !Array.isArray(servicos_ids) || servicos_ids.length === 0) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Pelo menos um serviço é obrigatório'
+                });
+            }
+            if (!data_agendada || !hora_inicio || !hora_fim) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Data e horário são obrigatórios'
+                });
+            }
+
+            // Verificar se o agendamento existe e pertence ao usuário
+            const agendamentoExistente = await agendamentoService.getAgendamentoComServicosById(id, userId);
+            if (!agendamentoExistente) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'Agendamento não encontrado'
+                });
+            }
+            if (agendamentoExistente.status !== 'confirmado') {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Apenas agendamentos confirmados podem ser editados'
+                });
+            }
+
+            // Calcular duração total (opcional)
+            const servicosInfo = await Promise.all(
+                servicos_ids.map(id => servicoService.getServicoById(id))
+            );
+            const duracaoTotal = servicosInfo.reduce((acc, s) => acc + (s?.duracao_servico || 0), 0);
+            const [h, m] = hora_inicio.split(':').map(Number);
+            const inicio = new Date();
+            inicio.setHours(h, m, 0);
+            const fimCalculado = new Date(inicio.getTime() + duracaoTotal * 60000);
+            const horaFimCalculada = `${String(fimCalculado.getHours()).padStart(2, '0')}:${String(fimCalculado.getMinutes()).padStart(2, '0')}`;
+            if (hora_fim !== horaFimCalculada) {
+                console.warn(`Hora fim fornecida (${hora_fim}) difere da calculada (${horaFimCalculada})`);
+            }
+
+            const agendamentoData = {
+                usuario_id: userId,
+                barbeiro_id: barbeiro_id || null,
+                servicos_ids,
+                data_agendada,
+                hora_inicio,
+                hora_fim: hora_fim || horaFimCalculada,
+                observacoes
+            };
+
+            const agendamentoAtualizado = await agendamentoService.updateAgendamento(id, agendamentoData);
+            res.json({
+                success: true,
+                message: 'Agendamento atualizado com sucesso',
+                agendamento: agendamentoAtualizado
+            });
+        } catch (error) {
+            console.error('Erro ao atualizar agendamento:', error);
+            if (error.message.includes('indisponível')) {
+                return res.status(409).json({
+                    success: false,
+                    message: error.message
+                });
+            }
+            res.status(500).json({
+                success: false,
+                message: 'Erro interno do servidor'
+            });
+        }
+    }
 }
 
 module.exports = new AgendamentoController();

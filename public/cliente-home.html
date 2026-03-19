@@ -2118,6 +2118,10 @@
                             <button class="btn-action btn-primary" onclick="verDetalhesAgendamento(${agendamento.id})">
                                 <i class="fas fa-eye"></i> Ver Detalhes
                             </button>
+                            <button class="btn-action" onclick="editarAgendamento(${agendamento.id})" 
+                                    ${agendamento.status !== 'confirmado' ? 'disabled' : ''}>
+                                <i class="fas fa-edit"></i> Editar
+                            </button>
                         </div>
                     `;
                     
@@ -2601,6 +2605,11 @@
                 });
             }
         }
+        
+        function editarAgendamento(id) {
+            window.location.href = `editar-agendamento.html?id=${id}`;
+        }
+        window.editarAgendamento = editarAgendamento;
     </script>
     <script src="/scripts/subscriptionStatus.js"></script>
 </body>

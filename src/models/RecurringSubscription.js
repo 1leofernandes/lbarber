@@ -220,7 +220,7 @@ class RecurringSubscription {
         const { assinaturaPagamentoId, usuarioId, valor, dataCobranca } = dados;
         
         const query = `
-            INSERT INTO assinaturas_historico_cobranças 
+            INSERT INTO assinaturas_historico_cobrancas 
             (assinatura_pagamento_id, usuario_id, valor, data_cobranca, status)
             VALUES ($1, $2, $3, $4, 'pendente')
             RETURNING *
@@ -234,7 +234,7 @@ class RecurringSubscription {
         const { status, mercadoPagoPaymentId, dataProcessamento, motivoFalha } = dados;
         
         let query = `
-            UPDATE assinaturas_historico_cobranças
+            UPDATE assinaturas_historico_cobrancas
             SET status = $1, updated_at = CURRENT_TIMESTAMP
         `;
         let params = [status, cobrancaId];
@@ -268,7 +268,7 @@ class RecurringSubscription {
     static async getCobrancasComFalha() {
         const query = `
             SELECT ahc.*, apr.usuario_id, u.email
-            FROM assinaturas_historico_cobranças ahc
+            FROM assinaturas_historico_cobrancas ahc
             JOIN assinaturas_pagamentos_recorrentes apr ON ahc.assinatura_pagamento_id = apr.id
             JOIN usuarios u ON ahc.usuario_id = u.id
             WHERE ahc.status = 'falha' 
@@ -282,7 +282,7 @@ class RecurringSubscription {
 
     static async incrementarTentativasCobranca(cobrancaId) {
         const query = `
-            UPDATE assinaturas_historico_cobranças
+            UPDATE assinaturas_historico_cobrancas
             SET tentativas = tentativas + 1,
                 proxima_tentativa = CURRENT_TIMESTAMP + INTERVAL '24 hours',
                 updated_at = CURRENT_TIMESTAMP
@@ -296,7 +296,7 @@ class RecurringSubscription {
     static async getHistoricoCobrancas(usuarioId, limit = 20, offset = 0) {
         const query = `
             SELECT ahc.*
-            FROM assinaturas_historico_cobranças ahc
+            FROM assinaturas_historico_cobrancas ahc
             WHERE ahc.usuario_id = $1
             ORDER BY ahc.data_cobranca DESC
             LIMIT $2 OFFSET $3

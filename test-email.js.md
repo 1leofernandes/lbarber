@@ -21,4 +21,3 @@ return console.log('Erro ao enviar email:', error);
 }
 console.log('Email enviado: ' + info.response);
 });
-// Carrega os barbeiros

@@ -7,7 +7,21 @@ const barbeiroService = require('../services/barbeiroService');
 class BarbeiroController {
   async getAll(req, res) {
     try {
-        const barbeiros = await barbeiroService.getAllBarbeiros();
+        // ⚠️ OTIMIZAÇÃO: Cachear listagem de barbeiros por 2h (dados mudam raramente)
+        const cache = require('../utils/cache');
+        const cacheKey = 'barbeiros:list:all';
+        
+        // Verificar cache
+        let barbeiros = await cache.get(cacheKey);
+        if (barbeiros) {
+            return res.json(barbeiros);
+        }
+        
+        // Se não tem em cache, buscar do DB
+        barbeiros = await barbeiroService.getAllBarbeiros();
+        
+        // Guardar em cache por 2 horas
+        await cache.set(cacheKey, barbeiros, 2 * 60 * 60);
         
         res.json(barbeiros);
     } catch (error) {

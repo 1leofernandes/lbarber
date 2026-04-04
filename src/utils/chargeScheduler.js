@@ -11,12 +11,12 @@ class ChargeScheduler {
         // Executar a cada 1 hora
         schedulerInterval = setInterval(() => {
             this.checkAndSyncSubscriptions();
-        }, 60 * 60 * 1000);
+        }, 24 *60 * 60 * 1000);
 
         // Executar imediatamente na inicialização
         this.checkAndSyncSubscriptions();
 
-        logger.info('✅ Sincronizador de assinaturas iniciado (a cada 1 hora)');
+        logger.info('✅ Sincronizador de assinaturas iniciado (a cada 1 dia)');
     }
 
     static stop() {

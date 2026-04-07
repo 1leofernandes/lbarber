@@ -1690,6 +1690,18 @@
             box-shadow: 0 6px 15px rgba(40, 167, 69, 0.3);
         }
 
+        .btn-ausente {
+            background: linear-gradient(135deg, #ffc107, #ffb300);
+            color: #000;
+            font-weight: 600;
+        }
+
+        .btn-ausente:hover {
+            filter: brightness(1.1);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(255, 193, 7, 0.3);
+        }
+
         .btn-excluir {
             background: linear-gradient(135deg, #dc3545, #c82333);
             color: white;
@@ -3513,6 +3525,9 @@
                         <button type="button" class="btn-finalizar" id="modal-finalizar-btn">
                             <i class="fas fa-check-circle"></i> Finalizar
                         </button>
+                        <button type="button" class="btn-ausente" id="modal-ausente-btn" style="background-color: #ffc107; color: #000;">
+                            <i class="fas fa-user-clock"></i> Ausente
+                        </button>
                         <button type="button" class="btn-excluir" id="modal-excluir-btn">
                             <i class="fas fa-trash-alt"></i> Excluir
                         </button>
@@ -3537,6 +3552,7 @@
 
             // Configurar botões de ação imediatamente (sem setTimeout)
             const finalizarBtn = modalOverlay.querySelector('#modal-finalizar-btn');
+            const ausenteBtn = modalOverlay.querySelector('#modal-ausente-btn');
             const excluirBtn = modalOverlay.querySelector('#modal-excluir-btn');
 
             if (finalizarBtn) {
@@ -3545,6 +3561,17 @@
                     await atualizarStatusAgendamento(currentModalAgendamentoId, 'concluido');
                     fecharModalAgendamento();
                     await carregarAgendamentosComFiltro({});
+                });
+            }
+
+            if (ausenteBtn) {
+                ausenteBtn.addEventListener('click', async () => {
+                    if (!currentModalAgendamentoId) return;
+                    if (confirm('Tem certeza que deseja marcar este agendamento como Ausente?')) {
+                        await atualizarStatusAgendamento(currentModalAgendamentoId, 'cancelado');
+                        fecharModalAgendamento();
+                        await carregarAgendamentosComFiltro({});
+                    }
                 });
             }
 

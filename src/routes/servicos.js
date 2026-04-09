@@ -9,4 +9,7 @@ router.get('/', servicoController.getAll);
 // GET /servicos/:id - Buscar serviço por ID (público)
 router.get('/:id', servicoController.getById);
 
+// ADICIONE ESTA LINHA
+router.get('/clear-cache', servicoController.clearCache);
+
 module.exports = router;

@@ -56,6 +56,24 @@ class ServicoController {
             });
         }
     }
+
+
+    // ADICIONE ESTE MÉTODO no final da classe
+    async clearCache(req, res) {
+        try {
+            const cache = require('../utils/cache');
+            await cache.del('servicos:list:all');
+            
+            console.log('🗑️ Cache limpo via endpoint');
+            
+            res.json({
+                success: true,
+                message: 'Cache de serviços limpo! Recarregue a página.'
+            });
+        } catch (error) {
+            res.status(500).json({ error: error.message });
+        }
+    }
 }
 
 module.exports = new ServicoController();

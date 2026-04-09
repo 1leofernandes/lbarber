@@ -62,7 +62,7 @@ class ServicoController {
     async clearCache(req, res) {
         try {
             const cache = require('../utils/cache');
-            await cache.del('servicos:list:all');
+            await cache.delete('servicos:list:all');
             
             console.log('🗑️ Cache limpo via endpoint');
             
